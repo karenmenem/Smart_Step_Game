@@ -37,3 +37,4 @@ npm start
 - **Frontend**: React, JavaScript/TypeScript
 - **Backend**: Node.js, Express.js
 - **Database**: (To be determined)# Smart_step_game
+# Smart-Step-Educational-Game

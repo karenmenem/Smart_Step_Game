@@ -17,6 +17,7 @@ function Header() {
             fontSize: "2.5rem",
             color: "#fff",
             letterSpacing: "2px",
+            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           }}
         >
           Smart Step

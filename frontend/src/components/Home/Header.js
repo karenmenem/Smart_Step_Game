@@ -11,68 +11,35 @@ function Header() {
           alignItems: "center",
         }}
       >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "2.5rem",
-            color: "#fff",
-            letterSpacing: "2px",
-            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          }}
-        >
+        <h1 className="logo-text">
           Smart Step
         </h1>
-        <div>
+        <nav className="nav-buttons">
           <button
-            style={{
-              marginRight: "1rem",
-              padding: "0.7rem 1.5rem",
-              borderRadius: "12px",
-              border: "2px solid #fff",
-              background: "rgba(255, 255, 255, 0.2)",
-              color: "#fff",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              fontSize: "1rem",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "rgba(255, 255, 255, 0.4)";
-              e.target.style.transform = "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = "rgba(255, 255, 255, 0.2)";
-              e.target.style.transform = "translateY(0)";
-            }}
+            className="nav-btn profile-btn"
+            onClick={() => navigate("/profile")}
           >
             Profile
           </button>
           <button
-            style={{
-              padding: "0.7rem 1.5rem",
-              borderRadius: "12px",
-              border: "none",
-              background: "#fff",
-              color: "#ff6b9d",
-              fontWeight: "700",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-              fontSize: "1rem",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = "translateY(-2px)";
-              e.target.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = "translateY(0)";
-              e.target.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
-            }}
+            className="nav-btn login-btn"
             onClick={() => navigate("/login")}
           >
             Login
           </button>
-        </div>
+          <button
+            className="nav-btn dashboard-btn"
+            onClick={() => navigate("/dashboard")}
+          >
+            Dashboard
+          </button>
+          <button
+            className="nav-btn achievements-btn"
+            onClick={() => navigate("/achievements")}
+          >
+            Achievements
+          </button>
+        </nav>
       </div>
     </header>
   );

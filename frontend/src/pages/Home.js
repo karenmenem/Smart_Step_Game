@@ -1,7 +1,13 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 function Home() {
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
     <div className="math-adventure-layout">
@@ -10,7 +16,8 @@ function Home() {
           <div className="ma-logo">
             <h1>Smart<span className="logo-accent">Step</span></h1>
           </div>
-          <nav className="ma-nav">
+          
+          <nav className="ma-nav ma-nav-desktop">
             <button className="ma-nav-btn">🏠</button>
             <button className="ma-nav-btn">Dashboard</button>
             <button className="ma-nav-btn">Achievements</button>
@@ -19,7 +26,35 @@ function Home() {
               <button className="ma-signup-btn" onClick={() => navigate("/register")}>Sign Up</button>
             </div>
           </nav>
+
+          <button className="ma-mobile-menu-btn" onClick={toggleMobileMenu}>
+            <span className={`hamburger ${isMobileMenuOpen ? 'open' : ''}`}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </button>
         </div>
+
+        <div className={`ma-mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
+          <button className="ma-mobile-nav-btn" onClick={() => setIsMobileMenuOpen(false)}>
+            🏠 Home
+          </button>
+          <button className="ma-mobile-nav-btn" onClick={() => setIsMobileMenuOpen(false)}>
+            📊 Dashboard
+          </button>
+          <button className="ma-mobile-nav-btn" onClick={() => setIsMobileMenuOpen(false)}>
+            🏆 Achievements
+          </button>
+          <button className="ma-mobile-nav-btn" onClick={() => { navigate("/login"); setIsMobileMenuOpen(false); }}>
+            🔐 Sign In
+          </button>
+          <button className="ma-mobile-nav-btn" onClick={() => { navigate("/register"); setIsMobileMenuOpen(false); }}>
+            ✨ Sign Up
+          </button>
+        </div>
+
+        {isMobileMenuOpen && <div className="ma-mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>}
       </header>
 
       <main className="ma-main">
@@ -45,10 +80,10 @@ function Home() {
           
           <div className="ma-buttons">
             <button className="ma-btn ma-btn-secondary" onClick={() => navigate("/dashboard")}>
-              Go to Dashboard
+              📊 Go to Dashboard
             </button>
             <button className="ma-btn ma-btn-primary" onClick={() => navigate("/subjects")}>
-              Play Now
+              🎮 Play Now
             </button>
           </div>
         </div>

@@ -1,187 +1,142 @@
--- Smart Step Educational Game Database Schema
--- Complete schema with all foreign key relationships
+-- Smart Step Learning Platform Database Schema
+-- Create database (uncomment if needed)
+-- CREATE DATABASE IF NOT EXISTS `Smart Step Learning1`;
+-- USE `Smart Step Learning1`;
 
--- Enable foreign key checks
-SET foreign_key_checks = 1;
-
--- 1. Admin Table
-CREATE TABLE admin (
-    admin_id INT PRIMARY KEY AUTO_INCREMENT,
+-- Table: parent
+CREATE TABLE IF NOT EXISTS parent (
+    parent_id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL, -- Will store hashed passwords
+    password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 2. Parent Table
-CREATE TABLE parent (
-    parent_id INT PRIMARY KEY AUTO_INCREMENT,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL, -- Will store hashed passwords
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- 3. Subject Table (Created before activity for foreign key reference)
-CREATE TABLE subject (
-    subject_id INT PRIMARY KEY AUTO_INCREMENT,
-    subject_name VARCHAR(100) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- 4. Activity Table
-CREATE TABLE activity (
-    activity_id INT PRIMARY KEY AUTO_INCREMENT,
-    subject_id INT NOT NULL,
-    activity_name VARCHAR(255) NOT NULL,
-    level INT NOT NULL CHECK (level >= 1 AND level <= 10),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Foreign Key Constraints
-    CONSTRAINT fk_activity_subject 
-        FOREIGN KEY (subject_id) 
-        REFERENCES subject(subject_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE
-);
-
--- 5. Child Table
-CREATE TABLE child (
-    child_id INT AUTO_INCREMENT,
+-- Table: child  
+CREATE TABLE IF NOT EXISTS child (
+    child_id INT AUTO_INCREMENT PRIMARY KEY,
     parent_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
-    age INT NOT NULL CHECK (age >= 3 AND age <= 18),
-    current_math_level INT DEFAULT 1 CHECK (current_math_level >= 1 AND current_math_level <= 10),
-    current_english_level INT DEFAULT 1 CHECK (current_english_level >= 1 AND current_english_level <= 10),
-    volume_level INT DEFAULT 50 CHECK (volume_level >= 0 AND volume_level <= 100),
-    audio_enable BOOLEAN DEFAULT TRUE,
+    age INT NOT NULL,
+    profile_picture VARCHAR(255),
+    current_math_level INT DEFAULT 1,
+    current_english_level INT DEFAULT 1,
+    total_points INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Primary Key (Compound)
-    PRIMARY KEY (child_id, parent_id),
-    
-    -- Foreign Key Constraints
-    CONSTRAINT fk_child_parent 
-        FOREIGN KEY (parent_id) 
-        REFERENCES parent(parent_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE
+    FOREIGN KEY (parent_id) REFERENCES parent(parent_id) ON DELETE CASCADE
 );
 
--- 6. Achievement Table
-CREATE TABLE achievement (
-    achievement_id INT PRIMARY KEY AUTO_INCREMENT,
-    level_required INT NOT NULL CHECK (level_required >= 1 AND level_required <= 10),
-    badge_name VARCHAR(100) NOT NULL,
+-- Table: subject
+CREATE TABLE IF NOT EXISTS subject (
+    subject_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 7. Question Table
-CREATE TABLE question (
-    question_id INT PRIMARY KEY AUTO_INCREMENT,
+-- Table: section
+CREATE TABLE IF NOT EXISTS section (
+    section_id INT AUTO_INCREMENT PRIMARY KEY,
+    subject_id INT NOT NULL,
+    level INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    order_index INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subject_id) REFERENCES subject(subject_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_subject_level (subject_id, level)
+);
+
+-- Table: activity
+CREATE TABLE IF NOT EXISTS activity (
+    activity_id INT AUTO_INCREMENT PRIMARY KEY,
+    section_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    activity_type ENUM('quiz', 'exercise', 'game') NOT NULL,
+    points_value INT DEFAULT 10,
+    order_index INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (section_id) REFERENCES section(section_id) ON DELETE CASCADE
+);
+
+-- Table: question
+CREATE TABLE IF NOT EXISTS question (
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
     activity_id INT NOT NULL,
-    text TEXT NOT NULL, -- Fixed from "tex" to "text"
-    audio_url VARCHAR(500),
-    asl_url VARCHAR(500), -- ASL (American Sign Language) video URL
-    correct_answer CHAR(1) NOT NULL CHECK (correct_answer IN ('A', 'B', 'C', 'D')),
-    choice_a TEXT NOT NULL,
-    choice_b TEXT NOT NULL,
-    choice_c TEXT,
-    choice_d TEXT,
+    question_text TEXT NOT NULL,
+    question_type ENUM('multiple_choice', 'true_false', 'fill_blank', 'drag_drop') NOT NULL,
+    correct_answer TEXT NOT NULL,
+    options JSON, -- For multiple choice options
+    explanation TEXT,
+    difficulty_level INT DEFAULT 1,
+    points_value INT DEFAULT 1,
+    order_index INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Foreign Key Constraints
-    CONSTRAINT fk_question_activity 
-        FOREIGN KEY (activity_id) 
-        REFERENCES activity(activity_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE
+    FOREIGN KEY (activity_id) REFERENCES activity(activity_id) ON DELETE CASCADE
 );
 
--- 8. Attempts Table
-CREATE TABLE attempts (
-    attempt_id INT PRIMARY KEY AUTO_INCREMENT, -- Added primary key
+-- Table: child_progress
+CREATE TABLE IF NOT EXISTS child_progress (
+    progress_id INT AUTO_INCREMENT PRIMARY KEY,
     child_id INT NOT NULL,
-    parent_id INT NOT NULL, -- Added to match child table compound key
+    activity_id INT NOT NULL,
+    completed BOOLEAN DEFAULT FALSE,
+    score INT DEFAULT 0,
+    max_score INT DEFAULT 0,
+    attempts INT DEFAULT 0,
+    last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL,
+    FOREIGN KEY (child_id) REFERENCES child(child_id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES activity(activity_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_child_activity (child_id, activity_id)
+);
+
+-- Table: attempt
+CREATE TABLE IF NOT EXISTS attempt (
+    attempt_id INT AUTO_INCREMENT PRIMARY KEY,
+    child_id INT NOT NULL,
     question_id INT NOT NULL,
-    activity_id INT NOT NULL,
-    duration INT NOT NULL, -- Duration in seconds
-    selected_answer CHAR(1) CHECK (selected_answer IN ('A', 'B', 'C', 'D')),
-    percentage DECIMAL(5,2) CHECK (percentage >= 0 AND percentage <= 100),
+    selected_answer TEXT,
+    is_correct BOOLEAN NOT NULL,
+    points_earned INT DEFAULT 0,
+    time_taken INT, -- in seconds
     attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign Key Constraints
-    CONSTRAINT fk_attempts_child 
-        FOREIGN KEY (child_id, parent_id) 
-        REFERENCES child(child_id, parent_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE,
-    
-    CONSTRAINT fk_attempts_question 
-        FOREIGN KEY (question_id) 
-        REFERENCES question(question_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE,
-    
-    CONSTRAINT fk_attempts_activity 
-        FOREIGN KEY (activity_id) 
-        REFERENCES activity(activity_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE
+    FOREIGN KEY (child_id) REFERENCES child(child_id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES question(question_id) ON DELETE CASCADE
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_child_parent ON child(parent_id);
-CREATE INDEX idx_activity_subject ON activity(subject_id);
-CREATE INDEX idx_question_activity ON question(activity_id);
-CREATE INDEX idx_attempts_child ON attempts(child_id, parent_id);
-CREATE INDEX idx_attempts_activity ON attempts(activity_id);
-CREATE INDEX idx_attempts_question ON attempts(question_id);
-CREATE INDEX idx_attempts_date ON attempts(attempted_at);
-CREATE INDEX idx_parent_email ON parent(email);
-CREATE INDEX idx_admin_email ON admin(email);
+-- Table: achievement
+CREATE TABLE IF NOT EXISTS achievement (
+    achievement_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    icon VARCHAR(255),
+    points_required INT DEFAULT 0,
+    level_required INT DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- Insert sample subjects
-INSERT INTO subject (subject_name, description) VALUES 
-('Mathematics', 'Mathematical concepts and problem solving'),
-('English', 'English language learning and comprehension');
-
--- Insert sample achievements
-INSERT INTO achievement (level_required, badge_name, description) VALUES 
-(1, 'First Steps', 'Complete your first level'),
-(3, 'Getting Better', 'Reach level 3 in any subject'),
-(5, 'Halfway Hero', 'Reach level 5 in any subject'),
-(7, 'Almost Expert', 'Reach level 7 in any subject'),
-(10, 'Master Student', 'Complete level 10 in any subject');
-
--- Create a junction table for child achievements (Recommended addition)
-CREATE TABLE child_achievement (
+-- Table: child_achievement
+CREATE TABLE IF NOT EXISTS child_achievement (
     child_id INT NOT NULL,
-    parent_id INT NOT NULL,
     achievement_id INT NOT NULL,
     earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    PRIMARY KEY (child_id, parent_id, achievement_id),
-    
-    CONSTRAINT fk_child_achievement_child 
-        FOREIGN KEY (child_id, parent_id) 
-        REFERENCES child(child_id, parent_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE,
-    
-    CONSTRAINT fk_child_achievement_achievement 
-        FOREIGN KEY (achievement_id) 
-        REFERENCES achievement(achievement_id) 
-        ON DELETE CASCADE 
-        ON UPDATE CASCADE
+    PRIMARY KEY (child_id, achievement_id),
+    FOREIGN KEY (child_id) REFERENCES child(child_id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_id) REFERENCES achievement(achievement_id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_child_achievement_child ON child_achievement(child_id, parent_id);
-CREATE INDEX idx_child_achievement_achievement ON child_achievement(achievement_id);
+-- Insert default subjects
+INSERT IGNORE INTO subject (name, description) VALUES 
+('Math', 'Mathematics learning activities'),
+('English', 'English language learning activities');
+
+-- Insert sample achievements
+INSERT IGNORE INTO achievement (name, description, icon, points_required, level_required) VALUES
+('First Steps', 'Complete your first activity', '🌟', 10, 1),
+('Quick Learner', 'Complete 5 activities in one day', '⚡', 50, 1),
+('Math Wizard', 'Complete all level 1 math activities', '🧙‍♂️', 100, 1),
+('Word Master', 'Complete all level 1 English activities', '📚', 100, 1),
+('Persistent', 'Complete an activity after 3 attempts', '💪', 25, 1);

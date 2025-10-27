@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api, auth } from "../api/auth";
 
 function Login() {
   const navigate = useNavigate();
@@ -7,6 +8,8 @@ function Login() {
     email: "",
     password: ""
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -15,10 +18,29 @@ function Login() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add login logic later
-    console.log("Login form submitted:", formData);
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await api.login(formData);
+      
+      if (response.success) {
+        // Store authentication data
+        auth.login(response);
+        
+        // Navigate to home page
+        navigate("/");
+      } else {
+        setError(response.message || "Login failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,6 +52,12 @@ function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+          
           <div className="form-group">
             <label htmlFor="email" className="form-label">Email Address</label>
             <input
@@ -58,8 +86,8 @@ function Login() {
             />
           </div>
 
-          <button type="submit" className="auth-submit-btn">
-            Sign In
+          <button type="submit" className="auth-submit-btn" disabled={loading}>
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 

@@ -1,12 +1,28 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { auth } from "../api/auth";
 
 function Home() {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check if user is authenticated
+    if (auth.isAuthenticated()) {
+      const userData = auth.getCurrentUser();
+      setUser(userData);
+    }
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleLogout = () => {
+    auth.logout();
+    setUser(null);
+    navigate("/");
   };
 
   return (
@@ -22,8 +38,18 @@ function Home() {
             <button className="ma-nav-btn">Dashboard</button>
             <button className="ma-nav-btn">Achievements</button>
             <div className="ma-user-section">
-              <button className="ma-signin-btn" onClick={() => navigate("/login")}>Sign In</button>
-              <button className="ma-signup-btn" onClick={() => navigate("/register")}>Sign Up</button>
+              {user ? (
+                <>
+                  <span className="ma-welcome-text">Welcome, {user.child?.name || user.parent?.email}!</span>
+                  <button className="ma-profile-btn" onClick={() => navigate("/profile")}>Profile</button>
+                  <button className="ma-logout-btn" onClick={handleLogout}>Logout</button>
+                </>
+              ) : (
+                <>
+                  <button className="ma-signin-btn" onClick={() => navigate("/login")}>Sign In</button>
+                  <button className="ma-signup-btn" onClick={() => navigate("/register")}>Sign Up</button>
+                </>
+              )}
             </div>
           </nav>
 
@@ -76,14 +102,14 @@ function Home() {
 
         <div className="ma-content">
           <h1 className="ma-main-title">Make Learning Fun<br/>with Smart Step!</h1>
-          <p className="ma-subtitle">Welcome back! Ready to continue your learning journey?</p>
+          <p className="ma-subtitle">Let's learn with words, numbers, and signs!</p>
           
           <div className="ma-buttons">
             <button className="ma-btn ma-btn-secondary" onClick={() => navigate("/dashboard")}>
               📊 Go to Dashboard
             </button>
             <button className="ma-btn ma-btn-primary" onClick={() => navigate("/subjects")}>
-              🎮 Play Now
+              Play Now
             </button>
           </div>
         </div>

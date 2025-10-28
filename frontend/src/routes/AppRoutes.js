@@ -5,6 +5,7 @@ import English from "../pages/English";
 import Profile from "../pages/Profile";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
+import Achievements from "../pages/Achievements";
 
 function AppRoutes() {
   return (
@@ -16,6 +17,7 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/achievements" element={<Achievements />} />
       </Routes>
     </Router>
   );

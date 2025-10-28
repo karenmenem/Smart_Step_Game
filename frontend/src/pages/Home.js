@@ -8,9 +8,9 @@ function Home() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Check if user is authenticated
     if (auth.isAuthenticated()) {
       const userData = auth.getCurrentUser();
+      console.log('User data:', userData);
       setUser(userData);
     }
   }, []);
@@ -34,13 +34,30 @@ function Home() {
           </div>
           
           <nav className="ma-nav ma-nav-desktop">
-            <button className="ma-nav-btn">🏠</button>
+            <button className="ma-nav-btn" onClick={() => navigate("/")}>🏠</button>
             <button className="ma-nav-btn">Dashboard</button>
-            <button className="ma-nav-btn">Achievements</button>
+            <button className="ma-nav-btn" onClick={() => navigate("/achievements")}>Achievements</button>
             <div className="ma-user-section">
               {user ? (
                 <>
-                  <span className="ma-welcome-text">Welcome, {user.child?.name || user.parent?.email}!</span>
+                  <div className="ma-user-info">
+                    {user.child?.profile_picture ? (
+                      <img 
+                        src={`http://localhost:5000/${user.child.profile_picture}`} 
+                        alt="Profile" 
+                        className="ma-profile-avatar"
+                        onError={(e) => {
+                          console.log('Image failed to load:', e.target.src);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="ma-avatar">
+                        {(user.child?.name || user.parent?.email || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="ma-welcome-text">Welcome, {user.child?.name || user.parent?.email}!</span>
+                  </div>
                   <button className="ma-profile-btn" onClick={() => navigate("/profile")}>Profile</button>
                   <button className="ma-logout-btn" onClick={handleLogout}>Logout</button>
                 </>
@@ -69,15 +86,46 @@ function Home() {
           <button className="ma-mobile-nav-btn" onClick={() => setIsMobileMenuOpen(false)}>
             📊 Dashboard
           </button>
-          <button className="ma-mobile-nav-btn" onClick={() => setIsMobileMenuOpen(false)}>
+          <button className="ma-mobile-nav-btn" onClick={() => { navigate("/achievements"); setIsMobileMenuOpen(false); }}>
             🏆 Achievements
           </button>
-          <button className="ma-mobile-nav-btn" onClick={() => { navigate("/login"); setIsMobileMenuOpen(false); }}>
-            🔐 Sign In
-          </button>
-          <button className="ma-mobile-nav-btn" onClick={() => { navigate("/register"); setIsMobileMenuOpen(false); }}>
-            ✨ Sign Up
-          </button>
+          {user ? (
+            <>
+              <div className="ma-mobile-user-info">
+                {user.child?.profile_picture ? (
+                  <img 
+                    src={`http://localhost:5000/${user.child.profile_picture}`} 
+                    alt="Profile" 
+                    className="ma-mobile-profile-avatar"
+                    onError={(e) => {
+                      console.log('Mobile image failed to load:', e.target.src);
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="ma-mobile-avatar">
+                    {(user.child?.name || user.parent?.email || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span>Welcome, {user.child?.name || user.parent?.email}!</span>
+              </div>
+              <button className="ma-mobile-nav-btn" onClick={() => { navigate("/profile"); setIsMobileMenuOpen(false); }}>
+                👤 Profile
+              </button>
+              <button className="ma-mobile-nav-btn" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}>
+                🚪 Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="ma-mobile-nav-btn" onClick={() => { navigate("/login"); setIsMobileMenuOpen(false); }}>
+                🔐 Sign In
+              </button>
+              <button className="ma-mobile-nav-btn" onClick={() => { navigate("/register"); setIsMobileMenuOpen(false); }}>
+                ✨ Sign Up
+              </button>
+            </>
+          )}
         </div>
 
         {isMobileMenuOpen && <div className="ma-mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>}
@@ -153,6 +201,7 @@ function Home() {
           </div>
           <p className="ma-progress-text">What We Learn in Smart Step!</p>
         </div>
+
       </main>
     </div>
   );

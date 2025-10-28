@@ -43,7 +43,6 @@ function Register() {
     e.preventDefault();
     setError("");
     
-    // Validate passwords match
     if (parentData.password !== parentData.confirmPassword) {
       setError("Passwords don't match!");
       return;
@@ -54,7 +53,6 @@ function Register() {
       return;
     }
     
-    // Move to next step
     setCurrentStep(2);
   };
 
@@ -64,7 +62,6 @@ function Register() {
     setError("");
     
     try {
-      // Validate child data
       if (!childData.name.trim()) {
         setError("Please enter your child's name!");
         return;
@@ -75,7 +72,6 @@ function Register() {
         return;
       }
       
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append('email', parentData.email);
       formData.append('password', parentData.password);
@@ -85,7 +81,6 @@ function Register() {
         formData.append('profilePicture', childData.profilePicture);
       }
       
-      // Make API call to register
       const result = await api.register(formData);
       
       if (result.success) {
@@ -169,7 +164,7 @@ function Register() {
             </div>
 
             <button type="submit" className="auth-submit-btn">
-              Next: Child Profile →
+              Next: Profile →
             </button>
           </form>
         ) : (
@@ -190,21 +185,18 @@ function Register() {
 
             <div className="form-group">
               <label htmlFor="age" className="form-label">Child's Age</label>
-              <select
+              <input
+                type="number"
                 id="age"
                 name="age"
                 value={childData.age}
                 onChange={handleChildChange}
                 className="form-input"
+                placeholder="Enter age (3-18)"
+                min="3"
+                max="18"
                 required
-              >
-                <option value="">Select age</option>
-                {[...Array(16)].map((_, i) => (
-                  <option key={i + 3} value={i + 3}>
-                    {i + 3} years old
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className="form-group">

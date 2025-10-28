@@ -6,7 +6,6 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 
-// Configure multer for profile picture uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = 'uploads/profile-pictures/';
@@ -23,7 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -37,15 +36,12 @@ const upload = multer({
   }
 });
 
-// Import database connection
 const { query } = require('../config/database');
 
-// Register endpoint
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
   try {
     const { email, password, childName, childAge } = req.body;
     
-    // Validate input
     if (!email || !password || !childName || !childAge) {
       return res.status(400).json({ 
         success: false, 
@@ -53,7 +49,6 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
     
-    // Check if email already exists
     const existingParent = await query('SELECT * FROM parent WHERE email = ?', [email]);
     if (existingParent.length > 0) {
       return res.status(400).json({ 
@@ -62,11 +57,9 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
     
-    // Hash password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     
-    // Insert parent
     const parentResult = await query(
       'INSERT INTO parent (email, password) VALUES (?, ?)',
       [email, hashedPassword]
@@ -74,17 +67,15 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
     
     const parentId = parentResult.insertId;
     
-    // Insert child
-    const childResult = await query(
-      'INSERT INTO child (parent_id, name, age, current_math_level, current_english_level) VALUES (?, ?, ?, 1, 1)',
-      [parentId, childName, parseInt(childAge)]
-    );
-    
-    // Handle profile picture if uploaded
     let profilePicturePath = null;
     if (req.file) {
       profilePicturePath = req.file.path;
     }
+    
+    const childResult = await query(
+      'INSERT INTO child (parent_id, name, age, current_math_level, current_english_level, profile_picture) VALUES (?, ?, ?, 1, 1, ?)',
+      [parentId, childName, parseInt(childAge), profilePicturePath]
+    );
     
     res.status(201).json({
       success: true,
@@ -99,7 +90,6 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     
-    // Delete uploaded file if registration fails
     if (req.file) {
       fs.unlink(req.file.path, (err) => {
         if (err) console.error('Error deleting file:', err);
@@ -113,7 +103,6 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
   }
 });
 
-// Login endpoint
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -125,7 +114,6 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // Find parent by email
     const parents = await query('SELECT * FROM parent WHERE email = ?', [email]);
     if (parents.length === 0) {
       return res.status(401).json({
@@ -136,7 +124,6 @@ router.post('/login', async (req, res) => {
     
     const parent = parents[0];
     
-    // Verify password
     const isValidPassword = await bcrypt.compare(password, parent.password);
     if (!isValidPassword) {
       return res.status(401).json({
@@ -145,10 +132,8 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // Get child information
     const children = await query('SELECT * FROM child WHERE parent_id = ?', [parent.parent_id]);
     
-    // Generate JWT token
     const token = jwt.sign(
       { 
         parentId: parent.parent_id,
@@ -173,7 +158,8 @@ router.post('/login', async (req, res) => {
           name: children[0].name,
           age: children[0].age,
           mathLevel: children[0].current_math_level,
-          englishLevel: children[0].current_english_level
+          englishLevel: children[0].current_english_level,
+          profile_picture: children[0].profile_picture
         } : null
       }
     });

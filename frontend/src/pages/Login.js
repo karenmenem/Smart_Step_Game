@@ -27,10 +27,8 @@ function Login() {
       const response = await api.login(formData);
       
       if (response.success) {
-        // Store authentication data
         auth.login(response);
         
-        // Navigate to home page
         navigate("/");
       } else {
         setError(response.message || "Login failed. Please try again.");

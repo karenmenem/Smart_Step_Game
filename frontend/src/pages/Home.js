@@ -1,19 +1,68 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { auth } from "../api/auth";
 
 function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (auth.isAuthenticated()) {
-      const userData = auth.getCurrentUser();
-      console.log('User data:', userData);
-      setUser(userData);
-    }
+    const updateUserData = () => {
+      if (auth.isAuthenticated()) {
+        const userData = auth.getCurrentUser();
+        const currentChild = auth.getCurrentChild();
+        
+        console.log('User data:', userData);
+        console.log('Current child:', currentChild);
+        
+        // Ensure the user data has the current child
+        if (userData && currentChild) {
+          userData.child = currentChild;
+        }
+        
+        setUser(userData);
+      }
+    };
+
+    updateUserData();
+
+    // Listen for storage changes to update when child is switched
+    const handleStorageChange = (e) => {
+      if (e.key === 'userData' || e.key === 'currentChild') {
+        updateUserData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for focus events (when returning to the page)
+    window.addEventListener('focus', updateUserData);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', updateUserData);
+    };
   }, []);
+
+  // Update user data when returning to the home page
+  useEffect(() => {
+    const updateUserData = () => {
+      if (auth.isAuthenticated()) {
+        const userData = auth.getCurrentUser();
+        const currentChild = auth.getCurrentChild();
+        
+        if (userData && currentChild) {
+          userData.child = currentChild;
+        }
+        
+        setUser(userData);
+      }
+    };
+
+    updateUserData();
+  }, [location.pathname]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -160,6 +209,50 @@ function Home() {
               Play Now
             </button>
           </div>
+
+          {/* Family Management Section for Authenticated Users */}
+          {user && (
+            <div className="ma-family-section">
+              <div className="ma-current-child">
+                {user.child ? (
+                  <div className="ma-child-display">
+                    <div className="ma-child-avatar">
+                      {user.child.profile_picture ? (
+                        <img 
+                          src={`http://localhost:5000/${user.child.profile_picture}`} 
+                          alt={user.child.name}
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                      ) : (
+                        <div className="ma-avatar-placeholder">
+                          {user.child.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ma-child-info">
+                      <h3>Playing as: {user.child.name}</h3>
+                      <p>Age: {user.child.age} • Math Level: {user.child.mathLevel} • English Level: {user.child.englishLevel}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="ma-no-child">
+                    <p>No child selected</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="ma-family-buttons">
+                <button className="ma-family-btn" onClick={() => navigate("/profile")}>
+                  👨‍👩‍👧‍👦 Manage Children
+                </button>
+                {user.children && user.children.length > 1 && (
+                  <button className="ma-family-btn" onClick={() => navigate("/profile")}>
+                    🔄 Switch Child
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="ma-features-section">

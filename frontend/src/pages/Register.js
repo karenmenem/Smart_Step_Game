@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../api/auth";
+import { api, auth } from "../api/auth";
 
 function Register() {
   const navigate = useNavigate();
@@ -84,8 +84,10 @@ function Register() {
       const result = await api.register(formData);
       
       if (result.success) {
+        // Auto-login the user with the returned token
+        auth.login(result);
         alert("🎉 Account created successfully! Welcome to Smart Step!");
-        navigate("/login");
+        navigate("/profile");
       } else {
         setError(result.message || "Registration failed. Please try again.");
       }

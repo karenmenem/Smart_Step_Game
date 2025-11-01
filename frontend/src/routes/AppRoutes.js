@@ -6,6 +6,8 @@ import Profile from "../pages/Profile";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Achievements from "../pages/Achievements";
+import Subjects from "../pages/Subjects";
+import MathLevels from "../pages/MathLevels";
 
 function AppRoutes() {
   return (
@@ -18,6 +20,8 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/achievements" element={<Achievements />} />
+        <Route path="/subjects" element={<Subjects />} />
+        <Route path="/math/:operation" element={<MathLevels />} />
       </Routes>
     </Router>
   );

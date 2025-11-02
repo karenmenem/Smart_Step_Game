@@ -8,6 +8,7 @@ import Register from "../pages/Register";
 import Achievements from "../pages/Achievements";
 import Subjects from "../pages/Subjects";
 import MathLevels from "../pages/MathLevels";
+import MathQuiz from "../pages/MathQuiz";
 
 function AppRoutes() {
   return (
@@ -22,6 +23,7 @@ function AppRoutes() {
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/subjects" element={<Subjects />} />
         <Route path="/math/:operation" element={<MathLevels />} />
+        <Route path="/math/:operation/quiz/:level/:sublevel" element={<MathQuiz />} />
       </Routes>
     </Router>
   );

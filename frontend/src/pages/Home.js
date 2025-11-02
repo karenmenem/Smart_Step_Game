@@ -210,7 +210,6 @@ function Home() {
             </button>
           </div>
 
-          {/* Family Management Section for Authenticated Users */}
           {user && (
             <div className="ma-family-section">
               <div className="ma-current-child">

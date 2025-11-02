@@ -115,7 +115,7 @@ function MathLevels() {
           {/* Beginner Level */}
           <div className="level-card beginner-card active">
             <div className="level-header">
-              <div className="level-icon">🟢</div>
+              <div className="level-icon">🌱</div>
               <div className="level-info">
                 <h2 className="level-title">Beginner</h2>
                 <p className="level-description">Perfect for starting your {operationInfo.title.toLowerCase()} journey!</p>
@@ -142,7 +142,10 @@ function MathLevels() {
                 </div>
               </div>
               
-              <button className="level-btn start-btn">
+              <button 
+                className="level-btn start-btn"
+                onClick={() => navigate(`/math/${operation}/quiz/beginner/1`)}
+              >
                 Start Learning
               </button>
             </div>
@@ -155,7 +158,7 @@ function MathLevels() {
             </div>
             
             <div className="level-header">
-              <div className="level-icon">🟡</div>
+              <div className="level-icon">⚡</div>
               <div className="level-info">
                 <h2 className="level-title">Intermediate</h2>
                 <p className="level-description">Challenge yourself with harder problems!</p>
@@ -187,7 +190,7 @@ function MathLevels() {
             </div>
             
             <div className="level-header">
-              <div className="level-icon">🔴</div>
+              <div className="level-icon">🏆</div>
               <div className="level-info">
                 <h2 className="level-title">Advanced</h2>
                 <p className="level-description">Master the toughest challenges!</p>

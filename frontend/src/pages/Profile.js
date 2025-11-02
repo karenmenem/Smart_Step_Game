@@ -47,15 +47,12 @@ function Profile() {
       const response = await api.addChild(formData);
 
       if (response.success) {
-        // Add new child to the list
         const newChildren = [...children, response.data];
         setChildren(newChildren);
         
-        // Reset form
         setNewChild({ name: "", age: "", profilePicture: null });
         setShowAddChild(false);
         
-        // Update user data with new children list
         const updatedUserData = {
           ...user,
           children: newChildren
@@ -78,10 +75,8 @@ function Profile() {
   const selectChild = (child) => {
     console.log('Switching to child:', child);
     
-    // Update current child in auth system
     auth.setCurrentChild(child);
     
-    // Update user data with the new active child
     const updatedUserData = {
       ...user,
       child: child,
@@ -89,16 +84,13 @@ function Profile() {
     };
     setUser(updatedUserData);
     
-    // Update localStorage
     localStorage.setItem('userData', JSON.stringify(updatedUserData));
     
-    // Trigger a storage event to notify other components
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'currentChild',
       newValue: JSON.stringify(child)
     }));
     
-    // Navigate back to home
     navigate("/");
   };
 
@@ -108,7 +100,6 @@ function Profile() {
 
   return (
     <div className="profile-layout">
-      {/* Header */}
       <header className="profile-header">
         <div className="profile-header-content">
           <div className="profile-logo">
@@ -126,7 +117,6 @@ function Profile() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="profile-main">
         <div className="profile-content">
           <div className="parent-info">
@@ -209,7 +199,6 @@ function Profile() {
         </div>
       </main>
 
-      {/* Add Child Modal */}
       {showAddChild && (
         <div className="modal-overlay" onClick={() => setShowAddChild(false)}>
           <div className="add-child-modal" onClick={(e) => e.stopPropagation()}>

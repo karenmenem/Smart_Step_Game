@@ -88,6 +88,14 @@ function Subjects() {
                 </div>
               </button>
               
+              <button className="subject-btn english-btn comprehension-btn">
+                <div className="btn-icon">📖</div>
+                <div className="btn-content">
+                  <h3>Comprehension</h3>
+                  <p>Understand reading passages</p>
+                </div>
+              </button>
+              
               <button className="subject-btn english-btn vocabulary-btn">
                 <div className="btn-icon">🌟</div>
                 <div className="btn-content">

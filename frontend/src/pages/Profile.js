@@ -9,6 +9,7 @@ function Profile() {
   const [showAddChild, setShowAddChild] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [childrenProgress, setChildrenProgress] = useState({});
   const [newChild, setNewChild] = useState({
     name: "",
     age: "",
@@ -18,12 +19,40 @@ function Profile() {
   useEffect(() => {
     if (auth.isAuthenticated()) {
       const userData = auth.getCurrentUser();
+      console.log('Profile loaded with userData:', userData);
+      console.log('Children found:', userData.children);
       setUser(userData);
       setChildren(userData.children || []);
+      
+      if (userData.children) {
+        fetchAllChildrenProgress(userData.children);
+      }
     } else {
       navigate("/login");
     }
   }, [navigate]);
+
+  const fetchAllChildrenProgress = async (childrenList) => {
+    const progressData = {};
+    
+    for (const child of childrenList) {
+      try {
+        const response = await auth.getProgress(child.id);
+        if (response.success) {
+          progressData[child.id] = {
+            activities: response.progress || [],
+            completedCount: response.progress ? response.progress.filter(p => p.completed).length : 0,
+            totalScore: response.progress ? response.progress.reduce((sum, p) => sum + (p.score || 0), 0) : 0
+          };
+        }
+      } catch (error) {
+        console.error(`Error fetching progress for child ${child.id}:`, error);
+        progressData[child.id] = { activities: [], completedCount: 0, totalScore: 0 };
+      }
+    }
+    
+    setChildrenProgress(progressData);
+  };
 
   const handleLogout = () => {
     auth.logout();
@@ -139,7 +168,12 @@ function Profile() {
             <div className="children-grid">
               {children.map((child) => {
                 const currentChild = auth.getCurrentChild();
-                const isActive = currentChild && currentChild.id === child.id;
+                const isActive = currentChild && currentChild.id && (
+                  currentChild.id === child.id || 
+                  currentChild.child_id === child.child_id ||
+                  currentChild.id === child.child_id ||
+                  currentChild.child_id === child.id
+                );
                 
                 return (
                   <div 
@@ -171,9 +205,41 @@ function Profile() {
                       <h4>{child.name}</h4>
                       <p>Age: {child.age}</p>
                       <div className="child-progress">
-                        <span>Math Level: {child.mathLevel}</span>
-                        <span>English Level: {child.englishLevel}</span>
-                        <span>Points: {child.totalPoints || 0}</span>
+                        <div className="progress-stats">
+                          <div className="stat-item">
+                            <span className="stat-label">Math Level:</span>
+                            <span className="stat-value">{child.current_math_level || 1}</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-label">Activities Completed:</span>
+                            <span className="stat-value">{childrenProgress[child.id]?.completedCount || 0}</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-label">Total Points:</span>
+                            <span className="stat-value">{child.total_points || 0}</span>
+                          </div>
+                        </div>
+                        
+                        {childrenProgress[child.id]?.activities && childrenProgress[child.id].activities.length > 0 && (
+                          <div className="recent-activities">
+                            <h5>Recent Activities:</h5>
+                            <div className="activity-list">
+                              {childrenProgress[child.id].activities.slice(0, 3).map((activity, index) => (
+                                <div key={index} className="activity-item">
+                                  <span className="activity-name">
+                                    {activity.activity_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </span>
+                                  <span className={`activity-status ${activity.completed ? 'completed' : 'in-progress'}`}>
+                                    {activity.completed ? '✅' : '⏳'}
+                                  </span>
+                                  <span className="activity-score">
+                                    {activity.score}/{activity.max_score}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="select-child-btn">

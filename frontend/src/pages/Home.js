@@ -17,10 +17,7 @@ function Home() {
         console.log('User data:', userData);
         console.log('Current child:', currentChild);
         
-        // Ensure the user data has the current child
-        if (userData && currentChild) {
-          userData.child = currentChild;
-        }
+                if (userData && !userData.child && userData.children && userData.children.length > 0) {
         
         setUser(userData);
       }
@@ -28,8 +25,7 @@ function Home() {
 
     updateUserData();
 
-    // Listen for storage changes to update when child is switched
-    const handleStorageChange = (e) => {
+    const handleStorageChange = () => {
       if (e.key === 'userData' || e.key === 'currentChild') {
         updateUserData();
       }

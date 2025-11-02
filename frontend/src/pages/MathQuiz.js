@@ -24,71 +24,75 @@ function MathQuiz() {
     }
   }, [navigate]);
 
-  // ASL number signs (Unicode representations)
+  // ASL number signs with animated descriptions
   const aslNumbers = {
-    1: "☝️", 2: "✌️", 3: "🤟", 4: "🖖", 5: "🖐️",
-    6: "🤙", 7: "🤏", 8: "🤞", 9: "🖖", 10: "✊"
+    1: { name: "ONE", description: "Index finger extended" },
+    2: { name: "TWO", description: "Peace sign" },
+    3: { name: "THREE", description: "Thumb, index, middle" },
+    4: { name: "FOUR", description: "Four fingers up" },
+    5: { name: "FIVE", description: "Open hand" },
+    6: { name: "SIX", description: "Pinky and thumb" }
   };
 
   // Level 1 Addition Questions (Beginner - numbers 1-10)
   const questions = [
     {
       question: "What is 2 + 3?",
-      asl: "✌️ ➕ 🤟",
+      aslSigns: [2, 3],
       options: ["4", "5", "6", "7"],
       correct: "5"
     },
     {
       question: "What is 1 + 4?",
-      asl: "☝️ ➕ 🖖",
+      aslSigns: [1, 4],
       options: ["3", "4", "5", "6"],
       correct: "5"
     },
     {
       question: "What is 3 + 2?",
-      asl: "🤟 ➕ ✌️",
+      aslSigns: [3, 2],
       options: ["4", "5", "6", "7"],
       correct: "5"
     },
     {
       question: "What is 4 + 1?",
-      asl: "🖖 ➕ ☝️",
+      aslSigns: [4, 1],
       options: ["3", "4", "5", "6"],
       correct: "5"
     },
     {
       question: "What is 2 + 2?",
-      asl: "✌️ ➕ ✌️",
+      aslSigns: [2, 2],
       options: ["3", "4", "5", "6"],
       correct: "4"
     },
     {
       question: "What is 3 + 3?",
-      asl: "🤟 ➕ 🤟",
+      aslSigns: [3, 3],
       options: ["5", "6", "7", "8"],
       correct: "6"
     },
     {
       question: "What is 1 + 6?",
-      asl: "☝️ ➕ 🤙",
+      aslSigns: [1, 6],
       options: ["6", "7", "8", "9"],
       correct: "7"
     },
     {
       question: "What is 5 + 2?",
-      asl: "🖐️ ➕ ✌️",
+      aslSigns: [5, 2],
       options: ["6", "7", "8", "9"],
       correct: "7"
     },
     {
       question: "What is 4 + 3?",
-      asl: "🖖 ➕ 🤟",
+      aslSigns: [4, 3],
       options: ["6", "7", "8", "9"],
       correct: "7"
     },
     {
       question: "What is 2 + 6?",
-      asl: "✌️ ➕ 🤙",
+      aslSigns: [2, 6],
       options: ["7", "8", "9", "10"],
       correct: "8"
     }
@@ -206,6 +210,35 @@ function MathQuiz() {
 
     return () => clearTimeout(timer);
   }, [currentQuestion, showResult, quizComplete, audioEnabled]);
+
+  // Save progress when quiz completes
+  useEffect(() => {
+    if (quizComplete && user && user.activeChild) {
+      const percentage = Math.round((score / questions.length) * 100);
+      const passed = percentage >= 80;
+      
+      saveProgress({
+        childId: user.activeChild.child_id,
+        activityType: 'addition',
+        level: parseInt(level) || 1,
+        sublevel: parseInt(sublevel) || 1,
+        score: score,
+        maxScore: questions.length,
+        passed: passed
+      });
+    }
+  }, [quizComplete, score, user, level, sublevel]);
+
+  const saveProgress = async (progressData) => {
+    try {
+      const response = await auth.saveProgress(progressData);
+      if (response.success) {
+        console.log('Progress saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    }
+  };
 
   if (!user) {
     return <div>Loading...</div>;
@@ -330,6 +363,15 @@ function MathQuiz() {
                 <div className="question-text-container">
                   <h3 className="question-text">
                     {questions[currentQuestion].question}
+                    <span className="inline-asl">
+                      <span className="asl-hand" data-number={questions[currentQuestion].aslSigns[0]}>
+                        <span className="hand-shape"></span>
+                      </span>
+                      <span className="plus-sign">+</span>
+                      <span className="asl-hand" data-number={questions[currentQuestion].aslSigns[1]}>
+                        <span className="hand-shape"></span>
+                      </span>
+                    </span>
                   </h3>
                   <button 
                     className={`speaker-btn ${isPlaying ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
@@ -340,13 +382,6 @@ function MathQuiz() {
                   >
                     {!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
                   </button>
-                </div>
-                
-                <div className="asl-container">
-                  <div className="asl-label">🤟 ASL Signs:</div>
-                  <div className="asl-signs">
-                    {questions[currentQuestion].asl}
-                  </div>
                 </div>
                 
                 <div className="options-grid">

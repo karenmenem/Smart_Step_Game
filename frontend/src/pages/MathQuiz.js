@@ -211,35 +211,6 @@ function MathQuiz() {
     return () => clearTimeout(timer);
   }, [currentQuestion, showResult, quizComplete, audioEnabled]);
 
-  // Save progress when quiz completes
-  useEffect(() => {
-    if (quizComplete && user && user.activeChild) {
-      const percentage = Math.round((score / questions.length) * 100);
-      const passed = percentage >= 80;
-      
-      saveProgress({
-        childId: user.activeChild.child_id,
-        activityType: 'addition',
-        level: parseInt(level) || 1,
-        sublevel: parseInt(sublevel) || 1,
-        score: score,
-        maxScore: questions.length,
-        passed: passed
-      });
-    }
-  }, [quizComplete, score, user, level, sublevel]);
-
-  const saveProgress = async (progressData) => {
-    try {
-      const response = await auth.saveProgress(progressData);
-      if (response.success) {
-        console.log('Progress saved successfully');
-      }
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    }
-  };
-
   if (!user) {
     return <div>Loading...</div>;
   }

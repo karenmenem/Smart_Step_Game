@@ -29,11 +29,6 @@ function Login() {
       if (response.success) {
         auth.login(response);
         
-        // Set the first child as active if available
-        if (response.data.children && response.data.children.length > 0) {
-          auth.setCurrentChild(response.data.children[0]);
-        }
-        
         navigate("/");
       } else {
         setError(response.message || "Login failed. Please try again.");

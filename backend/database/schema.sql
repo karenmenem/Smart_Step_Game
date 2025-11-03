@@ -104,32 +104,14 @@ CREATE TABLE IF NOT EXISTS achievement (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS achievement_child (
-    achievement_child_id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS child_achievement (
     child_id INT NOT NULL,
     achievement_id INT NOT NULL,
     earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (child_id, achievement_id),
     FOREIGN KEY (child_id) REFERENCES child(child_id) ON DELETE CASCADE,
-    FOREIGN KEY (achievement_id) REFERENCES achievement(achievement_id) ON DELETE CASCADE,
-    UNIQUE KEY unique_child_achievement (child_id, achievement_id)
+    FOREIGN KEY (achievement_id) REFERENCES achievement(achievement_id) ON DELETE CASCADE
 );
-
--- Insert basic subjects if they don't exist
-INSERT IGNORE INTO subject (subject_id, name, description) VALUES 
-(1, 'Math', 'Mathematics learning activities'),
-(2, 'English', 'English language learning activities');
-
--- Insert basic sections if they don't exist
-INSERT IGNORE INTO section (section_id, subject_id, level, name, description, order_index) VALUES 
-(1, 1, 1, 'Beginner Addition', 'Basic addition problems for beginners', 1),
-(2, 1, 2, 'Intermediate Addition', 'More complex addition problems', 2),
-(3, 1, 3, 'Advanced Addition', 'Advanced addition challenges', 3);
-
--- Insert some basic activities
-INSERT IGNORE INTO activity (activity_id, section_id, name, description, activity_type, points_value, order_index) VALUES 
-(1, 1, 'addition_level_1_1', 'Addition Level 1 Sublevel 1', 'quiz', 10, 1),
-(2, 1, 'addition_level_1_2', 'Addition Level 1 Sublevel 2', 'quiz', 10, 2),
-(3, 1, 'addition_level_1_3', 'Addition Level 1 Sublevel 3', 'quiz', 10, 3);
 
 INSERT IGNORE INTO subject (name, description) VALUES 
 ('Math', 'Mathematics learning activities'),

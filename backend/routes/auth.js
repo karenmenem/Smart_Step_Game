@@ -43,27 +43,20 @@ const { query } = require('../config/database');
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
   console.log('Registration attempt:', {
     body: req.body,
-    file: req.file ? 'File uploaded' : 'No file',
-    email: req.body.email,
-    password: req.body.password ? '[PROVIDED]' : '[MISSING]',
-    childName: req.body.childName,
-    childAge: req.body.childAge
+    file: req.file ? 'File uploaded' : 'No file'
   });
 
   try {
     const { email, password, childName, childAge } = req.body;
     
-    // Validate required fields for parent
-    if (!email || !password) {
-      console.log('Missing required fields:', { email: !!email, password: !!password });
+    // Validate required fields
+    if (!email || !password || !childName || !childAge) {
+      console.log('Missing required fields:', { email: !!email, password: !!password, childName: !!childName, childAge: !!childAge });
       return res.status(400).json({ 
         success: false, 
-        message: 'Email and password are required' 
+        message: 'All fields are required (email, password, childName, childAge)' 
       });
     }
-
-    // Check if this is parent-only registration (no child data)
-    const isParentOnly = !childName || !childAge;
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,15 +75,13 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
 
-    // Validate child age if child data is provided
-    if (!isParentOnly) {
-      const age = parseInt(childAge);
-      if (isNaN(age) || age < 3 || age > 18) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Child age must be between 3 and 18' 
-        });
-      }
+    // Validate child age
+    const age = parseInt(childAge);
+    if (isNaN(age) || age < 3 || age > 18) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Child age must be between 3 and 18' 
+      });
     }
     
     // Check if parent email already exists
@@ -124,33 +115,14 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       console.log('Profile picture uploaded:', profilePicturePath);
     }
     
-    let childId = null;
-    let childrenArray = [];
-    let activeChild = null;
-
-    // Insert child record only if child data provided
-    if (!isParentOnly) {
-      const childResult = await query(
-        'INSERT INTO child (parent_id, name, age, current_math_level, current_english_level, profile_picture) VALUES (?, ?, ?, 1, 1, ?)',
-        [parentId, childName, parseInt(childAge), profilePicturePath]
-      );
-      
-      childId = childResult.insertId;
-      console.log('Child created with ID:', childId);
-
-      activeChild = {
-        id: childId,
-        child_id: childId,
-        name: childName,
-        age: parseInt(childAge),
-        current_math_level: 1,
-        current_english_level: 1,
-        total_points: 0,
-        profile_picture: profilePicturePath
-      };
-      
-      childrenArray = [activeChild];
-    }
+    // Insert child record
+    const childResult = await query(
+      'INSERT INTO child (parent_id, name, age, current_math_level, current_english_level, profile_picture) VALUES (?, ?, ?, 1, 1, ?)',
+      [parentId, childName, age, profilePicturePath]
+    );
+    
+    const childId = childResult.insertId;
+    console.log('Child created with ID:', childId);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -166,15 +138,21 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
     // Return success response
     res.status(201).json({
       success: true,
-      message: isParentOnly ? 'Parent account created successfully!' : 'Account created successfully! Welcome to SmartStep!',
-      token: token,
+      message: 'Account created successfully! Welcome to SmartStep!',
       data: {
+        token: token,
         parent: {
           id: parentId,
           email: email
         },
-        children: childrenArray,
-        activeChild: activeChild
+        child: {
+          id: childId,
+          name: childName,
+          age: age,
+          mathLevel: 1,
+          englishLevel: 1,
+          profile_picture: profilePicturePath
+        }
       }
     });
     
@@ -252,30 +230,24 @@ router.post('/login', async (req, res) => {
     // Prepare children data
     const childrenData = children.map(child => ({
       id: child.child_id,
-      child_id: child.child_id,
       name: child.name,
       age: child.age,
-      current_math_level: child.current_math_level,
-      current_english_level: child.current_english_level,
-      total_points: child.total_points,
-      profile_picture: child.profile_picture,
-      // Keep backwards compatibility
       mathLevel: child.current_math_level,
       englishLevel: child.current_english_level,
+      profile_picture: child.profile_picture,
       totalPoints: child.total_points
     }));
     
     res.json({
       success: true,
       message: 'Login successful',
-      token: token,
       data: {
+        token,
         parent: {
           id: parent.parent_id,
           email: parent.email
         },
         children: childrenData,
-        activeChild: childrenData[0] || null,
         // Keep backwards compatibility
         child: childrenData[0] || null
       }
@@ -409,142 +381,6 @@ router.get('/children/:parentId', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get children. Please try again.'
-    });
-  }
-});
-
-// PROGRESS SAVING ROUTE
-router.post('/save-progress', async (req, res) => {
-  try {
-    const { childId, activityType, level, sublevel, score, maxScore, passed } = req.body;
-    
-    console.log('Saving progress:', {
-      childId,
-      activityType,
-      level,
-      sublevel,
-      score,
-      maxScore,
-      passed
-    });
-
-    // Create a unique activity identifier
-    const activityName = `${activityType}_level_${level}_${sublevel || 1}`;
-    
-    // Check if progress already exists
-    const existingProgress = await query(
-      `SELECT progress_id, score, completed FROM child_progress 
-       WHERE child_id = ? AND activity_id = (
-         SELECT activity_id FROM activity WHERE name = ? LIMIT 1
-       )`,
-      [childId, activityName]
-    );
-
-    if (existingProgress.length > 0) {
-      // Update existing progress if new score is better
-      const currentBest = existingProgress[0].score;
-      const shouldUpdate = score > currentBest || (!existingProgress[0].completed && passed);
-      
-      if (shouldUpdate) {
-        await query(
-          `UPDATE child_progress 
-           SET score = ?, max_score = ?, completed = ?, attempts = attempts + 1, 
-               last_attempt = CURRENT_TIMESTAMP, completed_at = ?
-           WHERE progress_id = ?`,
-          [score, maxScore, passed, passed ? new Date() : null, existingProgress[0].progress_id]
-        );
-        
-        // Update child's level if they passed and it's higher than current
-        if (passed && level >= 1) {
-          await query(
-            `UPDATE child SET current_math_level = GREATEST(current_math_level, ?), 
-             total_points = total_points + ? WHERE child_id = ?`,
-            [level + (passed ? 1 : 0), score, childId]
-          );
-        }
-      } else {
-        // Just increment attempts
-        await query(
-          `UPDATE child_progress SET attempts = attempts + 1, last_attempt = CURRENT_TIMESTAMP 
-           WHERE progress_id = ?`,
-          [existingProgress[0].progress_id]
-        );
-      }
-    } else {
-      // Create new activity if it doesn't exist
-      await query(
-        `INSERT IGNORE INTO activity (section_id, name, description, activity_type, points_value)
-         VALUES (1, ?, ?, 'quiz', ?)`,
-        [activityName, `${activityType} Level ${level} ${sublevel || ''}`, maxScore]
-      );
-      
-      // Get the activity ID
-      const activityResult = await query(
-        `SELECT activity_id FROM activity WHERE name = ? LIMIT 1`,
-        [activityName]
-      );
-      
-      if (activityResult.length > 0) {
-        const activityId = activityResult[0].activity_id;
-        
-        // Insert new progress
-        await query(
-          `INSERT INTO child_progress 
-           (child_id, activity_id, completed, score, max_score, attempts, completed_at)
-           VALUES (?, ?, ?, ?, ?, 1, ?)`,
-          [childId, activityId, passed, score, maxScore, passed ? new Date() : null]
-        );
-        
-        // Update child's level and points if passed
-        if (passed && level >= 1) {
-          await query(
-            `UPDATE child SET current_math_level = GREATEST(current_math_level, ?), 
-             total_points = total_points + ? WHERE child_id = ?`,
-            [level + 1, score, childId]
-          );
-        }
-      }
-    }
-
-    res.json({
-      success: true,
-      message: 'Progress saved successfully'
-    });
-
-  } catch (error) {
-    console.error('Save progress error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error saving progress'
-    });
-  }
-});
-
-// GET CHILD PROGRESS ROUTE
-router.get('/progress/:childId', async (req, res) => {
-  try {
-    const { childId } = req.params;
-    
-    const progress = await query(
-      `SELECT cp.*, a.name as activity_name, a.activity_type, c.current_math_level, c.total_points
-       FROM child_progress cp
-       JOIN activity a ON cp.activity_id = a.activity_id
-       JOIN child c ON cp.child_id = c.child_id
-       WHERE cp.child_id = ?
-       ORDER BY cp.last_attempt DESC`,
-      [childId]
-    );
-
-    res.json({
-      success: true,
-      progress: progress
-    });
-
-  } catch (error) {
-    console.error('Get progress error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching progress'
     });
   }
 });

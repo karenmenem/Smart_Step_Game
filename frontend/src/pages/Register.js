@@ -39,43 +39,54 @@ function Register() {
     }
   };
 
-    const handleParentSubmit = async (e) => {
+  const handleParentSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+    
+    if (parentData.password !== parentData.confirmPassword) {
+      setError("Passwords don't match!");
+      return;
+    }
+    
+    if (parentData.password.length < 6) {
+      setError("Password must be at least 6 characters long!");
+      return;
+    }
+    
+    setCurrentStep(2);
+  };
+
+  const handleFinalSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     
     try {
-      if (!parentData.email.includes('@') || !parentData.email.includes('.')) {
-        setError("Please enter a valid email address!");
+      if (!childData.name.trim()) {
+        setError("Please enter your child's name!");
         return;
       }
       
-      if (parentData.password.length < 6) {
-        setError("Password must be at least 6 characters long!");
+      if (!childData.age || childData.age < 3 || childData.age > 18) {
+        setError("Please enter a valid age (3-18)!");
         return;
       }
-
-      if (parentData.password !== parentData.confirmPassword) {
-        setError("Passwords do not match!");
-        return;
-      }
-
-      // Register parent only
+      
       const formData = new FormData();
       formData.append('email', parentData.email);
       formData.append('password', parentData.password);
-      
-      console.log('Sending registration data:', {
-        email: parentData.email,
-        password: '[PROVIDED]'
-      });
+      formData.append('childName', childData.name);
+      formData.append('childAge', childData.age);
+      if (childData.profilePicture) {
+        formData.append('profilePicture', childData.profilePicture);
+      }
       
       const result = await api.register(formData);
       
       if (result.success) {
-        // Auto-login the parent
+        // Auto-login the user with the returned token
         auth.login(result);
-        alert("🎉 Parent account created successfully! Add your children in the profile page.");
+        alert("🎉 Account created successfully! Welcome to Smart Step!");
         navigate("/profile");
       } else {
         setError(result.message || "Registration failed. Please try again.");
@@ -88,8 +99,6 @@ function Register() {
       setLoading(false);
     }
   };
-
-  // Remove the child registration step - this is now handled in family setup
 
   return (
     <div className="auth-container">
@@ -111,54 +120,123 @@ function Register() {
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleParentSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">Parent Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={parentData.email}
-              onChange={handleParentChange}
-              className="form-input"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
+        {currentStep === 1 ? (
+          <form onSubmit={handleParentSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="email" className="form-label">Parent Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={parentData.email}
+                onChange={handleParentChange}
+                className="form-input"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={parentData.password}
-              onChange={handleParentChange}
-              className="form-input"
-              placeholder="Create a password (min 6 characters)"
-              required
-              minLength="6"
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="password" className="form-label">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={parentData.password}
+                onChange={handleParentChange}
+                className="form-input"
+                placeholder="Create a password (min 6 characters)"
+                required
+                minLength="6"
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={parentData.confirmPassword}
-              onChange={handleParentChange}
-              className="form-input"
-              placeholder="Confirm your password"
-              required
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={parentData.confirmPassword}
+                onChange={handleParentChange}
+                className="form-input"
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
 
-          <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account & Add Family →"}
-          </button>
-        </form>
+            <button type="submit" className="auth-submit-btn">
+              Next: Profile →
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleFinalSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="name" className="form-label">Child's Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={childData.name}
+                onChange={handleChildChange}
+                className="form-input"
+                placeholder="Enter your child's name"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="age" className="form-label">Child's Age</label>
+              <input
+                type="number"
+                id="age"
+                name="age"
+                value={childData.age}
+                onChange={handleChildChange}
+                className="form-input"
+                placeholder="Enter age (3-18)"
+                min="3"
+                max="18"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="profilePicture" className="form-label">Profile Picture (Optional)</label>
+              <div className="file-input-wrapper">
+                <input
+                  type="file"
+                  id="profilePicture"
+                  name="profilePicture"
+                  onChange={handleChildChange}
+                  className="file-input"
+                  accept="image/*"
+                />
+                <label htmlFor="profilePicture" className="file-input-label">
+                  {childData.profilePicture ? childData.profilePicture.name : "Choose a fun profile picture! 📸"}
+                </label>
+              </div>
+            </div>
+
+            <div className="form-buttons">
+              <button 
+                type="button" 
+                onClick={() => setCurrentStep(1)}
+                className="auth-back-btn"
+                disabled={loading}
+              >
+                ← Back
+              </button>
+              <button 
+                type="submit" 
+                className="auth-submit-btn"
+                disabled={loading}
+              >
+                {loading ? "Creating Account..." : "Create Account! 🎉"}
+              </button>
+            </div>
+          </form>
+        )}
 
         <div className="auth-footer">
           <p className="auth-switch">

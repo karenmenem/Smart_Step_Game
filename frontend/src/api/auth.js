@@ -87,17 +87,9 @@ export const api = {
 };
 
 export const auth = {
-  login: (response) => {
-    // Handle both response formats (token at root or in data)
-    const token = response.token || response.data?.token;
-    const userData = response.data || response;
-    
-    console.log('Login response:', response);
-    console.log('Extracted token:', token);
-    console.log('Extracted userData:', userData);
-    
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userData', JSON.stringify(userData));
+  login: (tokenData) => {
+    localStorage.setItem('authToken', tokenData.token);
+    localStorage.setItem('userData', JSON.stringify(tokenData.data));
     console.log('User logged in successfully');
   },
 
@@ -114,15 +106,7 @@ export const auth = {
   },
 
   setCurrentChild: (child) => {
-    console.log('Setting current child:', child);
     localStorage.setItem('currentChild', JSON.stringify(child));
-    
-    // Also update the userData to include activeChild
-    const userData = auth.getCurrentUser();
-    if (userData) {
-      userData.activeChild = child;
-      localStorage.setItem('userData', JSON.stringify(userData));
-    }
   },
 
   getCurrentChild: () => {
@@ -130,55 +114,14 @@ export const auth = {
     if (childData) {
       return JSON.parse(childData);
     }
-    
-    // Only fallback to activeChild if explicitly set, not to first child
+    // Fallback to first child from user data
     const userData = auth.getCurrentUser();
-    const activeChild = userData?.activeChild || userData?.child;
-    
-    return activeChild || null;
+    return userData?.child || userData?.children?.[0] || null;
   },
 
   isAuthenticated: () => {
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('userData');
     return !!(token && userData);
-  },
-
-  saveProgress: async (progressData) => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`${API_BASE_URL}/auth/save-progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
-        },
-        body: JSON.stringify(progressData)
-      });
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Save progress request failed:', error);
-      return { success: false, message: 'Network error. Please check your connection.' };
-    }
-  },
-
-  getProgress: async (childId) => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`${API_BASE_URL}/auth/progress/${childId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : ''
-        }
-      });
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Get progress request failed:', error);
-      return { success: false, message: 'Network error. Please check your connection.' };
-    }
   }
 };

@@ -135,7 +135,18 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       { expiresIn: '7d' }
     );
     
-    // Return success response
+    // Prepare child data
+    const childData = {
+      id: childId,
+      name: childName,
+      age: age,
+      mathLevel: 1,
+      englishLevel: 1,
+      profile_picture: profilePicturePath,
+      totalPoints: 0
+    };
+    
+    // Return success response with child in both formats for compatibility
     res.status(201).json({
       success: true,
       message: 'Account created successfully! Welcome to SmartStep!',
@@ -145,14 +156,8 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
           id: parentId,
           email: email
         },
-        child: {
-          id: childId,
-          name: childName,
-          age: age,
-          mathLevel: 1,
-          englishLevel: 1,
-          profile_picture: profilePicturePath
-        }
+        child: childData,
+        children: [childData]
       }
     });
     

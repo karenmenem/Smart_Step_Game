@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { auth } from "../api/auth";
+import { auth, api } from "../api/auth";
+import ASLPlayer from "../components/ASLPlayer";
 
 function MathQuiz() {
   const navigate = useNavigate();
@@ -14,15 +15,145 @@ function MathQuiz() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activityInfo, setActivityInfo] = useState(null);
+  const [answers, setAnswers] = useState([]);
 
   useEffect(() => {
     if (auth.isAuthenticated()) {
       const userData = auth.getCurrentUser();
-      setUser(userData);
+      const currentChild = auth.getCurrentChild();
+      setUser({ ...userData, child: currentChild });
+      
+      // Fetch questions from database
+      loadQuizData();
     } else {
       navigate("/login");
     }
   }, [navigate]);
+
+  const loadQuizData = async () => {
+    try {
+      setLoading(true);
+      // Map operation, level, and sublevel to activity IDs
+      // New structure: Math subject has 12 sections (4 operations × 3 difficulties)
+      // Addition Beginner: Activities 7, 8, 9 (Levels 1-3)
+      // Addition Intermediate: Activities 10, 11, 12 (Levels 1-3)
+      // Addition Advanced: Activities 13, 14, 15 (Levels 1-3)
+      
+      let activityId = 7; // Default to Addition Beginner Level 1
+      
+      if (operation === 'addition') {
+        if (level === 'beginner') {
+          activityId = 6 + parseInt(sublevel || 1); // 7, 8, or 9
+        } else if (level === 'intermediate') {
+          activityId = 9 + parseInt(sublevel || 1); // 10, 11, or 12
+        } else if (level === 'advanced') {
+          activityId = 12 + parseInt(sublevel || 1); // 13, 14, or 15
+        }
+      }
+      // TODO: Add other operations (subtraction, multiplication, division)
+      
+      const [questionsResponse, activityResponse] = await Promise.all([
+        api.getQuestions(activityId),
+        api.getActivity(activityId)
+      ]);
+      
+      if (questionsResponse.success && questionsResponse.data.length > 0) {
+        setQuestions(questionsResponse.data);
+      } else {
+        console.error('Failed to load questions, using fallback');
+        setQuestions(getFallbackQuestions());
+      }
+      
+      if (activityResponse.success) {
+        setActivityInfo(activityResponse.data);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading quiz data:', error);
+      setQuestions(getFallbackQuestions());
+      setLoading(false);
+    }
+  };
+
+  const getFallbackQuestions = () => {
+    // Fallback questions in case API fails
+    return [
+      {
+        id: 1,
+        question: "What is 2 + 3?",
+        aslSigns: [2, 3],
+        options: ["4", "5", "6", "7"],
+        correct: "5"
+      },
+      {
+        id: 2,
+        question: "What is 1 + 4?",
+        aslSigns: [1, 4],
+        options: ["3", "4", "5", "6"],
+        correct: "5"
+      },
+      {
+        id: 3,
+        question: "What is 3 + 2?",
+        aslSigns: [3, 2],
+        options: ["4", "5", "6", "7"],
+        correct: "5"
+      },
+      {
+        id: 4,
+        question: "What is 4 + 1?",
+        aslSigns: [4, 1],
+        options: ["3", "4", "5", "6"],
+        correct: "5"
+      },
+      {
+        id: 5,
+        question: "What is 2 + 2?",
+        aslSigns: [2, 2],
+        options: ["3", "4", "5", "6"],
+        correct: "4"
+      },
+      {
+        id: 6,
+        question: "What is 3 + 3?",
+        aslSigns: [3, 3],
+        options: ["5", "6", "7", "8"],
+        correct: "6"
+      },
+      {
+        id: 7,
+        question: "What is 1 + 6?",
+        aslSigns: [1, 6],
+        options: ["6", "7", "8", "9"],
+        correct: "7"
+      },
+      {
+        id: 8,
+        question: "What is 5 + 2?",
+        aslSigns: [5, 2],
+        options: ["6", "7", "8", "9"],
+        correct: "7"
+      },
+      {
+        id: 9,
+        question: "What is 4 + 3?",
+        aslSigns: [4, 3],
+        options: ["6", "7", "8", "9"],
+        correct: "7"
+      },
+      {
+        id: 10,
+        question: "What is 2 + 6?",
+        aslSigns: [2, 6],
+        options: ["7", "8", "9", "10"],
+        correct: "8"
+      }
+    ];
+  };
 
   // ASL number signs with animated descriptions
   const aslNumbers = {
@@ -34,88 +165,44 @@ function MathQuiz() {
     6: { name: "SIX", description: "Pinky and thumb" }
   };
 
-  // Level 1 Addition Questions (Beginner - numbers 1-10)
-  const questions = [
-    {
-      question: "What is 2 + 3?",
-      aslSigns: [2, 3],
-      options: ["4", "5", "6", "7"],
-      correct: "5"
-    },
-    {
-      question: "What is 1 + 4?",
-      aslSigns: [1, 4],
-      options: ["3", "4", "5", "6"],
-      correct: "5"
-    },
-    {
-      question: "What is 3 + 2?",
-      aslSigns: [3, 2],
-      options: ["4", "5", "6", "7"],
-      correct: "5"
-    },
-    {
-      question: "What is 4 + 1?",
-      aslSigns: [4, 1],
-      options: ["3", "4", "5", "6"],
-      correct: "5"
-    },
-    {
-      question: "What is 2 + 2?",
-      aslSigns: [2, 2],
-      options: ["3", "4", "5", "6"],
-      correct: "4"
-    },
-    {
-      question: "What is 3 + 3?",
-      aslSigns: [3, 3],
-      options: ["5", "6", "7", "8"],
-      correct: "6"
-    },
-    {
-      question: "What is 1 + 6?",
-      aslSigns: [1, 6],
-      options: ["6", "7", "8", "9"],
-      correct: "7"
-    },
-    {
-      question: "What is 5 + 2?",
-      aslSigns: [5, 2],
-      options: ["6", "7", "8", "9"],
-      correct: "7"
-    },
-    {
-      question: "What is 4 + 3?",
-      aslSigns: [4, 3],
-      options: ["6", "7", "8", "9"],
-      correct: "7"
-    },
-    {
-      question: "What is 2 + 6?",
-      aslSigns: [2, 6],
-      options: ["7", "8", "9", "10"],
-      correct: "8"
-    }
-  ];
-
   // Timer countdown
   useEffect(() => {
+    if (!questions || questions.length === 0) return;
+    
     if (timeLeft > 0 && !showResult && !quizComplete) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && !showResult) {
       handleNextQuestion();
     }
-  }, [timeLeft, showResult, quizComplete]);
+  }, [timeLeft, showResult, quizComplete, questions]);
 
   const handleAnswerSelect = (answer) => {
     setSelectedAnswer(answer);
   };
 
   const handleNextQuestion = () => {
-    if (selectedAnswer === questions[currentQuestion].correct) {
-      setScore(score + 1);
+    if (!questions || questions.length === 0 || !questions[currentQuestion]) {
+      console.error('No question available at current index');
+      return;
     }
+    
+    const isCorrect = selectedAnswer === questions[currentQuestion].correct;
+    const newScore = isCorrect ? score + 1 : score;
+    
+    if (isCorrect) {
+      setScore(newScore);
+    }
+
+    // Track answer for this question
+    const answerRecord = {
+      questionId: questions[currentQuestion].id,
+      selectedAnswer: selectedAnswer,
+      isCorrect: isCorrect,
+      pointsEarned: isCorrect ? (questions[currentQuestion].points || 10) : 0,
+      timeTaken: 30 - timeLeft
+    };
+    setAnswers([...answers, answerRecord]);
 
     setShowResult(true);
     
@@ -127,9 +214,58 @@ function MathQuiz() {
         setCurrentQuestion(currentQuestion + 1);
         setTimeLeft(30);
       } else {
+        // Quiz complete - save results to database
+        saveQuizResults(newScore, [...answers, answerRecord]);
         setQuizComplete(true);
       }
     }, 2000);
+  };
+
+  const saveQuizResults = async (finalScore, allAnswers) => {
+    try {
+      if (!user?.child?.id) {
+        console.error('No child ID found');
+        return;
+      }
+
+      // Use the same activity ID calculation as in loadQuizData
+      let activityId = 7;
+      if (operation === 'addition') {
+        if (level === 'beginner') {
+          activityId = 6 + parseInt(sublevel || 1);
+        } else if (level === 'intermediate') {
+          activityId = 9 + parseInt(sublevel || 1);
+        } else if (level === 'advanced') {
+          activityId = 12 + parseInt(sublevel || 1);
+        }
+      }
+      
+      const maxScore = questions.length;
+
+      const result = await api.saveQuizAttempt({
+        childId: user.child.id,
+        activityId: activityId,
+        score: finalScore,
+        maxScore: maxScore,
+        answers: allAnswers
+      });
+
+      if (result.success) {
+        console.log('Quiz results saved successfully:', result.data);
+        
+        // Update user's total points in local storage
+        if (result.data.passed) {
+          const updatedUser = { ...user };
+          if (updatedUser.child) {
+            updatedUser.child.totalPoints = (updatedUser.child.totalPoints || 0) + (activityInfo?.points || 100);
+          }
+          setUser(updatedUser);
+          localStorage.setItem('userData', JSON.stringify(updatedUser));
+        }
+      }
+    } catch (error) {
+      console.error('Error saving quiz results:', error);
+    }
   };
 
   const handleLogout = () => {
@@ -152,6 +288,7 @@ function MathQuiz() {
 
   const speakQuestion = () => {
     if (!audioEnabled) return;
+    if (!questions || questions.length === 0 || !questions[currentQuestion]) return;
     
     if ('speechSynthesis' in window) {
       // Stop any ongoing speech
@@ -202,17 +339,66 @@ function MathQuiz() {
 
   // Auto-play question when component mounts or question changes
   useEffect(() => {
+    if (!questions || questions.length === 0) return;
+    
     const timer = setTimeout(() => {
-      if (!showResult && !quizComplete && audioEnabled) {
+      if (!showResult && !quizComplete && audioEnabled && questions[currentQuestion]) {
         speakQuestion();
       }
     }, 500); // Small delay to ensure component is ready
 
     return () => clearTimeout(timer);
-  }, [currentQuestion, showResult, quizComplete, audioEnabled]);
+  }, [currentQuestion, showResult, quizComplete, audioEnabled, questions]);
 
-  if (!user) {
-    return <div>Loading...</div>;
+  if (!user || loading) {
+    return (
+      <div className="quiz-layout">
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          fontSize: '24px',
+          color: '#4A90E2'
+        }}>
+          <div>
+            <div style={{ marginBottom: '20px', textAlign: 'center' }}>⏳</div>
+            <div>Loading quiz questions...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="quiz-layout">
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          fontSize: '24px',
+          color: '#E74C3C'
+        }}>
+          <div>
+            <div style={{ marginBottom: '20px', textAlign: 'center' }}>⚠️</div>
+            <div>No questions available for this quiz.</div>
+            <button 
+              onClick={() => navigate('/math/addition')} 
+              style={{ 
+                marginTop: '20px',
+                padding: '10px 20px',
+                fontSize: '16px',
+                cursor: 'pointer'
+              }}
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (quizComplete) {
@@ -323,7 +509,7 @@ function MathQuiz() {
         </div>
 
         <div className="question-container">
-          {!showResult ? (
+          {!showResult && questions[currentQuestion] ? (
             <>
               <div className="question-header">
                 <h2 className="question-title">🌱 Beginner Level 1</h2>
@@ -331,18 +517,18 @@ function MathQuiz() {
               </div>
               
               <div className="question-card">
+                {/* ASL Player - Shows ASL translation for any question */}
+                {questions[currentQuestion] && (questions[currentQuestion].aslSigns || questions[currentQuestion].aslVideoUrl || questions[currentQuestion].aslImageUrl) && (
+                  <ASLPlayer 
+                    question={questions[currentQuestion]}
+                    autoPlay={false}
+                    showControls={true}
+                  />
+                )}
+                
                 <div className="question-text-container">
                   <h3 className="question-text">
                     {questions[currentQuestion].question}
-                    <span className="inline-asl">
-                      <span className="asl-hand" data-number={questions[currentQuestion].aslSigns[0]}>
-                        <span className="hand-shape"></span>
-                      </span>
-                      <span className="plus-sign">+</span>
-                      <span className="asl-hand" data-number={questions[currentQuestion].aslSigns[1]}>
-                        <span className="hand-shape"></span>
-                      </span>
-                    </span>
                   </h3>
                   <button 
                     className={`speaker-btn ${isPlaying ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
@@ -356,7 +542,7 @@ function MathQuiz() {
                 </div>
                 
                 <div className="options-grid">
-                  {questions[currentQuestion].options.map((option, index) => (
+                  {(questions[currentQuestion]?.options || []).map((option, index) => (
                     <button
                       key={index}
                       className={`option-btn ${selectedAnswer === option ? 'selected' : ''}`}
@@ -379,7 +565,7 @@ function MathQuiz() {
                 </button>
               </div>
             </>
-          ) : (
+          ) : questions[currentQuestion] ? (
             <div className="result-card">
               <div className="result-icon">
                 {selectedAnswer === questions[currentQuestion].correct ? "✅" : "❌"}
@@ -393,7 +579,7 @@ function MathQuiz() {
                   : `The correct answer is ${questions[currentQuestion].correct}`}
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
     </div>

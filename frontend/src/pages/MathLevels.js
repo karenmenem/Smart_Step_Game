@@ -126,28 +126,45 @@ function MathLevels() {
               <div className="level-stats">
                 <div className="stat-item">
                   <span className="stat-icon">🧮</span>
-                  <span className="stat-text">Add numbers step-by-step</span>
+                  <span className="stat-text">Numbers 1-10 with ASL signs</span>
                 </div>
                 <div className="stat-item">
                   <span className="stat-icon">⭐</span>
-                  <span className="stat-text">Earn stars for every correct answer</span>
+                  <span className="stat-text">10 questions per sublevel</span>
                 </div>
                 <div className="stat-item">
                   <span className="stat-icon">🎯</span>
-                  <span className="stat-text">Get over 80% to unlock intermediate</span>
+                  <span className="stat-text">Get over 80% to unlock next level</span>
                 </div>
                 <div className="stat-item">
                   <span className="stat-icon">📚</span>
-                  <span className="stat-text">3 levels each 10 questions</span>
+                  <span className="stat-text">3 sublevels to complete</span>
                 </div>
               </div>
               
-              <button 
-                className="level-btn start-btn"
-                onClick={() => navigate(`/math/${operation}/quiz/beginner/1`)}
-              >
-                Start Learning
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+                <button 
+                  className="level-btn start-btn"
+                  onClick={() => navigate(`/math/${operation}/quiz/beginner/1`)}
+                  style={{ backgroundColor: '#43e97b' }}
+                >
+                  📊 Sublevel 1: Simple Addition (1-10)
+                </button>
+                <button 
+                  className="level-btn start-btn"
+                  onClick={() => navigate(`/math/${operation}/quiz/beginner/2`)}
+                  style={{ backgroundColor: '#4facfe' }}
+                >
+                  🎬 Sublevel 2: ASL Video Addition (10-50)
+                </button>
+                <button 
+                  className="level-btn start-btn"
+                  onClick={() => navigate(`/math/${operation}/quiz/beginner/3`)}
+                  style={{ backgroundColor: '#667eea' }}
+                >
+                  🚀 Sublevel 3: Advanced (100+)
+                </button>
+              </div>
             </div>
           </div>
 

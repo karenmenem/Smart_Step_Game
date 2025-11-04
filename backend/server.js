@@ -18,7 +18,22 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Debug middleware to log all admin requests
+app.use('/api/admin', (req, res, next) => {
+  if (req.method === 'POST' || req.method === 'PUT') {
+    console.log('\n=== INCOMING ADMIN REQUEST ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    console.log('Body keys:', Object.keys(req.body));
+    console.log('==============================\n');
+  }
+  next();
+});
+
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/quiz', require('./routes/quiz'));
+app.use('/api/admin', require('./routes/admin'));
 
 app.get('/api/health', (req, res) => {
   res.json({ 

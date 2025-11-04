@@ -83,6 +83,92 @@ export const api = {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
     };
+  },
+
+  // Quiz-related API calls
+  getQuestions: async (activityId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/questions/${activityId}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Get questions request failed:', error);
+      return { success: false, message: 'Failed to fetch questions' };
+    }
+  },
+
+  getActivity: async (activityId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/activity/${activityId}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Get activity request failed:', error);
+      return { success: false, message: 'Failed to fetch activity' };
+    }
+  },
+
+  getActivitiesByLevel: async (subject, level) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/activities/${subject}/${level}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Get activities request failed:', error);
+      return { success: false, message: 'Failed to fetch activities' };
+    }
+  },
+
+  saveQuizAttempt: async (quizData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/attempt`, {
+        method: 'POST',
+        headers: api.getAuthHeaders(),
+        body: JSON.stringify(quizData)
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Save quiz attempt failed:', error);
+      return { success: false, message: 'Failed to save quiz attempt' };
+    }
+  },
+
+  getChildProgress: async (childId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/progress/${childId}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Get progress request failed:', error);
+      return { success: false, message: 'Failed to fetch progress' };
+    }
+  },
+
+  getChildAchievements: async (childId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/achievements/${childId}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Get achievements request failed:', error);
+      return { success: false, message: 'Failed to fetch achievements' };
+    }
   }
 };
 

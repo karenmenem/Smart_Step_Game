@@ -19,7 +19,27 @@ function Profile() {
     if (auth.isAuthenticated()) {
       const userData = auth.getCurrentUser();
       setUser(userData);
-      setChildren(userData.children || []);
+      
+      // Ensure children array exists
+      let childrenList = userData.children || [];
+      
+      // If no children array but there's a child object, create the array
+      if (childrenList.length === 0 && userData.child) {
+        childrenList = [userData.child];
+        // Update localStorage with the corrected data
+        const updatedUserData = {
+          ...userData,
+          children: childrenList
+        };
+        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+      }
+      
+      setChildren(childrenList);
+      
+      // Set the first child as current if not already set
+      if (childrenList.length > 0 && !auth.getCurrentChild()) {
+        auth.setCurrentChild(childrenList[0]);
+      }
     } else {
       navigate("/login");
     }

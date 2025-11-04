@@ -1,0 +1,284 @@
+/* ASL Player Styles */
+
+.asl-player {
+  background: transparent;
+  border-radius: 15px;
+  padding: 0;
+  margin: 15px 0;
+  box-shadow: none;
+}
+
+.asl-player-empty {
+  background: #f5f5f5;
+  border-radius: 15px;
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+/* Display Area */
+.asl-display {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 200px;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+.asl-video {
+  max-width: 100%;
+  width: auto;
+  height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  object-fit: contain;
+}
+
+.asl-image {
+  max-width: 100%;
+  width: auto;
+  height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  object-fit: contain;
+}
+
+.asl-built-in {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.asl-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+.asl-fingerspell {
+  text-align: center;
+}
+
+.asl-fingerspell h3 {
+  font-size: 48px;
+  color: #667eea;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+  letter-spacing: 5px;
+}
+
+.asl-note {
+  color: #999;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* Sign Label */
+.asl-label {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.asl-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-right: 8px;
+}
+
+.asl-type {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+}
+
+/* Sequence Progress */
+.asl-sequence {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.asl-sequence-item {
+  background: white;
+  color: #667eea;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  min-width: 35px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.asl-sequence-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.asl-sequence-item.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.asl-sequence-item.completed {
+  background: #e0e0e0;
+  color: #999;
+}
+
+/* Controls */
+.asl-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.asl-control-btn {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.asl-control-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.asl-control-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.asl-control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Speed Control */
+.asl-speed-control {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.asl-speed-control label {
+  color: white;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.speed-btn {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  border: 2px solid transparent;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.speed-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.speed-btn.active {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}
+
+/* Warning */
+.asl-warning {
+  background: rgba(255, 193, 7, 0.2);
+  border: 2px solid #ffc107;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.asl-warning p {
+  color: white;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Responsive */
+/* Pulse animation for operations */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+@media (max-width: 768px) {
+  .asl-player {
+    padding: 20px;
+  }
+
+  .asl-display {
+    min-height: 200px;
+  }
+
+  .asl-video,
+  .asl-image {
+    max-height: 180px;
+  }
+
+  .asl-fingerspell h3 {
+    font-size: 36px;
+  }
+
+  .asl-sequence-item {
+    padding: 8px 12px;
+    font-size: 14px;
+    min-width: 35px;
+  }
+
+  .asl-control-btn {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  .speed-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

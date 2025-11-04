@@ -1,0 +1,63 @@
+✅ Database connected successfully
+🚀 Server running on http://localhost:5000
+📁 Uploads directory: /Users/karenmenhem/Documents/SmartStep web 2/backend/uploads
+
+=== INCOMING ADMIN REQUEST ===
+Method: POST
+URL: /questions
+Body: {
+  "activity_id": "1",
+  "question_text": "What is 6 + 3",
+  "question_type": "multiple_choice",
+  "correct_answer": "9",
+  "options": "[\"9\", \"10\", \"8\", \"7\"]",
+  "asl_signs": "[6,3]",
+  "asl_video_url": "",
+  "asl_type": "none",
+  "explanation": "",
+  "difficulty_level": 1,
+  "points_value": 10,
+  "order_index": 1
+}
+Body keys: [
+  'activity_id',
+  'question_text',
+  'question_type',
+  'correct_answer',
+  'options',
+  'asl_signs',
+  'asl_video_url',
+  'asl_type',
+  'explanation',
+  'difficulty_level',
+  'points_value',
+  'order_index'
+]
+==============================
+
+Received request body: {
+  activity_id: '1',
+  question_text: 'What is 6 + 3',
+  question_type: 'multiple_choice',
+  correct_answer: '9',
+  options: '["9", "10", "8", "7"]',
+  asl_signs: '[6,3]',
+  asl_video_url: '',
+  asl_type: 'none',
+  explanation: '',
+  difficulty_level: 1,
+  points_value: 10,
+  order_index: 1
+}
+=== CREATE QUESTION DEBUG ===
+Parsed values: {
+  actId: '1',
+  qText: 'What is 6 + 3',
+  qType: 'multiple_choice',
+  correctAns: '9'
+}
+Activity ID check: 1 truthy? true type: string
+Question text check: What is 6 + 3 truthy? true type: string
+Question type check: multiple_choice truthy? true type: string
+Correct answer check: 9 truthy? true type: string
+✅ VALIDATION PASSED

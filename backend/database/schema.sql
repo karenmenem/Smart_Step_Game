@@ -58,6 +58,9 @@ CREATE TABLE IF NOT EXISTS question (
     question_type ENUM('multiple_choice', 'true_false', 'fill_blank', 'drag_drop') NOT NULL,
     correct_answer TEXT NOT NULL,
     options JSON,
+    asl_signs JSON,
+    asl_video_url VARCHAR(500),
+    asl_type ENUM('numbers', 'video', 'both', 'none') DEFAULT 'numbers',
     explanation TEXT,
     difficulty_level INT DEFAULT 1,
     points_value INT DEFAULT 1,
@@ -113,6 +116,19 @@ CREATE TABLE IF NOT EXISTS child_achievement (
     FOREIGN KEY (achievement_id) REFERENCES achievement(achievement_id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS admin (
+    admin_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP NULL
+);
+
+-- Insert default admin user (password: admin123)
+INSERT IGNORE INTO admin (username, password, email) VALUES
+('admin', '$2b$10$rN7kYVZL.5lB9xJ0h3K5XOqPqPxJLKqWJ3xGz5mZ3kYVZL5lB9xJ0h', 'admin@smartstep.com');
+
 INSERT IGNORE INTO subject (name, description) VALUES 
 ('Math', 'Mathematics learning activities'),
 ('English', 'English language learning activities');
@@ -123,3 +139,58 @@ INSERT IGNORE INTO achievement (name, description, icon, points_required, level_
 ('Math Wizard', 'Complete all level 1 math activities', '🧙‍♂️', 100, 1),
 ('Word Master', 'Complete all level 1 English activities', '📚', 100, 1),
 ('Persistent', 'Complete an activity after 3 attempts', '💪', 25, 1);
+
+-- Insert Math sections (levels)
+INSERT IGNORE INTO section (section_id, subject_id, level, name, description, order_index) VALUES
+(1, 1, 1, 'Beginner Addition', 'Learn basic addition with numbers 1-10', 1),
+(2, 1, 2, 'Intermediate Addition', 'Practice addition with larger numbers', 2),
+(3, 1, 3, 'Advanced Addition', 'Master complex addition problems', 3);
+
+-- Insert Math activities
+INSERT IGNORE INTO activity (activity_id, section_id, name, description, activity_type, points_value, order_index) VALUES
+(1, 1, 'Addition Level 1', 'Basic addition quiz with ASL signs', 'quiz', 100, 1),
+(2, 2, 'Addition Level 2', 'Intermediate addition quiz', 'quiz', 150, 1),
+(3, 3, 'Addition Level 3', 'Advanced addition quiz', 'quiz', 200, 1);
+
+-- Insert Level 1 Addition Questions with ASL signs
+INSERT IGNORE INTO question (question_id, activity_id, question_text, question_type, correct_answer, options, asl_signs, asl_video_url, asl_type, difficulty_level, points_value, order_index) VALUES
+(1, 1, 'What is 2 + 3?', 'multiple_choice', '5', '["4", "5", "6", "7"]', '[2, 3]', NULL, 'numbers', 1, 10, 1),
+(2, 1, 'What is 1 + 4?', 'multiple_choice', '5', '["3", "4", "5", "6"]', '[1, 4]', NULL, 'numbers', 1, 10, 2),
+(3, 1, 'What is 3 + 2?', 'multiple_choice', '5', '["4", "5", "6", "7"]', '[3, 2]', NULL, 'numbers', 1, 10, 3),
+(4, 1, 'What is 4 + 1?', 'multiple_choice', '5', '["3", "4", "5", "6"]', '[4, 1]', NULL, 'numbers', 1, 10, 4),
+(5, 1, 'What is 2 + 2?', 'multiple_choice', '4', '["3", "4", "5", "6"]', '[2, 2]', NULL, 'numbers', 1, 10, 5),
+(6, 1, 'What is 3 + 3?', 'multiple_choice', '6', '["5", "6", "7", "8"]', '[3, 3]', NULL, 'numbers', 1, 10, 6),
+(7, 1, 'What is 1 + 6?', 'multiple_choice', '7', '["6", "7", "8", "9"]', '[1, 6]', NULL, 'numbers', 1, 10, 7),
+(8, 1, 'What is 5 + 2?', 'multiple_choice', '7', '["6", "7", "8", "9"]', '[5, 2]', NULL, 'numbers', 1, 10, 8),
+(9, 1, 'What is 4 + 3?', 'multiple_choice', '7', '["6", "7", "8", "9"]', '[4, 3]', NULL, 'numbers', 1, 10, 9),
+(10, 1, 'What is 2 + 6?', 'multiple_choice', '8', '["7", "8", "9", "10"]', '[2, 6]', NULL, 'numbers', 1, 10, 10);
+
+-- Insert Level 2 Addition Questions with ASL video integration for numbers 10-50
+INSERT IGNORE INTO question (question_id, activity_id, question_text, question_type, correct_answer, options, asl_signs, asl_video_url, asl_type, difficulty_level, points_value, order_index) VALUES
+(21, 2, 'What is 15 + 12?', 'multiple_choice', '27', '["25", "26", "27", "28"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 1),
+(22, 2, 'What is 23 + 14?', 'multiple_choice', '37', '["35", "36", "37", "38"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 2),
+(23, 2, 'What is 18 + 19?', 'multiple_choice', '37', '["35", "36", "37", "38"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 3),
+(24, 2, 'What is 25 + 22?', 'multiple_choice', '47', '["45", "46", "47", "48"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 4),
+(25, 2, 'What is 30 + 17?', 'multiple_choice', '47', '["45", "46", "47", "48"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 5),
+(26, 2, 'What is 12 + 11?', 'multiple_choice', '23', '["21", "22", "23", "24"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 6),
+(27, 2, 'What is 28 + 15?', 'multiple_choice', '43', '["41", "42", "43", "44"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 7),
+(28, 2, 'What is 35 + 14?', 'multiple_choice', '49', '["47", "48", "49", "50"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 8),
+(29, 2, 'What is 20 + 29?', 'multiple_choice', '49', '["47", "48", "49", "50"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 9),
+(30, 2, 'What is 16 + 24?', 'multiple_choice', '40', '["38", "39", "40", "41"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 2, 15, 10);
+
+-- Insert Advanced Addition Questions with ASL video URLs for complex problems (100+)
+INSERT IGNORE INTO question (question_id, activity_id, question_text, question_type, correct_answer, options, asl_signs, asl_video_url, asl_type, difficulty_level, points_value, order_index) VALUES
+(11, 3, 'What is 100 + 167?', 'multiple_choice', '267', '["267", "257", "277", "367"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 3, 20, 1),
+(12, 3, 'What is 234 + 456?', 'multiple_choice', '690', '["690", "680", "700", "790"]', NULL, 'https://www.youtube.com/embed/aQvGIIdgFDM', 'video', 3, 20, 2);
+
+-- Insert English sections (levels)
+INSERT IGNORE INTO section (section_id, subject_id, level, name, description, order_index) VALUES
+(4, 2, 1, 'Beginner English', 'Learn basic English vocabulary', 1),
+(5, 2, 2, 'Intermediate English', 'Practice English grammar and reading', 2),
+(6, 2, 3, 'Advanced English', 'Master complex English concepts', 3);
+
+-- Insert English activities
+INSERT IGNORE INTO activity (activity_id, section_id, name, description, activity_type, points_value, order_index) VALUES
+(4, 4, 'Vocabulary Level 1', 'Basic vocabulary quiz', 'quiz', 100, 1),
+(5, 5, 'Grammar Level 2', 'Intermediate grammar quiz', 'quiz', 150, 1),
+(6, 6, 'Reading Level 3', 'Advanced reading comprehension', 'quiz', 200, 1);

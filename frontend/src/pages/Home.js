@@ -1,15 +1,18 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { auth } from "../api/auth";
+import { auth, api } from "../api/auth";
 
 function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [progress, setProgress] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const updateUserData = () => {
+    const updateUserData = async () => {
       if (auth.isAuthenticated()) {
         const userData = auth.getCurrentUser();
         const currentChild = auth.getCurrentChild();
@@ -20,9 +23,13 @@ function Home() {
         // Ensure the user data has the current child
         if (userData && currentChild) {
           userData.child = currentChild;
+          
+          // Fetch child's progress and achievements from database
+          await fetchChildData(currentChild.id);
         }
         
         setUser(userData);
+        setLoading(false);
       }
     };
 
@@ -48,13 +55,15 @@ function Home() {
 
   // Update user data when returning to the home page
   useEffect(() => {
-    const updateUserData = () => {
+    const updateUserData = async () => {
       if (auth.isAuthenticated()) {
         const userData = auth.getCurrentUser();
         const currentChild = auth.getCurrentChild();
         
         if (userData && currentChild) {
           userData.child = currentChild;
+          // Refresh progress when navigating back to home
+          await fetchChildData(currentChild.id);
         }
         
         setUser(userData);
@@ -63,6 +72,27 @@ function Home() {
 
     updateUserData();
   }, [location.pathname]);
+
+  const fetchChildData = async (childId) => {
+    try {
+      const [progressResponse, achievementsResponse] = await Promise.all([
+        api.getChildProgress(childId),
+        api.getChildAchievements(childId)
+      ]);
+
+      if (progressResponse.success) {
+        setProgress(progressResponse.data);
+        console.log('Child progress:', progressResponse.data);
+      }
+
+      if (achievementsResponse.success) {
+        setAchievements(achievementsResponse.data);
+        console.log('Child achievements:', achievementsResponse.data);
+      }
+    } catch (error) {
+      console.error('Error fetching child data:', error);
+    }
+  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

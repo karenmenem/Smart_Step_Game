@@ -9,6 +9,9 @@ import Achievements from "../pages/Achievements";
 import Subjects from "../pages/Subjects";
 import MathLevels from "../pages/MathLevels";
 import MathQuiz from "../pages/MathQuiz";
+import AdminLogin from "../pages/AdminLogin";
+import AdminDashboard from "../pages/AdminDashboard";
+import AdminQuestionForm from "../pages/AdminQuestionForm";
 
 function AppRoutes() {
   return (
@@ -24,6 +27,15 @@ function AppRoutes() {
         <Route path="/subjects" element={<Subjects />} />
         <Route path="/math/:operation" element={<MathLevels />} />
         <Route path="/math/:operation/quiz/:level/:sublevel" element={<MathQuiz />} />
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/questions/add" element={<AdminQuestionForm />} />
+        <Route path="/admin/questions/edit/:id" element={<AdminQuestionForm />} />
+        <Route path="/admin/subjects/*" element={<AdminDashboard />} />
+        <Route path="/admin/sections/*" element={<AdminDashboard />} />
+        <Route path="/admin/activities/*" element={<AdminDashboard />} />
+        <Route path="/admin/achievements/*" element={<AdminDashboard />} />
       </Routes>
     </Router>
   );

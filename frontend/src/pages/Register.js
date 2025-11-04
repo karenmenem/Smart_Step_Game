@@ -84,6 +84,11 @@ function Register() {
       const result = await api.register(formData);
       
       if (result.success) {
+        // Ensure the child is in the children array
+        if (result.data.child && !result.data.children) {
+          result.data.children = [result.data.child];
+        }
+        
         // Auto-login the user with the returned token
         auth.login(result);
         alert("🎉 Account created successfully! Welcome to Smart Step!");

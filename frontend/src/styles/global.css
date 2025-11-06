@@ -2276,16 +2276,17 @@ select.form-input {
 /* Level Content */
 .level-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2rem;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 3rem;
 }
 
 .level-stats {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 300px;
 }
 
 .stat-item {

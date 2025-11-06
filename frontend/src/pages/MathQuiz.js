@@ -19,6 +19,9 @@ function MathQuiz() {
   const [loading, setLoading] = useState(true);
   const [activityInfo, setActivityInfo] = useState(null);
   const [answers, setAnswers] = useState([]);
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [newAchievements, setNewAchievements] = useState([]);
+  const [totalPoints, setTotalPoints] = useState(0);
 
   useEffect(() => {
     if (auth.isAuthenticated()) {
@@ -36,12 +39,8 @@ function MathQuiz() {
   const loadQuizData = async () => {
     try {
       setLoading(true);
-      // Map operation, level, and sublevel to activity IDs
-      // New structure: Math subject has 12 sections (4 operations × 3 difficulties)
-      // Addition Beginner: Activities 7, 8, 9 (Levels 1-3)
-      // Addition Intermediate: Activities 10, 11, 12 (Levels 1-3)
-      // Addition Advanced: Activities 13, 14, 15 (Levels 1-3)
       
+      // Map operation, level, and sublevel to activity IDs
       let activityId = 7; // Default to Addition Beginner Level 1
       
       if (operation === 'addition') {
@@ -52,8 +51,41 @@ function MathQuiz() {
         } else if (level === 'advanced') {
           activityId = 12 + parseInt(sublevel || 1); // 13, 14, or 15
         }
+      } else if (operation === 'subtraction') {
+        if (level === 'beginner') {
+          activityId = 15 + parseInt(sublevel || 1); // 16, 17, or 18
+        } else if (level === 'intermediate') {
+          activityId = 18 + parseInt(sublevel || 1); // 19, 20, or 21
+        } else if (level === 'advanced') {
+          activityId = 21 + parseInt(sublevel || 1); // 22, 23, or 24
+        }
+      } else if (operation === 'multiplication') {
+        if (level === 'beginner') {
+          activityId = 24 + parseInt(sublevel || 1); // 25, 26, or 27
+        } else if (level === 'intermediate') {
+          activityId = 27 + parseInt(sublevel || 1); // 28, 29, or 30
+        } else if (level === 'advanced') {
+          activityId = 30 + parseInt(sublevel || 1); // 31, 32, or 33
+        }
+      } else if (operation === 'division') {
+        if (level === 'beginner') {
+          activityId = 33 + parseInt(sublevel || 1); // 34, 35, or 36
+        } else if (level === 'intermediate') {
+          activityId = 36 + parseInt(sublevel || 1); // 37, 38, or 39
+        } else if (level === 'advanced') {
+          activityId = 39 + parseInt(sublevel || 1); // 40, 41, or 42
+        }
       }
-      // TODO: Add other operations (subtraction, multiplication, division)
+      
+      // Check if child has access to this level
+      if (user?.child?.id) {
+        const accessCheck = await api.checkLevelAccess(user.child.id, activityId);
+        if (accessCheck.success && !accessCheck.allowed) {
+          alert(accessCheck.reason || 'You need to complete the previous level first with 80% or higher!');
+          navigate(`/math/${operation}`);
+          return;
+        }
+      }
       
       const [questionsResponse, activityResponse] = await Promise.all([
         api.getQuestions(activityId),
@@ -238,10 +270,35 @@ function MathQuiz() {
         } else if (level === 'advanced') {
           activityId = 12 + parseInt(sublevel || 1);
         }
+      } else if (operation === 'subtraction') {
+        if (level === 'beginner') {
+          activityId = 15 + parseInt(sublevel || 1);
+        } else if (level === 'intermediate') {
+          activityId = 18 + parseInt(sublevel || 1);
+        } else if (level === 'advanced') {
+          activityId = 21 + parseInt(sublevel || 1);
+        }
+      } else if (operation === 'multiplication') {
+        if (level === 'beginner') {
+          activityId = 24 + parseInt(sublevel || 1);
+        } else if (level === 'intermediate') {
+          activityId = 27 + parseInt(sublevel || 1);
+        } else if (level === 'advanced') {
+          activityId = 30 + parseInt(sublevel || 1);
+        }
+      } else if (operation === 'division') {
+        if (level === 'beginner') {
+          activityId = 33 + parseInt(sublevel || 1);
+        } else if (level === 'intermediate') {
+          activityId = 36 + parseInt(sublevel || 1);
+        } else if (level === 'advanced') {
+          activityId = 39 + parseInt(sublevel || 1);
+        }
       }
       
       const maxScore = questions.length;
 
+      // Save quiz attempt
       const result = await api.saveQuizAttempt({
         childId: user.child.id,
         activityId: activityId,
@@ -249,6 +306,21 @@ function MathQuiz() {
         maxScore: maxScore,
         answers: allAnswers
       });
+
+      // Save progress for level locking and award achievements
+      const progressResult = await api.saveProgress({
+        childId: user.child.id,
+        activityId: activityId,
+        score: finalScore,
+        maxScore: maxScore
+      });
+
+      // Store achievement/points info for display
+      if (progressResult.success) {
+        setPointsEarned(progressResult.pointsEarned || 0);
+        setNewAchievements(progressResult.newAchievements || []);
+        setTotalPoints(progressResult.totalPoints || 0);
+      }
 
       if (result.success) {
         console.log('Quiz results saved successfully:', result.data);
@@ -385,7 +457,7 @@ function MathQuiz() {
             <div style={{ marginBottom: '20px', textAlign: 'center' }}>⚠️</div>
             <div>No questions available for this quiz.</div>
             <button 
-              onClick={() => navigate('/math/addition')} 
+              onClick={() => navigate(`/math/${operation}`)} 
               style={{ 
                 marginTop: '20px',
                 padding: '10px 20px',
@@ -448,6 +520,49 @@ function MathQuiz() {
                 ? "Great job! You've mastered Level 1 Addition!" 
                 : "You're getting better! Try again to unlock the next level."}
             </p>
+            
+            {/* Points Display */}
+            {pointsEarned > 0 && (
+              <div style={{
+                backgroundColor: '#FFA500',
+                color: 'white',
+                padding: '15px',
+                borderRadius: '10px',
+                margin: '20px 0',
+                textAlign: 'center',
+                fontSize: '20px',
+                fontWeight: 'bold'
+              }}>
+                🌟 +{pointsEarned} Points Earned!
+                <div style={{ fontSize: '14px', marginTop: '5px', fontWeight: 'normal' }}>
+                  Total Points: {totalPoints}
+                </div>
+              </div>
+            )}
+
+            {/* New Achievements Display */}
+            {newAchievements && newAchievements.length > 0 && (
+              <div style={{
+                backgroundColor: '#FFD700',
+                color: '#333',
+                padding: '15px',
+                borderRadius: '10px',
+                margin: '20px 0'
+              }}>
+                <div style={{ fontSize: '24px', marginBottom: '10px' }}>🏆 New Achievement{newAchievements.length > 1 ? 's' : ''}!</div>
+                {newAchievements.map((ach, idx) => (
+                  <div key={idx} style={{
+                    backgroundColor: 'white',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    margin: '5px 0',
+                    fontWeight: 'bold'
+                  }}>
+                    {ach.name}
+                  </div>
+                ))}
+              </div>
+            )}
             
             <div className="results-buttons">
               <button className="quiz-btn secondary-btn" onClick={restartQuiz}>

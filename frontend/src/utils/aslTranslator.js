@@ -1,11 +1,6 @@
-/**
- * ASL Translation Utility
- * Converts text, numbers, and sentences into ASL sign sequences
- */
 
-// ASL resource URLs mapping
 export const ASL_RESOURCES = {
-  // Numbers 0-9
+  
   numbers: {
     0: '/asl/numbers/0.mp4',
     1: '/asl/numbers/1.mp4',
@@ -19,7 +14,7 @@ export const ASL_RESOURCES = {
     9: '/asl/numbers/9.mp4',
   },
   
-  // Math operations
+  
   operations: {
     'plus': '/asl/operations/plus.mp4',
     'add': '/asl/operations/plus.mp4',
@@ -38,9 +33,9 @@ export const ASL_RESOURCES = {
     '=': '/asl/operations/equals.mp4',
   },
   
-  // Common words for English comprehension
+  
   words: {
-    // Question words
+    
     'what': '/asl/words/what.mp4',
     'who': '/asl/words/who.mp4',
     'where': '/asl/words/where.mp4',
@@ -48,7 +43,7 @@ export const ASL_RESOURCES = {
     'why': '/asl/words/why.mp4',
     'how': '/asl/words/how.mp4',
     
-    // Common verbs
+    
     'is': '/asl/words/is.mp4',
     'are': '/asl/words/are.mp4',
     'was': '/asl/words/was.mp4',
@@ -62,7 +57,7 @@ export const ASL_RESOURCES = {
     'read': '/asl/words/read.mp4',
     'write': '/asl/words/write.mp4',
     
-    // Pronouns
+    
     'i': '/asl/words/i.mp4',
     'you': '/asl/words/you.mp4',
     'he': '/asl/words/he.mp4',
@@ -70,7 +65,7 @@ export const ASL_RESOURCES = {
     'we': '/asl/words/we.mp4',
     'they': '/asl/words/they.mp4',
     
-    // Common nouns
+    
     'cat': '/asl/words/cat.mp4',
     'dog': '/asl/words/dog.mp4',
     'house': '/asl/words/house.mp4',
@@ -90,11 +85,7 @@ export const ASL_RESOURCES = {
   }
 };
 
-/**
- * Convert a number (any size) into ASL digit sequence
- * Example: 47 -> [4, 7]
- * Example: 123 -> [1, 2, 3]
- */
+
 export const numberToASL = (number) => {
   const numStr = number.toString();
   return numStr.split('').map(digit => ({
@@ -105,20 +96,17 @@ export const numberToASL = (number) => {
   }));
 };
 
-/**
- * Convert a math expression into ASL sequence
- * Example: "23 + 15" -> [2, 3, plus, 1, 5]
- */
+
 export const mathExpressionToASL = (expression) => {
   const sequence = [];
   const tokens = expression.match(/\d+|[+\-×÷*/=]|\w+/g) || [];
   
   tokens.forEach(token => {
     if (/^\d+$/.test(token)) {
-      // It's a number - break into digits
+      
       sequence.push(...numberToASL(token));
     } else if (ASL_RESOURCES.operations[token.toLowerCase()]) {
-      // It's an operation
+      
       sequence.push({
         type: 'operation',
         value: token,
@@ -131,27 +119,24 @@ export const mathExpressionToASL = (expression) => {
   return sequence;
 };
 
-/**
- * Convert a sentence/paragraph into ASL sequence
- * Example: "What is the cat doing?" -> [what, is, the, cat, doing, question]
- */
+
 export const sentenceToASL = (sentence) => {
   const sequence = [];
   
-  // Clean and tokenize
+  
   const cleaned = sentence.toLowerCase().replace(/[^\w\s?!.]/g, '');
   const words = cleaned.split(/\s+/);
   
   words.forEach(word => {
-    // Remove punctuation from word but track it
+    
     const punctuation = word.match(/[?!.]$/);
     const cleanWord = word.replace(/[?!.]$/, '');
     
-    // Check if word is a number
+   
     if (/^\d+$/.test(cleanWord)) {
       sequence.push(...numberToASL(cleanWord));
     }
-    // Check if word exists in ASL dictionary
+    
     else if (ASL_RESOURCES.words[cleanWord]) {
       sequence.push({
         type: 'word',

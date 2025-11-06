@@ -273,7 +273,15 @@ const updateQuestion = async (req, res) => {
     });
   } catch (error) {
     console.error('Update question error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update question', error: error.message });
+    console.error('Error stack:', error.stack);
+    console.error('Request body:', req.body);
+    console.error('Question ID:', req.params.questionId);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update question', 
+      error: error.message,
+      details: error.stack
+    });
   }
 };
 

@@ -169,6 +169,65 @@ export const api = {
       console.error('Get achievements request failed:', error);
       return { success: false, message: 'Failed to fetch achievements' };
     }
+  },
+
+  // Progress/Level Locking API calls
+  checkLevelAccess: async (childId, activityId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/progress/check-access/${childId}/${activityId}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Check level access failed:', error);
+      return { success: false, allowed: true }; // Fail open to avoid blocking users
+    }
+  },
+
+  saveProgress: async (progressData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/progress/save`, {
+        method: 'POST',
+        headers: api.getAuthHeaders(),
+        body: JSON.stringify(progressData)
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Save progress failed:', error);
+      return { success: false, message: 'Failed to save progress' };
+    }
+  },
+
+  getAllProgress: async (childId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/progress/child/${childId}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Get all progress failed:', error);
+      return { success: false, message: 'Failed to fetch progress' };
+    }
+  },
+
+  // Achievements API calls
+  getAchievements: async (childId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/achievements/child/${childId}`, {
+        method: 'GET',
+        headers: api.getAuthHeaders()
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Get achievements failed:', error);
+      return { success: false, message: 'Failed to fetch achievements' };
+    }
   }
 };
 

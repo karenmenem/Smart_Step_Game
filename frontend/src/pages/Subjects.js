@@ -80,7 +80,7 @@ function Subjects() {
             </div>
             
             <div className="subject-buttons">
-              <button className="subject-btn english-btn grammar-btn">
+              <button className="subject-btn english-btn grammar-btn" onClick={() => navigate("/english/grammar")}>
                 <div className="btn-icon">✏️</div>
                 <div className="btn-content">
                   <h3>Grammar</h3>
@@ -88,7 +88,7 @@ function Subjects() {
                 </div>
               </button>
               
-              <button className="subject-btn english-btn comprehension-btn">
+              <button className="subject-btn english-btn comprehension-btn" onClick={() => navigate("/english/comprehension")}>
                 <div className="btn-icon">📖</div>
                 <div className="btn-content">
                   <h3>Comprehension</h3>
@@ -96,7 +96,7 @@ function Subjects() {
                 </div>
               </button>
               
-              <button className="subject-btn english-btn vocabulary-btn">
+              <button className="subject-btn english-btn vocabulary-btn" onClick={() => navigate("/english/vocabulary")}>
                 <div className="btn-icon">🌟</div>
                 <div className="btn-content">
                   <h3>Vocabulary</h3>
@@ -104,7 +104,7 @@ function Subjects() {
                 </div>
               </button>
               
-              <button className="subject-btn english-btn picture-match-btn">
+              <button className="subject-btn english-btn picture-match-btn" onClick={() => navigate("/english/picture_match")}>
                 <div className="btn-icon">🎯</div>
                 <div className="btn-content">
                   <h3>Picture Match</h3>

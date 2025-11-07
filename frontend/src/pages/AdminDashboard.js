@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { 
+  getReadingPassages, createReadingPassage, updateReadingPassage, deleteReadingPassage,
+  getDashboardStats
+} from '../api/admin';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -13,9 +17,13 @@ function AdminDashboard() {
   const [sections, setSections] = useState([]);
   const [activities, setActivities] = useState([]);
   const [achievements, setAchievements] = useState([]);
+  const [readingPassages, setReadingPassages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [showPassageModal, setShowPassageModal] = useState(false);
+  const [editingPassage, setEditingPassage] = useState(null);
+  const [selectedPassage, setSelectedPassage] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -122,12 +130,41 @@ function AdminDashboard() {
     }
   };
 
+  const loadReadingPassages = async () => {
+    try {
+      const response = await getReadingPassages();
+      if (response.success) {
+        setReadingPassages(response.data);
+      } else {
+        // Initialize with default passages if none exist
+        setReadingPassages([
+          {
+            id: 'temp-1',
+            subject: 'English',
+            topic: 'comprehension',
+            level: 'easy',
+            sublevel: '1',
+            title: 'The Cat and the Dog',
+            author: 'Sample Author',
+            content: 'Once upon a time, there was a friendly cat named Whiskers and a playful dog named Buddy...',
+            is_default: true
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error loading reading passages:', error);
+      // Initialize with defaults on error
+      setReadingPassages([]);
+    }
+  };
+
   useEffect(() => {
     if (!admin) return;
 
     switch (activeTab) {
       case 'questions':
         loadQuestions();
+        loadReadingPassages(); // Also load passages for dropdown
         break;
       case 'subjects':
         loadSubjects();
@@ -140,6 +177,9 @@ function AdminDashboard() {
         break;
       case 'achievements':
         loadAchievements();
+        break;
+      case 'reading-passages':
+        loadReadingPassages();
         break;
       default:
         break;
@@ -198,6 +238,55 @@ function AdminDashboard() {
     }
   };
 
+  const handleDeleteReadingPassage = async (id) => {
+    if (!id) {
+      alert('Invalid passage ID');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this reading passage?')) return;
+
+    try {
+      console.log('Attempting to delete passage with ID:', id);
+      
+      const response = await deleteReadingPassage(id);
+      console.log('Delete response data:', response);
+
+      if (response.success) {
+        alert('Reading passage deleted successfully!');
+        loadReadingPassages();
+      } else {
+        alert(response.message || 'Failed to delete reading passage');
+      }
+    } catch (error) {
+      console.error('Error deleting reading passage:', error);
+      alert('Network error: Failed to delete reading passage - ' + error.message);
+    }
+  };
+
+  const saveReadingPassage = async (passageData) => {
+    try {
+      let response;
+      if (editingPassage) {
+        response = await updateReadingPassage(editingPassage.id, passageData);
+      } else {
+        response = await createReadingPassage(passageData);
+      }
+
+      if (response.success) {
+        alert(editingPassage ? 'Reading passage updated successfully!' : 'Reading passage created successfully!');
+        setShowPassageModal(false);
+        setEditingPassage(null);
+        loadReadingPassages();
+      } else {
+        alert(response.message || 'Failed to save reading passage');
+      }
+    } catch (error) {
+      console.error('Error saving reading passage:', error);
+      alert('Failed to save reading passage');
+    }
+  };
+
   if (loading || !admin) {
     return <div className="admin-loading">Loading Admin Panel...</div>;
   }
@@ -247,6 +336,12 @@ function AdminDashboard() {
             onClick={() => setActiveTab('activities')}
           >
             🎯 Activities
+          </button>
+          <button
+            className={`admin-nav-btn ${activeTab === 'reading-passages' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reading-passages')}
+          >
+            📖 Reading Passages
           </button>
           <button
             className={`admin-nav-btn ${activeTab === 'achievements' ? 'active' : ''}`}
@@ -305,10 +400,7 @@ function AdminDashboard() {
                       <th>Question</th>
                       <th>Subject</th>
                       <th>Level</th>
-                      <th>Activity</th>
-                      <th>ASL Type</th>
-                      <th>ASL Data</th>
-                      <th>Points</th>
+                      <th>Reading Passage</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -565,8 +657,89 @@ function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {activeTab === 'reading-passages' && (
+            <div className="admin-content">
+              <div className="admin-content-header">
+                <h2>📖 Manage Reading Passages</h2>
+                <button className="admin-add-btn" onClick={() => {
+                  setEditingPassage(null);
+                  setShowPassageModal(true);
+                }}>
+                  + Add Reading Passage
+                </button>
+              </div>
+              <div className="admin-table-container">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Topic</th>
+                      <th>Level</th>
+                      <th>Sublevel</th>
+                      <th>Title</th>
+                      <th>Author</th>
+                      <th>Content Preview</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {readingPassages.map((passage, index) => (
+                      <tr key={passage.id || index}>
+                        <td><strong>{passage.subject}</strong></td>
+                        <td>{passage.topic}</td>
+                        <td>{passage.level}</td>
+                        <td>{passage.sublevel}</td>
+                        <td><strong>{passage.title}</strong></td>
+                        <td>{passage.author || 'Not specified'}</td>
+                        <td>
+                          <div style={{
+                            maxWidth: '200px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {passage.content}
+                          </div>
+                        </td>
+                        <td>
+                          <button
+                            className="admin-edit-btn"
+                            onClick={() => {
+                              setEditingPassage(passage);
+                              setShowPassageModal(true);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="admin-delete-btn"
+                            onClick={() => handleDeleteReadingPassage(passage.id)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </main>
       </div>
+
+      {/* Reading Passage Modal */}
+      {showPassageModal && (
+        <ReadingPassageModal
+          passage={editingPassage}
+          onSave={saveReadingPassage}
+          onClose={() => {
+            setShowPassageModal(false);
+            setEditingPassage(null);
+          }}
+        />
+      )}
 
       <style jsx>{`
         .admin-dashboard {
@@ -785,7 +958,309 @@ function AdminDashboard() {
           font-size: 1.5rem;
           color: #667eea;
         }
+
+        /* Reading Passage Modal Styles */
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+
+        .modal-content {
+          background: white;
+          border-radius: 15px;
+          width: 90%;
+          max-width: 700px;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+          padding: 1.5rem 2rem;
+          border-bottom: 1px solid #e9ecef;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header h2 {
+          margin: 0;
+          font-size: 1.3rem;
+        }
+
+        .modal-close {
+          background: none;
+          border: none;
+          font-size: 2rem;
+          color: white;
+          cursor: pointer;
+          padding: 0;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .passage-form {
+          padding: 2rem;
+        }
+
+        .question-form {
+          padding: 2rem;
+        }
+
+        .options-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .form-group {
+          margin-bottom: 1rem;
+        }
+
+        .form-group label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+          width: 100%;
+          padding: 0.75rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 1rem;
+          transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+          resize: vertical;
+          min-height: 200px;
+          font-family: inherit;
+          line-height: 1.5;
+        }
+
+        .char-count {
+          text-align: right;
+          font-size: 0.85rem;
+          color: #6b7280;
+          margin-top: 0.25rem;
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 1rem;
+          justify-content: flex-end;
+          padding-top: 1.5rem;
+          border-top: 1px solid #e9ecef;
+          margin-top: 1.5rem;
+        }
+
+        .btn-cancel,
+        .btn-save {
+          padding: 0.75rem 1.5rem;
+          border: none;
+          border-radius: 8px;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.3s;
+          min-width: 120px;
+        }
+
+        .btn-cancel {
+          background: #6b7280;
+          color: white;
+        }
+
+        .btn-cancel:hover {
+          background: #4b5563;
+        }
+
+        .btn-save {
+          background: #667eea;
+          color: white;
+        }
+
+        .btn-save:hover {
+          background: #5563d1;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        @media (max-width: 768px) {
+          .modal-content {
+            width: 95%;
+            margin: 1rem;
+          }
+
+          .passage-form {
+            padding: 1.5rem;
+          }
+
+          .form-row {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
+    </div>
+  );
+}
+
+// Reading Passage Modal Component
+function ReadingPassageModal({ passage, onSave, onClose }) {
+  const [formData, setFormData] = useState({
+    subject: passage?.subject || 'English',
+    topic: passage?.topic || 'comprehension',
+    level: passage?.level || 'easy',
+    sublevel: passage?.sublevel || '1',
+    title: passage?.title || '',
+    author: passage?.author || '',
+    content: passage?.content || ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.title.trim() || !formData.content.trim()) {
+      alert('Please fill in the title and content fields');
+      return;
+    }
+    onSave(formData);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{passage ? '✏️ Edit Reading Passage' : '📖 Add New Reading Passage'}</h2>
+          <button onClick={onClose} className="modal-close">×</button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="passage-form">
+          <div className="form-row">
+            <div className="form-group">
+              <label>Subject</label>
+              <select 
+                value={formData.subject} 
+                onChange={e => setFormData({...formData, subject: e.target.value})}
+              >
+                <option value="English">English</option>
+                <option value="Math">Math</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>Topic</label>
+              <select 
+                value={formData.topic} 
+                onChange={e => setFormData({...formData, topic: e.target.value})}
+              >
+                <option value="comprehension">Comprehension</option>
+                <option value="grammar">Grammar</option>
+                <option value="vocabulary">Vocabulary</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Level</label>
+              <select 
+                value={formData.level} 
+                onChange={e => setFormData({...formData, level: e.target.value})}
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>Sublevel</label>
+              <select 
+                value={formData.sublevel} 
+                onChange={e => setFormData({...formData, sublevel: e.target.value})}
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Title *</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={e => setFormData({...formData, title: e.target.value})}
+              placeholder="Enter passage title"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Author</label>
+            <input
+              type="text"
+              value={formData.author}
+              onChange={e => setFormData({...formData, author: e.target.value})}
+              placeholder="Enter author name (optional)"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Content *</label>
+            <textarea
+              value={formData.content}
+              onChange={e => setFormData({...formData, content: e.target.value})}
+              placeholder="Enter the reading passage content..."
+              rows="10"
+              required
+            />
+            <div className="char-count">{formData.content.length} characters</div>
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" onClick={onClose} className="btn-cancel">
+              Cancel
+            </button>
+            <button type="submit" className="btn-save">
+              {passage ? 'Update Passage' : 'Create Passage'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    const admins = await query('SELECT * FROM admin WHERE username = ? AND is_active = TRUE', [username]);
+    const admins = await query('SELECT * FROM admin WHERE username = ?', [username]);
     
     if (admins.length === 0) {
       return res.status(401).json({
@@ -172,5 +172,351 @@ router.get('/achievements', adminAuth, getAllAchievements);
 router.post('/achievements', adminAuth, createAchievement);
 router.put('/achievements/:achievementId', adminAuth, updateAchievement);
 router.delete('/achievements/:achievementId', adminAuth, deleteAchievement);
+
+// ==================== READING PASSAGES CRUD ====================
+router.get('/reading-passages', adminAuth, async (req, res) => {
+  try {
+    const passages = await query(`
+      SELECT * FROM reading_passages 
+      ORDER BY subject, topic, level, sublevel
+    `);
+    
+    res.json({
+      success: true,
+      data: passages
+    });
+  } catch (error) {
+    console.error('Get reading passages error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get reading passages'
+    });
+  }
+});
+
+router.post('/reading-passages', adminAuth, async (req, res) => {
+  try {
+    const { subject, topic, level, sublevel, title, author, content } = req.body;
+    
+    if (!subject || !topic || !level || !sublevel || !title || !content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Subject, topic, level, sublevel, title, and content are required'
+      });
+    }
+    
+    const result = await query(`
+      INSERT INTO reading_passages (subject, topic, level, sublevel, title, author, content, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [subject, topic, level, sublevel, title, author || null, content, req.admin.adminId]);
+    
+    res.json({
+      success: true,
+      message: 'Reading passage created successfully',
+      data: { id: result.insertId }
+    });
+  } catch (error) {
+    console.error('Create reading passage error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create reading passage'
+    });
+  }
+});
+
+router.put('/reading-passages/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subject, topic, level, sublevel, title, author, content } = req.body;
+    
+    if (!subject || !topic || !level || !sublevel || !title || !content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Subject, topic, level, sublevel, title, and content are required'
+      });
+    }
+    
+    await query(`
+      UPDATE reading_passages 
+      SET subject = ?, topic = ?, level = ?, sublevel = ?, title = ?, author = ?, content = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [subject, topic, level, sublevel, title, author || null, content, id]);
+    
+    res.json({
+      success: true,
+      message: 'Reading passage updated successfully'
+    });
+  } catch (error) {
+    console.error('Update reading passage error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update reading passage'
+    });
+  }
+});
+
+router.delete('/reading-passages/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('Attempting to delete reading passage with ID:', id);
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid passage ID'
+      });
+    }
+    
+    // Check if passage exists first
+    const existing = await query('SELECT id FROM reading_passages WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reading passage not found'
+      });
+    }
+    
+    const result = await query('DELETE FROM reading_passages WHERE id = ?', [id]);
+    console.log('Delete result:', result);
+    
+    res.json({
+      success: true,
+      message: 'Reading passage deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete reading passage error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete reading passage: ' + error.message
+    });
+  }
+});
+
+// ==================== PASSAGE-QUESTIONS ENDPOINTS ====================
+
+// Get questions for a specific passage
+router.get('/passage-questions/:passageId', adminAuth, async (req, res) => {
+  try {
+    const { passageId } = req.params;
+    
+    const questions = await query(`
+      SELECT q.*, rp.title as passage_title, rp.author as passage_author
+      FROM Question q
+      LEFT JOIN reading_passages rp ON q.reading_passage_id = rp.id
+      WHERE q.reading_passage_id = ?
+      ORDER BY q.id ASC
+    `, [passageId]);
+    
+    res.json({
+      success: true,
+      data: questions
+    });
+  } catch (error) {
+    console.error('Get passage questions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get passage questions: ' + error.message
+    });
+  }
+});
+
+// Get all questions (with or without passages)
+router.get('/all-questions', adminAuth, async (req, res) => {
+  try {
+    const questions = await query(`
+      SELECT q.*, rp.title as passage_title, rp.author as passage_author
+      FROM Question q
+      LEFT JOIN reading_passages rp ON q.reading_passage_id = rp.id
+      ORDER BY q.reading_passage_id, q.id ASC
+    `);
+    
+    res.json({
+      success: true,
+      data: questions
+    });
+  } catch (error) {
+    console.error('Get all questions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get questions: ' + error.message
+    });
+  }
+});
+
+// Create new question
+router.post('/questions', adminAuth, async (req, res) => {
+  try {
+    const {
+      subject, topic, level, sublevel, text,
+      option_a, option_b, option_c, option_d,
+      correct_answer, reading_passage_id
+    } = req.body;
+
+    // Validate required fields
+    if (!text || !option_a || !option_b || !option_c || !option_d || !correct_answer) {
+      return res.status(400).json({
+        success: false,
+        message: 'All question fields are required'
+      });
+    }
+
+    // Validate correct answer
+    if (!['A', 'B', 'C', 'D'].includes(correct_answer)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Correct answer must be A, B, C, or D'
+      });
+    }
+
+    // If reading_passage_id is provided, check if it exists
+    if (reading_passage_id) {
+      const passageExists = await query('SELECT id FROM reading_passages WHERE id = ?', [reading_passage_id]);
+      if (passageExists.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Reading passage not found'
+        });
+      }
+    }
+
+    const result = await query(`
+      INSERT INTO Question (
+        subject, topic, level, sublevel, text,
+        option_a, option_b, option_c, option_d,
+        correct_answer, reading_passage_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      subject || 'English',
+      topic || 'comprehension',
+      level || 'easy',
+      sublevel || '1',
+      text,
+      option_a,
+      option_b,
+      option_c,
+      option_d,
+      correct_answer,
+      reading_passage_id || null
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        id: result.insertId,
+        subject, topic, level, sublevel, text,
+        option_a, option_b, option_c, option_d,
+        correct_answer, reading_passage_id
+      },
+      message: 'Question created successfully'
+    });
+  } catch (error) {
+    console.error('Create question error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create question: ' + error.message
+    });
+  }
+});
+
+// Update question
+router.put('/questions/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      subject, topic, level, sublevel, text,
+      option_a, option_b, option_c, option_d,
+      correct_answer, reading_passage_id
+    } = req.body;
+
+    // Check if question exists
+    const existing = await query('SELECT id FROM Question WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Validate required fields
+    if (!text || !option_a || !option_b || !option_c || !option_d || !correct_answer) {
+      return res.status(400).json({
+        success: false,
+        message: 'All question fields are required'
+      });
+    }
+
+    // Validate correct answer
+    if (!['A', 'B', 'C', 'D'].includes(correct_answer)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Correct answer must be A, B, C, or D'
+      });
+    }
+
+    // If reading_passage_id is provided, check if it exists
+    if (reading_passage_id) {
+      const passageExists = await query('SELECT id FROM reading_passages WHERE id = ?', [reading_passage_id]);
+      if (passageExists.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Reading passage not found'
+        });
+      }
+    }
+
+    await query(`
+      UPDATE Question SET
+        subject = ?, topic = ?, level = ?, sublevel = ?, text = ?,
+        option_a = ?, option_b = ?, option_c = ?, option_d = ?,
+        correct_answer = ?, reading_passage_id = ?
+      WHERE id = ?
+    `, [
+      subject, topic, level, sublevel, text,
+      option_a, option_b, option_c, option_d,
+      correct_answer, reading_passage_id || null, id
+    ]);
+
+    res.json({
+      success: true,
+      message: 'Question updated successfully'
+    });
+  } catch (error) {
+    console.error('Update question error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update question: ' + error.message
+    });
+  }
+});
+
+// Delete question
+router.delete('/questions/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if question exists
+    const existing = await query('SELECT id FROM Question WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    await query('DELETE FROM Question WHERE id = ?', [id]);
+
+    res.json({
+      success: true,
+      message: 'Question deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete question error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete question: ' + error.message
+    });
+  }
+});
 
 module.exports = router;

@@ -174,6 +174,10 @@ const createQuestion = async (req, res) => {
 // Update question
 const updateQuestion = async (req, res) => {
   try {
+    console.log('\n=== UPDATE QUESTION DEBUG ===');
+    console.log('Question ID:', req.params.questionId);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
     const { questionId } = req.params;
     const {
       activity_id,
@@ -211,12 +215,19 @@ const updateQuestion = async (req, res) => {
     const ptsValue = points_value || pointsValue;
     const ordIdx = order_index || orderIndex;
     
+    console.log('Parsed values:');
+    console.log('  Activity ID:', actId);
+    console.log('  Question Text:', qText?.substring(0, 50));
+    console.log('  Question Type:', qType);
+    console.log('  Correct Answer:', correctAns);
+    
     // Parse options if it's a string
     let optionsData = options;
     if (typeof options === 'string' && options.trim()) {
       try {
         optionsData = JSON.parse(options);
       } catch (e) {
+        console.error('Failed to parse options:', e.message);
         optionsData = options;
       }
     }
@@ -227,13 +238,36 @@ const updateQuestion = async (req, res) => {
       try {
         aslSignsData = JSON.parse(aslS);
       } catch (e) {
+        console.error('Failed to parse ASL signs:', e.message);
         aslSignsData = aslS;
       }
     }
     
     const aslImg = req.body.asl_image_url || req.body.aslImageUrl || req.body['asl_image_url'] || req.body['aslImageUrl'];
     
-    await query(
+    console.log('Executing UPDATE query...');
+    
+    // Convert undefined to null for all parameters
+    const params = [
+      actId ?? null,
+      qText ?? null,
+      qType ?? null,
+      correctAns ?? null,
+      optionsData ? (typeof optionsData === 'string' ? optionsData : JSON.stringify(optionsData)) : null,
+      aslSignsData ? (typeof aslSignsData === 'string' ? aslSignsData : JSON.stringify(aslSignsData)) : null,
+      aslVid ?? null,
+      aslImg ?? null,
+      aslT ?? null,
+      explanation ?? null,
+      diffLevel ?? null,
+      ptsValue ?? null,
+      ordIdx ?? null,
+      questionId
+    ];
+    
+    console.log('Query parameters:', params.map((p, i) => `${i}: ${p === null ? 'NULL' : typeof p === 'string' ? p.substring(0, 30) + '...' : p}`));
+    
+    const result = await query(
       `UPDATE Question SET 
         activity_id = COALESCE(?, activity_id),
         question_text = COALESCE(?, question_text),
@@ -249,33 +283,24 @@ const updateQuestion = async (req, res) => {
         points_value = COALESCE(?, points_value),
         order_index = COALESCE(?, order_index)
       WHERE question_id = ?`,
-      [
-        actId,
-        qText,
-        qType,
-        correctAns,
-        optionsData ? (typeof optionsData === 'string' ? optionsData : JSON.stringify(optionsData)) : null,
-        aslSignsData ? (typeof aslSignsData === 'string' ? aslSignsData : JSON.stringify(aslSignsData)) : null,
-        aslVid,
-        aslImg,
-        aslT,
-        explanation,
-        diffLevel,
-        ptsValue,
-        ordIdx,
-        questionId
-      ]
+      params
     );
+    
+    console.log('Update result:', result);
+    console.log('Affected rows:', result.affectedRows);
+    console.log('=== UPDATE COMPLETE ===\n');
     
     res.json({
       success: true,
       message: 'Question updated successfully'
     });
   } catch (error) {
-    console.error('Update question error:', error);
+    console.error('\n=== UPDATE QUESTION ERROR ===');
+    console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
     console.error('Request body:', req.body);
     console.error('Question ID:', req.params.questionId);
+    console.error('=== ERROR END ===\n');
     res.status(500).json({ 
       success: false, 
       message: 'Failed to update question', 

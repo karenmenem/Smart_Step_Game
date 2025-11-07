@@ -363,6 +363,13 @@ function MathQuiz() {
     if (!questions || questions.length === 0 || !questions[currentQuestion]) return;
     
     if ('speechSynthesis' in window) {
+      // If already playing, stop it
+      if (isPlaying) {
+        window.speechSynthesis.cancel();
+        setIsPlaying(false);
+        return;
+      }
+      
       // Stop any ongoing speech
       window.speechSynthesis.cancel();
       
@@ -409,18 +416,19 @@ function MathQuiz() {
     }
   };
 
-  // Auto-play question when component mounts or question changes
-  useEffect(() => {
-    if (!questions || questions.length === 0) return;
-    
-    const timer = setTimeout(() => {
-      if (!showResult && !quizComplete && audioEnabled && questions[currentQuestion]) {
-        speakQuestion();
-      }
-    }, 500); // Small delay to ensure component is ready
-
-    return () => clearTimeout(timer);
-  }, [currentQuestion, showResult, quizComplete, audioEnabled, questions]);
+  // Auto-play question when component mounts or question changes - DISABLED
+  // Students can click the speaker button to hear the question
+  // useEffect(() => {
+  //   if (!questions || questions.length === 0) return;
+  //   
+  //   const timer = setTimeout(() => {
+  //     if (!showResult && !quizComplete && audioEnabled && questions[currentQuestion]) {
+  //       speakQuestion();
+  //     }
+  //   }, 500);
+  //
+  //   return () => clearTimeout(timer);
+  // }, [currentQuestion, showResult, quizComplete, audioEnabled, questions]);
 
   if (!user || loading) {
     return (
@@ -647,10 +655,13 @@ function MathQuiz() {
                   </h3>
                   <button 
                     className={`speaker-btn ${isPlaying ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
-                    onClick={audioEnabled ? speakQuestion : toggleAudio}
+                    onClick={speakQuestion}
                     onContextMenu={(e) => { e.preventDefault(); toggleAudio(); }}
-                    disabled={isPlaying}
-                    title={audioEnabled ? "🔈 Click to hear the question | Right-click to disable audio" : "🔇 Audio is off - click to enable"}
+                    title={
+                      !audioEnabled ? "� Audio is off - right-click to enable" : 
+                      isPlaying ? "🔊 Click to stop | Right-click to disable audio" : 
+                      "� Click to hear the question | Right-click to disable audio"
+                    }
                   >
                     {!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
                   </button>

@@ -7,9 +7,18 @@ function MathLevels() {
   const { operation } = useParams(); // addition, subtraction, multiplication, division
   const [user, setUser] = useState(null);
   const [levelAccess, setLevelAccess] = useState({
-    level1: true,
-    level2: { allowed: false, reason: '', percentage: 0 },
-    level3: { allowed: false, reason: '', percentage: 0 }
+    beginner: {
+      level1: true,
+      level2: { allowed: false, reason: '', percentage: 0 }
+    },
+    intermediate: {
+      level1: { allowed: false, reason: '', percentage: 0 },
+      level2: { allowed: false, reason: '', percentage: 0 }
+    },
+    advanced: {
+      level1: { allowed: false, reason: '', percentage: 0 },
+      level2: { allowed: false, reason: '', percentage: 0 }
+    }
   });
   const [loading, setLoading] = useState(true);
 
@@ -31,25 +40,50 @@ function MathLevels() {
 
     try {
       // Get activity IDs for this operation
+      // Structure: Beginner (L1, L2), Intermediate (L1, L2), Advanced (L1, L2)
       const operationBase = {
-        'addition': 7,
-        'subtraction': 16,
-        'multiplication': 25,
-        'division': 34
+        'addition': 7,      // 7, 8, 10, 11, 13, 14
+        'subtraction': 16,  // 16, 17, 19, 20, 22, 23
+        'multiplication': 25, // 25, 26, 28, 29, 31, 32
+        'division': 34      // 34, 35, 37, 38, 40, 41
       };
       
       const baseId = operationBase[operation] || 7;
       
-      // Check access for levels 2 and 3
-      const [level2Access, level3Access] = await Promise.all([
-        api.checkLevelAccess(userData.child.id, baseId + 1), // Level 2
-        api.checkLevelAccess(userData.child.id, baseId + 2)  // Level 3
+      // Check access for all levels
+      // Beginner Level 2 (baseId + 1)
+      // Intermediate Level 1 (baseId + 3)
+      // Intermediate Level 2 (baseId + 4)
+      // Advanced Level 1 (baseId + 6)
+      // Advanced Level 2 (baseId + 7)
+      
+      const [
+        beginnerL2,
+        intermediateL1,
+        intermediateL2,
+        advancedL1,
+        advancedL2
+      ] = await Promise.all([
+        api.checkLevelAccess(userData.child.id, baseId + 1),
+        api.checkLevelAccess(userData.child.id, baseId + 3),
+        api.checkLevelAccess(userData.child.id, baseId + 4),
+        api.checkLevelAccess(userData.child.id, baseId + 6),
+        api.checkLevelAccess(userData.child.id, baseId + 7)
       ]);
 
       setLevelAccess({
-        level1: true, // Always accessible
-        level2: level2Access.success ? level2Access : { allowed: false, reason: 'Complete Level 1 first' },
-        level3: level3Access.success ? level3Access : { allowed: false, reason: 'Complete Level 2 first' }
+        beginner: {
+          level1: true, // Always accessible
+          level2: beginnerL2.success ? beginnerL2 : { allowed: false, reason: 'Complete Level 1 first' }
+        },
+        intermediate: {
+          level1: intermediateL1.success ? intermediateL1 : { allowed: false, reason: 'Complete Beginner Level 2 first' },
+          level2: intermediateL2.success ? intermediateL2 : { allowed: false, reason: 'Complete Intermediate Level 1 first' }
+        },
+        advanced: {
+          level1: advancedL1.success ? advancedL1 : { allowed: false, reason: 'Complete Intermediate Level 2 first' },
+          level2: advancedL2.success ? advancedL2 : { allowed: false, reason: 'Complete Advanced Level 1 first' }
+        }
       });
     } catch (error) {
       console.error('Error checking level access:', error);
@@ -194,40 +228,21 @@ function MathLevels() {
                   📊 Sublevel 1: Simple {operationInfo.title} (1-10)
                 </button>
                 <button 
-                  className={`level-btn ${levelAccess.level2.allowed ? 'start-btn' : 'locked-btn'}`}
+                  className={`level-btn ${levelAccess.beginner.level2.allowed ? 'start-btn' : 'locked-btn'}`}
                   onClick={() => {
-                    if (levelAccess.level2.allowed) {
+                    if (levelAccess.beginner.level2.allowed) {
                       navigate(`/math/${operation}/quiz/beginner/2`);
                     } else {
-                      alert(levelAccess.level2.reason || 'Complete Level 1 with 80% or higher to unlock');
+                      alert(levelAccess.beginner.level2.reason || 'Complete Level 1 with 80% or higher to unlock');
                     }
                   }}
-                  style={{ backgroundColor: levelAccess.level2.allowed ? '#4facfe' : '#ccc' }}
-                  disabled={loading || !levelAccess.level2.allowed}
+                  style={{ backgroundColor: levelAccess.beginner.level2.allowed ? '#4facfe' : '#ccc' }}
+                  disabled={loading || !levelAccess.beginner.level2.allowed}
                 >
-                  {levelAccess.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Intermediate {operationInfo.title} (10-50)
-                  {!levelAccess.level2.allowed && levelAccess.level2.progress && (
+                  {levelAccess.beginner.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Intermediate {operationInfo.title} (10-50)
+                  {!levelAccess.beginner.level2.allowed && levelAccess.beginner.level2.progress && (
                     <div style={{ fontSize: '12px', marginTop: '5px' }}>
-                      Current: {levelAccess.level2.progress.percentage}% (Need 80%)
-                    </div>
-                  )}
-                </button>
-                <button 
-                  className={`level-btn ${levelAccess.level3.allowed ? 'start-btn' : 'locked-btn'}`}
-                  onClick={() => {
-                    if (levelAccess.level3.allowed) {
-                      navigate(`/math/${operation}/quiz/beginner/3`);
-                    } else {
-                      alert(levelAccess.level3.reason || 'Complete Level 2 with 80% or higher to unlock');
-                    }
-                  }}
-                  style={{ backgroundColor: levelAccess.level3.allowed ? '#667eea' : '#ccc' }}
-                  disabled={loading || !levelAccess.level3.allowed}
-                >
-                  {levelAccess.level3.allowed ? '🚀' : '🔒'} Sublevel 3: Advanced {operationInfo.title} (100+)
-                  {!levelAccess.level3.allowed && levelAccess.level3.progress && (
-                    <div style={{ fontSize: '12px', marginTop: '5px' }}>
-                      Current: {levelAccess.level3.progress.percentage}% (Need 80%)
+                      Current: {levelAccess.beginner.level2.progress.percentage}% (Need 80%)
                     </div>
                   )}
                 </button>
@@ -236,10 +251,12 @@ function MathLevels() {
           </div>
 
           {/* Intermediate Level */}
-          <div className="level-card intermediate-card locked">
-            <div className="lock-overlay">
-              <div className="lock-icon">🔒</div>
-            </div>
+          <div className={`level-card intermediate-card ${levelAccess.intermediate.level1.allowed ? 'active' : 'locked'}`}>
+            {!levelAccess.intermediate.level1.allowed && (
+              <div className="lock-overlay">
+                <div className="lock-icon">🔒</div>
+              </div>
+            )}
             
             <div className="level-header">
               <div className="level-icon">⚡</div>
@@ -253,25 +270,54 @@ function MathLevels() {
               <div className="level-stats">
                 <div className="stat-item">
                   <span className="stat-icon">🎯</span>
-                  <span className="stat-text">Challenge activities</span>
+                  <span className="stat-text">Numbers 10-100</span>
                 </div>
                 <div className="stat-item">
                   <span className="stat-icon">🏆</span>
-                  <span className="stat-text">More rewards</span>
+                  <span className="stat-text">More challenging problems</span>
                 </div>
               </div>
               
-              <button className="level-btn locked-btn" disabled>
-                Complete Beginner First
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+                <button 
+                  className={`level-btn ${levelAccess.intermediate.level1.allowed ? 'start-btn' : 'locked-btn'}`}
+                  onClick={() => {
+                    if (levelAccess.intermediate.level1.allowed) {
+                      navigate(`/math/${operation}/quiz/intermediate/1`);
+                    } else {
+                      alert(levelAccess.intermediate.level1.reason || 'Complete Beginner Level 2 with 80% or higher to unlock');
+                    }
+                  }}
+                  style={{ backgroundColor: levelAccess.intermediate.level1.allowed ? '#fa709a' : '#ccc' }}
+                  disabled={loading || !levelAccess.intermediate.level1.allowed}
+                >
+                  {levelAccess.intermediate.level1.allowed ? '📊' : '🔒'} Sublevel 1: Intermediate Problems
+                </button>
+                <button 
+                  className={`level-btn ${levelAccess.intermediate.level2.allowed ? 'start-btn' : 'locked-btn'}`}
+                  onClick={() => {
+                    if (levelAccess.intermediate.level2.allowed) {
+                      navigate(`/math/${operation}/quiz/intermediate/2`);
+                    } else {
+                      alert(levelAccess.intermediate.level2.reason || 'Complete Intermediate Level 1 with 80% or higher to unlock');
+                    }
+                  }}
+                  style={{ backgroundColor: levelAccess.intermediate.level2.allowed ? '#fa709a' : '#ccc' }}
+                  disabled={loading || !levelAccess.intermediate.level2.allowed}
+                >
+                  {levelAccess.intermediate.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Advanced Problems
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Advanced Level */}
-          <div className="level-card advanced-card locked">
-            <div className="lock-overlay">
-              <div className="lock-icon">🔒</div>
-            </div>
+          <div className={`level-card advanced-card ${levelAccess.advanced.level1.allowed ? 'active' : 'locked'}`}>
+            {!levelAccess.advanced.level1.allowed && (
+              <div className="lock-overlay">
+                <div className="lock-icon">🔒</div>
+              </div>
+            )}
             
             <div className="level-header">
               <div className="level-icon">🏆</div>
@@ -285,7 +331,7 @@ function MathLevels() {
               <div className="level-stats">
                 <div className="stat-item">
                   <span className="stat-icon">🚀</span>
-                  <span className="stat-text">Expert challenges</span>
+                  <span className="stat-text">Expert level problems</span>
                 </div>
                 <div className="stat-item">
                   <span className="stat-icon">👑</span>
@@ -293,6 +339,36 @@ function MathLevels() {
                 </div>
               </div>
               
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+                <button 
+                  className={`level-btn ${levelAccess.advanced.level1.allowed ? 'start-btn' : 'locked-btn'}`}
+                  onClick={() => {
+                    if (levelAccess.advanced.level1.allowed) {
+                      navigate(`/math/${operation}/quiz/advanced/1`);
+                    } else {
+                      alert(levelAccess.advanced.level1.reason || 'Complete Intermediate Level 2 with 80% or higher to unlock');
+                    }
+                  }}
+                  style={{ backgroundColor: levelAccess.advanced.level1.allowed ? '#667eea' : '#ccc' }}
+                  disabled={loading || !levelAccess.advanced.level1.allowed}
+                >
+                  {levelAccess.advanced.level1.allowed ? '📊' : '🔒'} Sublevel 1: Expert Problems
+                </button>
+                <button 
+                  className={`level-btn ${levelAccess.advanced.level2.allowed ? 'start-btn' : 'locked-btn'}`}
+                  onClick={() => {
+                    if (levelAccess.advanced.level2.allowed) {
+                      navigate(`/math/${operation}/quiz/advanced/2`);
+                    } else {
+                      alert(levelAccess.advanced.level2.reason || 'Complete Advanced Level 1 with 80% or higher to unlock');
+                    }
+                  }}
+                  style={{ backgroundColor: levelAccess.advanced.level2.allowed ? '#667eea' : '#ccc' }}
+                  disabled={loading || !levelAccess.advanced.level2.allowed}
+                >
+                  {levelAccess.advanced.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Master Problems
+                </button>
+              </div>
               <button className="level-btn locked-btn" disabled>
                 Complete Intermediate First
               </button>

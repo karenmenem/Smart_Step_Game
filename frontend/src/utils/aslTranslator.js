@@ -237,7 +237,7 @@ export const getASLFromQuestion = (question) => {
     }
   }
   
-  // Priority 3: ASL signs array (numbers) - handle both snake_case and camelCase
+  // Priority 3: ASL signs array (numbers or sentence words) - handle both snake_case and camelCase
   const aslSigns = question.asl_signs || question.aslSigns;
   if (aslSigns) {
     try {
@@ -245,6 +245,17 @@ export const getASLFromQuestion = (question) => {
         ? JSON.parse(aslSigns)
         : aslSigns;
       
+      // Check if it's sentence format with words array
+      if (signs.words && Array.isArray(signs.words)) {
+        return signs.words.map(wordObj => ({
+          type: 'word',
+          value: wordObj.word,
+          resource: wordObj.video,
+          display: wordObj.word
+        }));
+      }
+      
+      // Legacy format: array of numbers/operations
       return signs.map(sign => {
         if (typeof sign === 'number' || /^\d+$/.test(sign)) {
           return {

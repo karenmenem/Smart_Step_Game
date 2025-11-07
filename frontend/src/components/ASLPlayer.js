@@ -6,66 +6,19 @@ import '../styles/ASLPlayer.css';
  * ASL Player Component
  * Displays ASL signs in sequence - supports videos, images, and built-in signs
  */
-const ASLPlayer = ({ question, autoPlay = false, showControls = true }) => {
+const ASLPlayer = ({ question }) => {
   const [sequence, setSequence] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1.5); // seconds per sign
 
   useEffect(() => {
     if (question) {
       const aslSequence = getASLFromQuestion(question);
       setSequence(aslSequence);
       setCurrentIndex(0);
-      
-      if (autoPlay && aslSequence.length > 0) {
-        setIsPlaying(true);
-      }
     }
-  }, [question, autoPlay]);
+  }, [question]);
 
-  useEffect(() => {
-    if (isPlaying && sequence.length > 0) {
-      const timer = setTimeout(() => {
-        if (currentIndex < sequence.length - 1) {
-          setCurrentIndex(currentIndex + 1);
-        } else {
-          setIsPlaying(false);
-          setCurrentIndex(0);
-        }
-      }, playbackSpeed * 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isPlaying, currentIndex, sequence, playbackSpeed]);
-
-  const handlePlay = () => {
-    if (currentIndex === sequence.length - 1) {
-      setCurrentIndex(0);
-    }
-    setIsPlaying(true);
-  };
-
-  const handlePause = () => {
-    setIsPlaying(false);
-  };
-
-  const handleRestart = () => {
-    setCurrentIndex(0);
-    setIsPlaying(true);
-  };
-
-  const handleNext = () => {
-    if (currentIndex < sequence.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
+  // Videos auto-play and advance via onEnded event - no manual controls needed
 
   if (!sequence || sequence.length === 0) {
     return (
@@ -76,23 +29,24 @@ const ASLPlayer = ({ question, autoPlay = false, showControls = true }) => {
   }
 
   const currentSign = sequence[currentIndex];
-  const complete = isASLComplete(sequence);
-  const missing = getMissingASLResources(sequence);
 
   return (
     <div className="asl-player">
       {/* Display Area */}
       <div className="asl-display">
-        {currentSign.type === 'video' && currentSign.resource ? (
+        {(currentSign.type === 'video' || currentSign.type === 'word' || currentSign.type === 'operation') && currentSign.resource ? (
           <video
             key={currentIndex}
             className="asl-video"
-            autoPlay={isPlaying}
-            loop={!isPlaying}
+            autoPlay={true}
+            loop={false}
             muted={false}
             onEnded={() => {
-              if (isPlaying && currentIndex < sequence.length - 1) {
+              if (currentIndex < sequence.length - 1) {
                 setCurrentIndex(currentIndex + 1);
+              } else {
+                // Restart from beginning when done
+                setCurrentIndex(0);
               }
             }}
           >
@@ -105,15 +59,22 @@ const ASLPlayer = ({ question, autoPlay = false, showControls = true }) => {
             alt={`ASL sign for ${currentSign.display}`}
             className="asl-image"
           />
-        ) : currentSign.resource ? (
+        ) : currentSign.type === 'number' && currentSign.resource ? (
           <div className="asl-built-in">
-            {/* For built-in number/word signs */}
+            {/* For built-in number signs */}
             <video
               key={currentIndex}
               className="asl-video"
-              autoPlay={isPlaying}
-              loop={!isPlaying}
+              autoPlay={true}
+              loop={false}
               muted={false}
+              onEnded={() => {
+                if (currentIndex < sequence.length - 1) {
+                  setCurrentIndex(currentIndex + 1);
+                } else {
+                  setCurrentIndex(0);
+                }
+              }}
             >
               <source src={currentSign.resource} type="video/mp4" />
             </video>
@@ -149,69 +110,11 @@ const ASLPlayer = ({ question, autoPlay = false, showControls = true }) => {
           </div>
         )}
 
-        {/* Current Sign Label */}
+        {/* Current Sign Label - Always show word */}
         <div className="asl-label">
           <span className="asl-text">{currentSign.display}</span>
-          <span className="asl-type">({currentSign.type})</span>
         </div>
       </div>
-
-      {/* Sequence Progress */}
-      <div className="asl-sequence">
-        {sequence.map((sign, index) => (
-          <div
-            key={index}
-            className={`asl-sequence-item ${index === currentIndex ? 'active' : ''} ${index < currentIndex ? 'completed' : ''}`}
-            onClick={() => setCurrentIndex(index)}
-          >
-            {sign.display}
-          </div>
-        ))}
-      </div>
-
-      {/* Controls */}
-      {showControls && (
-        <div className="asl-controls">
-          <button 
-            className="asl-control-btn"
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-          >
-            ⏮️ Previous
-          </button>
-          
-          {isPlaying ? (
-            <button className="asl-control-btn primary" onClick={handlePause}>
-              ⏸️ Pause
-            </button>
-          ) : (
-            <button className="asl-control-btn primary" onClick={handlePlay}>
-              ▶️ Play
-            </button>
-          )}
-          
-          <button className="asl-control-btn" onClick={handleRestart}>
-            🔄 Restart
-          </button>
-          
-          <button 
-            className="asl-control-btn"
-            onClick={handleNext}
-            disabled={currentIndex === sequence.length - 1}
-          >
-            Next ⏭️
-          </button>
-        </div>
-      )}
-
-
-
-      {/* Missing Resources Warning */}
-      {!complete && missing.length > 0 && (
-        <div className="asl-warning">
-          <p>⚠️ Missing ASL resources for: {missing.map(m => m.word).join(', ')}</p>
-        </div>
-      )}
     </div>
   );
 };

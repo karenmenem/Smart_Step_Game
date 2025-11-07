@@ -25,7 +25,8 @@ const checkLevelAccess = async (req, res) => {
     const currentActivity = activity[0];
     
     // Check if this is Level 1 (always accessible)
-    const isLevel1 = [7, 16, 25, 34].includes(parseInt(activityId)); // Addition, Subtraction, Multiplication, Division Level 1
+    // Beginner Level 1: 7 (addition), 16 (subtraction), 25 (multiplication), 34 (division)
+    const isLevel1 = [7, 16, 25, 34].includes(parseInt(activityId));
     
     if (isLevel1) {
       return res.json({
@@ -35,17 +36,41 @@ const checkLevelAccess = async (req, res) => {
       });
     }
     
-    // For Level 2 or 3, check previous level completion
+    // For other levels, check previous level completion
     let requiredActivityId;
     
-    // Determine which previous level needs to be completed
-    if ([8, 17, 26, 35].includes(parseInt(activityId))) {
-      // Level 2 - requires Level 1
-      requiredActivityId = parseInt(activityId) - 1;
-    } else if ([9, 18, 27, 36].includes(parseInt(activityId))) {
-      // Level 3 - requires Level 2
-      requiredActivityId = parseInt(activityId) - 1;
-    }
+    // Map activity IDs to required previous activity
+    const activityMap = {
+      // Addition: Beginner (7, 8), Intermediate (10, 11), Advanced (13, 14)
+      8: 7,   // Beginner L2 requires Beginner L1
+      10: 8,  // Intermediate L1 requires Beginner L2
+      11: 10, // Intermediate L2 requires Intermediate L1
+      13: 11, // Advanced L1 requires Intermediate L2
+      14: 13, // Advanced L2 requires Advanced L1
+      
+      // Subtraction: Beginner (16, 17), Intermediate (19, 20), Advanced (22, 23)
+      17: 16,
+      19: 17,
+      20: 19,
+      22: 20,
+      23: 22,
+      
+      // Multiplication: Beginner (25, 26), Intermediate (28, 29), Advanced (31, 32)
+      26: 25,
+      28: 26,
+      29: 28,
+      31: 29,
+      32: 31,
+      
+      // Division: Beginner (34, 35), Intermediate (37, 38), Advanced (40, 41)
+      35: 34,
+      37: 35,
+      38: 37,
+      40: 38,
+      41: 40
+    };
+    
+    requiredActivityId = activityMap[parseInt(activityId)];
     
     // Get progress for required level
     const progress = await query(`

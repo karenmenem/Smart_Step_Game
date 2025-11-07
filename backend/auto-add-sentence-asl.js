@@ -1,11 +1,4 @@
-/**
- * Automatically add ASL translation support to sentence-based questions
- * 
- * This script:
- * 1. Finds all English/comprehension questions
- * 2. Sets asl_type to 'sentence' for automatic translation
- * 3. The frontend will automatically translate each word to ASL
- */
+
 
 const { query } = require('./config/database');
 

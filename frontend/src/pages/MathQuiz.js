@@ -31,6 +31,9 @@ function MathQuiz() {
   const [pointsEarned, setPointsEarned] = useState(0);
   const [newAchievements, setNewAchievements] = useState([]);
   const [totalPoints, setTotalPoints] = useState(0);
+  const [showHintModal, setShowHintModal] = useState(false);
+  const [currentHintLevel, setCurrentHintLevel] = useState(0);
+  const [timerPaused, setTimerPaused] = useState(false);
 
   useEffect(() => {
     if (auth.isAuthenticated()) {
@@ -210,13 +213,63 @@ function MathQuiz() {
   useEffect(() => {
     if (!questions || questions.length === 0) return;
     
-    if (timeLeft > 0 && !showResult && !quizComplete) {
+    if (timeLeft > 0 && !showResult && !quizComplete && !timerPaused) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !showResult) {
       handleNextQuestion();
     }
-  }, [timeLeft, showResult, quizComplete, questions]);
+  }, [timeLeft, showResult, quizComplete, questions, timerPaused]);
+
+  // Generate hints based on question
+  const generateHints = (question) => {
+    const text = question.question || question.text || "";
+    const isWordProblem = text.length > 50;
+    
+    if (isWordProblem) {
+      // Word problem hints
+      return [
+        "💡 Read the problem carefully and identify the numbers.",
+        "💡 What operation do you need? Look for keywords like 'total', 'altogether', 'in all'.",
+        "💡 Write down the numbers and add them step by step. Start with the first two numbers."
+      ];
+    } else {
+      // Number problem hints
+      const numbers = text.match(/\d+/g);
+      if (numbers && numbers.length >= 2) {
+        const num1 = parseInt(numbers[0]);
+        const num2 = parseInt(numbers[1]);
+        return [
+          "💡 Break the problem into smaller parts.",
+          `💡 Start with ${num1}. Now add ${num2} to it. You can count up!`,
+          `💡 Think: ${num1} + ${num2} = ? Try adding the ones place first, then the tens.`
+        ];
+      }
+      return [
+        "💡 Take your time and read the question again.",
+        "💡 Try counting on your fingers or using objects to help.",
+        "💡 Look at the answer choices - which one makes sense?"
+      ];
+    }
+  };
+
+  const handleHelpClick = () => {
+    setShowHintModal(true);
+    setTimerPaused(true);
+    setCurrentHintLevel(0);
+  };
+
+  const handleNextHint = () => {
+    if (currentHintLevel < 2) {
+      setCurrentHintLevel(currentHintLevel + 1);
+    }
+  };
+
+  const handleCloseHint = () => {
+    setShowHintModal(false);
+    setTimerPaused(false);
+    setCurrentHintLevel(0);
+  };
 
   const handleAnswerSelect = (answer) => {
     setSelectedAnswer(answer);
@@ -630,7 +683,17 @@ function MathQuiz() {
             <span className="progress-text">
               Question {currentQuestion + 1} of {questions.length}
             </span>
-            <span className="timer">⏰ {timeLeft}s</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button 
+                className="help-btn" 
+                onClick={handleHelpClick}
+                disabled={showResult || quizComplete}
+                title="Get a hint"
+              >
+                💡 Help
+              </button>
+              <span className="timer">⏰ {timeLeft}s</span>
+            </div>
           </div>
           <div className="progress-bar">
             <div 
@@ -717,6 +780,45 @@ function MathQuiz() {
           ) : null}
         </div>
       </main>
+
+      {/* Hint Modal */}
+      {showHintModal && questions[currentQuestion] && (
+        <div className="hint-modal-overlay" onClick={handleCloseHint}>
+          <div className="hint-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hint-modal-header">
+              <h3>💡 Need Help?</h3>
+              <button className="hint-close-btn" onClick={handleCloseHint}>✕</button>
+            </div>
+            
+            <div className="hint-modal-content">
+              <p className="hint-text">{generateHints(questions[currentQuestion])[currentHintLevel]}</p>
+              
+              <div className="hint-level-indicator">
+                {[0, 1, 2].map(level => (
+                  <span 
+                    key={level} 
+                    className={`hint-dot ${level <= currentHintLevel ? 'active' : ''}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div className="hint-modal-footer">
+              {currentHintLevel < 2 ? (
+                <button className="hint-next-btn" onClick={handleNextHint}>
+                  Next Hint →
+                </button>
+              ) : (
+                <button className="hint-got-it-btn" onClick={handleCloseHint}>
+                  Got it! ✓
+                </button>
+              )}
+            </div>
+            
+            <p className="hint-timer-note">⏸️ Timer paused while viewing hints</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

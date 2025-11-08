@@ -214,7 +214,7 @@ function MathLevels() {
                 </div>
                 <div className="stat-item">
                   <span className="stat-icon">📚</span>
-                  <span className="stat-text">3 sublevels to complete</span>
+                  <span className="stat-text">2 sublevels to complete</span>
                 </div>
               </div>
               

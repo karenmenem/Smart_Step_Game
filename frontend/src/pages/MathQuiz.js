@@ -6,13 +6,22 @@ import ASLPlayer from "../components/ASLPlayer";
 function MathQuiz() {
   const navigate = useNavigate();
   const { operation, level, sublevel } = useParams();
+  
+  // Get timer duration based on difficulty level
+  const getTimerDuration = () => {
+    if (level === 'beginner') return 30;      // 30 seconds
+    if (level === 'intermediate') return 60;  // 1 minute
+    if (level === 'advanced') return 90;      // 1.5 minutes
+    return 30; // default
+  };
+  
   const [user, setUser] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [quizComplete, setQuizComplete] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(getTimerDuration());
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [questions, setQuestions] = useState([]);
@@ -232,7 +241,7 @@ function MathQuiz() {
       selectedAnswer: selectedAnswer,
       isCorrect: isCorrect,
       pointsEarned: isCorrect ? (questions[currentQuestion].points || 10) : 0,
-      timeTaken: 30 - timeLeft
+      timeTaken: getTimerDuration() - timeLeft
     };
     setAnswers([...answers, answerRecord]);
 
@@ -244,7 +253,7 @@ function MathQuiz() {
       
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(currentQuestion + 1);
-        setTimeLeft(30);
+        setTimeLeft(getTimerDuration());
       } else {
         // Quiz complete - save results to database
         saveQuizResults(newScore, [...answers, answerRecord]);

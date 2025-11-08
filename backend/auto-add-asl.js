@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // ========== CONFIGURATION ==========
-const QUESTION_ID = 34; // <-- CHANGE THIS to the question ID you want to add ASL for
+const QUESTION_ID = 70; // <-- CHANGE THIS to the question ID you want to add ASL for
 // ===================================
 
 async function autoAddASL() {

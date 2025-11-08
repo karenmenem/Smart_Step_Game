@@ -2277,43 +2277,54 @@ select.form-input {
 .level-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 2rem;
+  align-items: flex-start;
+  gap: 2.5rem;
+  margin-top: 1rem;
 }
 
 .level-stats {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
   flex: 1;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  font-size: 1rem;
-  background: none;
+  gap: 1rem;
+  font-size: 1.1rem;
+  background: #f8fafb;
   border: none;
-  /* padding: 0.3rem 0; */
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  background: #f0f4f8;
+  transform: translateX(4px);
 }
 
 .stat-icon {
-  font-size: 1.2rem;
-  opacity: 0.8;
+  font-size: 1.5rem;
+  opacity: 0.9;
+  min-width: 24px;
+  text-align: center;
 }
 
 .stat-text {
   color: #1f2937;
   font-weight: 500;
+  line-height: 1.4;
 }
 
 /* Level Buttons */
 .level-btn {
-  padding: 1rem 2rem;
+  padding: 1rem 1.5rem;
   border: none;
-  border-radius: 15px;
-  font-size: 1.1rem;
+  border-radius: 12px;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -2322,6 +2333,8 @@ select.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: normal;
+  line-height: 1.5;
 }
 
 .start-btn {
@@ -4195,10 +4208,10 @@ select.form-input {
 }
 
 .option-btn.selected {
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #43e97b 0%, #38d9a9 100%);
   color: white;
-  border-color: #8b5cf6;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  border-color: #20bf6b;
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
 }
 
 .quiz-navigation {
@@ -4210,7 +4223,7 @@ select.form-input {
 }
 
 .quiz-nav-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #43e97b 0%, #38d9a9 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -4224,7 +4237,7 @@ select.form-input {
 
 .quiz-nav-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
 }
 
 .quiz-nav-btn:disabled {

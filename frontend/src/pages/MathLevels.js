@@ -74,15 +74,15 @@ function MathLevels() {
       setLevelAccess({
         beginner: {
           level1: true, // Always accessible
-          level2: beginnerL2.success ? beginnerL2 : { allowed: false, reason: 'Complete Level 1 first' }
+          level2: beginnerL2.success && beginnerL2.allowed ? beginnerL2 : { allowed: false, reason: beginnerL2.reason || 'Complete Level 1 first' }
         },
         intermediate: {
-          level1: intermediateL1.success ? intermediateL1 : { allowed: false, reason: 'Complete Beginner Level 2 first' },
-          level2: intermediateL2.success ? intermediateL2 : { allowed: false, reason: 'Complete Intermediate Level 1 first' }
+          level1: intermediateL1.success && intermediateL1.allowed ? intermediateL1 : { allowed: false, reason: intermediateL1.reason || 'Complete Beginner Level 2 first' },
+          level2: intermediateL2.success && intermediateL2.allowed ? intermediateL2 : { allowed: false, reason: intermediateL2.reason || 'Complete Intermediate Level 1 first' }
         },
         advanced: {
-          level1: advancedL1.success ? advancedL1 : { allowed: false, reason: 'Complete Intermediate Level 2 first' },
-          level2: advancedL2.success ? advancedL2 : { allowed: false, reason: 'Complete Advanced Level 1 first' }
+          level1: advancedL1.success && advancedL1.allowed ? advancedL1 : { allowed: false, reason: advancedL1.reason || 'Complete Intermediate Level 2 first' },
+          level2: advancedL2.success && advancedL2.allowed ? advancedL2 : { allowed: false, reason: advancedL2.reason || 'Complete Advanced Level 1 first' }
         }
       });
     } catch (error) {

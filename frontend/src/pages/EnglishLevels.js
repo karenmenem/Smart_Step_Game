@@ -1,29 +1,13 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { auth } from "../api/auth";
+import { auth, api } from "../api/auth";
 
 function EnglishLevels() {
 	const navigate = useNavigate();
 	const { topic } = useParams(); // e.g., comprehension, grammar, vocabulary, picture match
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(false);
-
-	useEffect(() => {
-		if (auth.isAuthenticated()) {
-			const userData = auth.getCurrentUser();
-			setUser(userData);
-		} else {
-			navigate("/login");
-		}
-	}, [navigate]);
-
-	const handleLogout = () => {
-		auth.logout();
-		navigate("/");
-	};
-
-	// Mock level access logic - you can implement actual progress checking later
-	const levelAccess = {
+	const [levelAccess, setLevelAccess] = useState({
 		beginner: {
 			level1: { allowed: true },
 			level2: { allowed: false, reason: 'Complete Sublevel 1 with 80% or higher' }
@@ -36,6 +20,77 @@ function EnglishLevels() {
 			level1: { allowed: false, reason: 'Complete Intermediate levels first' },
 			level2: { allowed: false, reason: 'Complete Advanced Sublevel 1 first' }
 		}
+	});
+
+	useEffect(() => {
+		if (auth.isAuthenticated()) {
+			const userData = auth.getCurrentUser();
+			setUser(userData);
+			checkLevelAccess(userData);
+		} else {
+			navigate("/login");
+		}
+	}, [navigate, topic]);
+
+	const checkLevelAccess = async (userData) => {
+		if (!userData?.child?.id) return;
+		
+		setLoading(true);
+		try {
+			// Map topics to base activity IDs
+			// Comprehension: 43-48 (Beginner 43,44 / Intermediate 45,46 / Advanced 47,48)
+			// Grammar: 49-54 / Vocabulary: 55-60 / Picture Match: 61-66
+			const topicBaseIds = {
+				comprehension: 43,
+				grammar: 49,
+				vocabulary: 55,
+				picture_match: 61
+			};
+
+			const baseId = topicBaseIds[topic] || 43;
+
+			// Check access for each level
+			// Beginner: baseId, baseId+1
+			// Intermediate: baseId+2, baseId+3
+			// Advanced: baseId+4, baseId+5
+			const [
+				beginnerL2,
+				intermediateL1,
+				intermediateL2,
+				advancedL1,
+				advancedL2
+			] = await Promise.all([
+				api.checkLevelAccess(userData.child.id, baseId + 1),
+				api.checkLevelAccess(userData.child.id, baseId + 2),
+				api.checkLevelAccess(userData.child.id, baseId + 3),
+				api.checkLevelAccess(userData.child.id, baseId + 4),
+				api.checkLevelAccess(userData.child.id, baseId + 5)
+			]);
+
+			setLevelAccess({
+				beginner: {
+					level1: { allowed: true }, // Always accessible
+					level2: beginnerL2.success && beginnerL2.allowed ? beginnerL2 : { allowed: false, reason: beginnerL2.reason || 'Complete Sublevel 1 first' }
+				},
+				intermediate: {
+					level1: intermediateL1.success && intermediateL1.allowed ? intermediateL1 : { allowed: false, reason: intermediateL1.reason || 'Complete Beginner Sublevel 2 first' },
+					level2: intermediateL2.success && intermediateL2.allowed ? intermediateL2 : { allowed: false, reason: intermediateL2.reason || 'Complete Intermediate Sublevel 1 first' }
+				},
+				advanced: {
+					level1: advancedL1.success && advancedL1.allowed ? advancedL1 : { allowed: false, reason: advancedL1.reason || 'Complete Intermediate Sublevel 2 first' },
+					level2: advancedL2.success && advancedL2.allowed ? advancedL2 : { allowed: false, reason: advancedL2.reason || 'Complete Advanced Sublevel 1 first' }
+				}
+			});
+		} catch (error) {
+			console.error('Error checking level access:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleLogout = () => {
+		auth.logout();
+		navigate("/");
 	};
 
 	const getTopicDetails = () => {
@@ -199,21 +254,21 @@ function EnglishLevels() {
 						</div>
 					</div>
 
-					{/* Intermediate Level */}
-					<div className="level-card intermediate-card locked">
+				{/* Intermediate Level */}
+				<div className={`level-card intermediate-card ${levelAccess.intermediate.level1.allowed ? 'active' : 'locked'}`}>
+					{!levelAccess.intermediate.level1.allowed && (
 						<div className="lock-overlay">
 							<div className="lock-icon">🔒</div>
 						</div>
+					)}
 
-						<div className="level-header">
-							<div className="level-icon">⚡</div>
-							<div className="level-info">
-								<h2 className="level-title">Intermediate</h2>
-								<p className="level-description">Challenge yourself with harder {topicInfo.title.toLowerCase()}!</p>
-							</div>
+					<div className="level-header">
+						<div className="level-icon">⚡</div>
+						<div className="level-info">
+							<h2 className="level-title">Intermediate</h2>
+							<p className="level-description">Challenge yourself with harder {topicInfo.title.toLowerCase()}!</p>
 						</div>
-
-						<div className="level-content">
+					</div>						<div className="level-content">
 							<div className="level-stats">
 								<div className="stat-item">
 									<span className="stat-icon">🎯</span>
@@ -258,13 +313,13 @@ function EnglishLevels() {
 						</div>
 					</div>
 
-					{/* Advanced Level */}
-					<div className="level-card advanced-card locked">
+				{/* Advanced Level */}
+				<div className={`level-card advanced-card ${levelAccess.advanced.level1.allowed ? 'active' : 'locked'}`}>
+					{!levelAccess.advanced.level1.allowed && (
 						<div className="lock-overlay">
 							<div className="lock-icon">🔒</div>
 						</div>
-
-						<div className="level-header">
+					)}						<div className="level-header">
 							<div className="level-icon">🏆</div>
 							<div className="level-info">
 								<h2 className="level-title">Advanced</h2>

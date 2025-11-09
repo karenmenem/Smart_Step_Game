@@ -10,6 +10,7 @@ function AdminQuestionForm() {
 
   const [formData, setFormData] = useState({
     activity_id: '',
+    passage_id: '',
     question_text: '',
     question_type: 'multiple_choice',
     correct_answer: '',
@@ -25,6 +26,9 @@ function AdminQuestionForm() {
   });
 
   const [activities, setActivities] = useState([]);
+  const [passages, setPassages] = useState([]);
+  const [filteredPassages, setFilteredPassages] = useState([]);
+  const [selectedActivity, setSelectedActivity] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [imageFiles, setImageFiles] = useState({ num1: null, num2: null });
@@ -37,11 +41,23 @@ function AdminQuestionForm() {
     }
     
     loadActivities();
+    loadPassages();
     
     if (isEditMode) {
       loadQuestion();
     }
   }, [id, navigate]);
+
+  // Auto-select passage when activity changes
+  useEffect(() => {
+    if (formData.activity_id && selectedActivity) {
+      // Check if it's a comprehension activity
+      const activityName = selectedActivity.name?.toLowerCase() || '';
+      if (activityName.includes('comprehension')) {
+        autoSelectPassage(selectedActivity);
+      }
+    }
+  }, [formData.activity_id, selectedActivity]);
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -62,6 +78,51 @@ function AdminQuestionForm() {
     }
   };
 
+  const loadPassages = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/reading-passages`, {
+        headers: getHeaders()
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPassages(data.data);
+      }
+    } catch (error) {
+      console.error('Error loading passages:', error);
+    }
+  };
+
+  const autoSelectPassage = (activity) => {
+    // Extract level and sublevel from activity name
+    // Example: "Comprehension Beginner - Level 1"
+    const activityName = activity.name || '';
+    const sectionName = activity.section_name || '';
+    
+    // Determine level (1=Beginner, 2=Intermediate, 3=Advanced)
+    let level = 1;
+    if (sectionName.includes('Intermediate')) level = 2;
+    else if (sectionName.includes('Advanced')) level = 3;
+    
+    // Extract sublevel from activity name (Level 1, Level 2)
+    const sublevelMatch = activityName.match(/Level (\d+)/i);
+    const sublevel = sublevelMatch ? parseInt(sublevelMatch[1]) : 1;
+    
+    // Find matching passage
+    const matchingPassage = passages.find(p => 
+      p.level === level && p.sublevel === sublevel && p.topic?.toLowerCase() === 'comprehension'
+    );
+    
+    if (matchingPassage) {
+      setFormData(prev => ({
+        ...prev,
+        passage_id: matchingPassage.id
+      }));
+      console.log('Auto-selected passage:', matchingPassage.title, `(Level ${level}, Sublevel ${sublevel})`);
+    } else {
+      console.log(`No matching passage found for Level ${level}, Sublevel ${sublevel}`);
+    }
+  };
+
   const loadQuestion = async () => {
     try {
       setLoading(true);
@@ -74,6 +135,7 @@ function AdminQuestionForm() {
         const q = data.data;
         setFormData({
           activity_id: q.activity_id || '',
+          passage_id: q.passage_id || '',
           question_text: q.question_text || '',
           question_type: q.question_type || 'multiple_choice',
           correct_answer: q.correct_answer || '',
@@ -87,6 +149,12 @@ function AdminQuestionForm() {
           points_value: q.points_value || 10,
           order_index: q.order_index || 1
         });
+        
+        // Set selected activity for edit mode
+        const activity = activities.find(a => a.activity_id === q.activity_id);
+        if (activity) {
+          setSelectedActivity(activity);
+        }
       }
     } catch (error) {
       console.error('Error loading question:', error);
@@ -102,6 +170,12 @@ function AdminQuestionForm() {
       ...prev,
       [name]: value
     }));
+
+    // If activity changes, find and store the selected activity
+    if (name === 'activity_id') {
+      const activity = activities.find(a => a.activity_id === parseInt(value));
+      setSelectedActivity(activity);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -220,6 +294,29 @@ function AdminQuestionForm() {
               </select>
             </div>
           </div>
+
+          {selectedActivity?.name?.toLowerCase().includes('comprehension') && (
+            <div className="form-group">
+              <label>Reading Passage {formData.passage_id && '✓'}</label>
+              <select
+                name="passage_id"
+                value={formData.passage_id}
+                onChange={handleChange}
+              >
+                <option value="">No Passage</option>
+                {passages.map(passage => (
+                  <option key={passage.id} value={passage.id}>
+                    {passage.title} (Level {passage.level}, Sublevel {passage.sublevel})
+                  </option>
+                ))}
+              </select>
+              {formData.passage_id && (
+                <small style={{ color: 'green' }}>
+                  ✓ Passage auto-selected based on activity level
+                </small>
+              )}
+            </div>
+          )}
 
           <div className="form-group">
             <label>Question Text *</label>

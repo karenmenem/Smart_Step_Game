@@ -9,6 +9,22 @@ const checkLevelAccess = async (req, res) => {
   try {
     const { childId, activityId } = req.params;
     
+    // First, check if the child has ever attempted this activity
+    // If they have, it means it was unlocked before and should stay unlocked
+    const hasAttempted = await query(
+      'SELECT * FROM child_progress WHERE child_id = ? AND activity_id = ?',
+      [childId, activityId]
+    );
+    
+    if (hasAttempted && hasAttempted.length > 0) {
+      return res.json({
+        success: true,
+        allowed: true,
+        reason: 'Level previously unlocked',
+        hasProgress: true
+      });
+    }
+    
     // Get activity info
     const activity = await query(
       'SELECT * FROM Activity WHERE activity_id = ?',
@@ -25,8 +41,8 @@ const checkLevelAccess = async (req, res) => {
     const currentActivity = activity[0];
     
     // Check if this is Level 1 (always accessible)
-    // Beginner Level 1: 7 (addition), 16 (subtraction), 25 (multiplication), 34 (division)
-    const isLevel1 = [7, 16, 25, 34].includes(parseInt(activityId));
+    // Beginner Level 1: 7 (addition), 16 (subtraction), 25 (multiplication), 34 (division), 43 (comprehension)
+    const isLevel1 = [7, 16, 25, 34, 43].includes(parseInt(activityId));
     
     if (isLevel1) {
       return res.json({
@@ -67,12 +83,73 @@ const checkLevelAccess = async (req, res) => {
       37: 35,
       38: 37,
       40: 38,
-      41: 40
+      41: 40,
+      
+      // English Comprehension: Beginner (43, 44), Intermediate (45, 46), Advanced (47, 48)
+      44: 43, // Beginner L2 requires Beginner L1
+      45: 44, // Intermediate L1 requires Beginner L2
+      46: 45, // Intermediate L2 requires Intermediate L1
+      47: 46, // Advanced L1 requires Intermediate L2
+      48: 47  // Advanced L2 requires Advanced L1
     };
     
     requiredActivityId = activityMap[parseInt(activityId)];
     
-    // Get progress for required level
+    // Special logic for English: Intermediate L1 and Advanced L1 require BOTH previous sublevels
+    // Intermediate L1 (45) requires both Beginner L1 (43) AND L2 (44)
+    // Advanced L1 (47) requires both Intermediate L1 (45) AND L2 (46)
+    const requiresBothSublevels = [45, 47]; // English Intermediate L1 and Advanced L1
+    
+    if (requiresBothSublevels.includes(parseInt(activityId))) {
+      let requiredActivities = [];
+      if (parseInt(activityId) === 45) {
+        // Intermediate L1 requires both Beginner sublevels
+        requiredActivities = [43, 44];
+      } else if (parseInt(activityId) === 47) {
+        // Advanced L1 requires both Intermediate sublevels
+        requiredActivities = [45, 46];
+      }
+      
+      // Check both required activities
+      for (const reqActivityId of requiredActivities) {
+        const progress = await query(`
+          SELECT * FROM child_progress 
+          WHERE child_id = ? AND activity_id = ?
+          ORDER BY last_attempt DESC
+          LIMIT 1
+        `, [childId, reqActivityId]);
+        
+        if (!progress || progress.length === 0) {
+          return res.json({
+            success: true,
+            allowed: false,
+            reason: 'Complete both previous sublevels first',
+            requiredLevel: reqActivityId
+          });
+        }
+        
+        const lastProgress = progress[0];
+        const percentage = (lastProgress.score / lastProgress.max_score) * 100;
+        
+        if (percentage < 80) {
+          return res.json({
+            success: true,
+            allowed: false,
+            reason: 'You need 80% or higher in both previous sublevels',
+            progress: Math.round(percentage)
+          });
+        }
+      }
+      
+      // Both sublevels completed with 80%+
+      return res.json({
+        success: true,
+        allowed: true,
+        reason: 'Level unlocked!'
+      });
+    }
+    
+    // Standard logic for other levels (single prerequisite)
     const progress = await query(`
       SELECT * FROM child_progress 
       WHERE child_id = ? AND activity_id = ?

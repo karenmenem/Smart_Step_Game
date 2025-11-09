@@ -13,11 +13,15 @@ const getAllQuestions = async (req, res) => {
         a.name as activity_name,
         s.name as section_name,
         s.level,
-        sub.name as subject_name
+        sub.name as subject_name,
+        rp.passage_id,
+        rp.title as passage_title,
+        rp.content as passage_content
       FROM question q
       JOIN activity a ON q.activity_id = a.activity_id
       JOIN section s ON a.section_id = s.section_id
       JOIN subject sub ON s.subject_id = sub.subject_id
+      LEFT JOIN reading_passage rp ON q.passage_id = rp.passage_id
       WHERE 1=1
     `;
     const params = [];
@@ -138,13 +142,17 @@ const createQuestion = async (req, res) => {
       }
     }
     
+    // Get passage_id if provided
+    const passageId = req.body.passage_id || req.body.passageId || null;
+    
     const result = await query(
       `INSERT INTO Question 
-      (activity_id, question_text, question_type, correct_answer, options, asl_signs, 
+      (activity_id, passage_id, question_text, question_type, correct_answer, options, asl_signs, 
        asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         actId,
+        passageId,
         qText,
         qType,
         correctAns,
@@ -244,12 +252,14 @@ const updateQuestion = async (req, res) => {
     }
     
     const aslImg = req.body.asl_image_url || req.body.aslImageUrl || req.body['asl_image_url'] || req.body['aslImageUrl'];
+    const passageId = req.body.passage_id || req.body.passageId || null;
     
     console.log('Executing UPDATE query...');
     
     // Convert undefined to null for all parameters
     const params = [
       actId ?? null,
+      passageId,
       qText ?? null,
       qType ?? null,
       correctAns ?? null,
@@ -270,6 +280,7 @@ const updateQuestion = async (req, res) => {
     const result = await query(
       `UPDATE Question SET 
         activity_id = COALESCE(?, activity_id),
+        passage_id = ?,
         question_text = COALESCE(?, question_text),
         question_type = COALESCE(?, question_type),
         correct_answer = COALESCE(?, correct_answer),

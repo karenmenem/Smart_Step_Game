@@ -400,7 +400,10 @@ function AdminDashboard() {
                       <th>Question</th>
                       <th>Subject</th>
                       <th>Level</th>
-                      <th>Reading Passage</th>
+                      <th>Activity</th>
+                      <th>ASL Type</th>
+                      <th>ASL Content</th>
+                      <th>Points</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -1143,8 +1146,8 @@ function ReadingPassageModal({ passage, onSave, onClose }) {
   const [formData, setFormData] = useState({
     subject: passage?.subject || 'English',
     topic: passage?.topic || 'comprehension',
-    level: passage?.level || 'easy',
-    sublevel: passage?.sublevel || '1',
+    level: passage?.level || 1,
+    sublevel: passage?.sublevel || 1,
     title: passage?.title || '',
     author: passage?.author || '',
     content: passage?.content || ''
@@ -1198,11 +1201,11 @@ function ReadingPassageModal({ passage, onSave, onClose }) {
               <label>Level</label>
               <select 
                 value={formData.level} 
-                onChange={e => setFormData({...formData, level: e.target.value})}
+                onChange={e => setFormData({...formData, level: parseInt(e.target.value)})}
               >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
+                <option value="1">1 - Beginner</option>
+                <option value="2">2 - Intermediate</option>
+                <option value="3">3 - Advanced</option>
               </select>
             </div>
             
@@ -1210,7 +1213,7 @@ function ReadingPassageModal({ passage, onSave, onClose }) {
               <label>Sublevel</label>
               <select 
                 value={formData.sublevel} 
-                onChange={e => setFormData({...formData, sublevel: e.target.value})}
+                onChange={e => setFormData({...formData, sublevel: parseInt(e.target.value)})}
               >
                 <option value="1">1</option>
                 <option value="2">2</option>

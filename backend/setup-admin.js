@@ -13,8 +13,6 @@ async function setupAdmin() {
         username VARCHAR(100) UNIQUE NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
-        full_name VARCHAR(200),
-        is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP NULL
       )
@@ -26,15 +24,14 @@ async function setupAdmin() {
     const hashedPassword = await bcrypt.hash('admin123', 10);
     
     await query(`
-      INSERT IGNORE INTO admin (username, email, password, full_name) VALUES
-      (?, ?, ?, ?)
-    `, ['admin', 'admin@smartstep.com', hashedPassword, 'System Administrator']);
+      INSERT IGNORE INTO admin (username, email, password) VALUES
+      (?, ?, ?)
+    `, ['admin', 'admin@smartstep.com', hashedPassword]);
     
     console.log('✅ Default admin created');
-    console.log('\n📝 Admin Credentials:');
+    console.log('\n📝 Admin Login Credentials:');
     console.log('   Username: admin');
-    console.log('   Password: admin123');
-    console.log('   Email: admin@smartstep.com\n');
+    console.log('   Password: admin123\n');
     console.log('⚠️  Please change the default password after first login!\n');
 
     process.exit(0);

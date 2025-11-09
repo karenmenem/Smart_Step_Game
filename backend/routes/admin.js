@@ -83,8 +83,7 @@ router.post('/login', async (req, res) => {
         admin: {
           id: admin.admin_id,
           username: admin.username,
-          email: admin.email,
-          fullName: admin.full_name
+          email: admin.email
         }
       }
     });
@@ -177,7 +176,18 @@ router.delete('/achievements/:achievementId', adminAuth, deleteAchievement);
 router.get('/reading-passages', adminAuth, async (req, res) => {
   try {
     const passages = await query(`
-      SELECT * FROM reading_passages 
+      SELECT 
+        passage_id as id,
+        subject,
+        topic,
+        level,
+        sublevel,
+        title,
+        author,
+        content,
+        difficulty,
+        created_at
+      FROM reading_passage
       ORDER BY subject, topic, level, sublevel
     `);
     
@@ -206,9 +216,9 @@ router.post('/reading-passages', adminAuth, async (req, res) => {
     }
     
     const result = await query(`
-      INSERT INTO reading_passages (subject, topic, level, sublevel, title, author, content, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [subject, topic, level, sublevel, title, author || null, content, req.admin.adminId]);
+      INSERT INTO reading_passage (subject, topic, level, sublevel, title, author, content)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [subject, topic, level, sublevel, title, author || null, content]);
     
     res.json({
       success: true,
@@ -237,9 +247,9 @@ router.put('/reading-passages/:id', adminAuth, async (req, res) => {
     }
     
     await query(`
-      UPDATE reading_passages 
-      SET subject = ?, topic = ?, level = ?, sublevel = ?, title = ?, author = ?, content = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
+      UPDATE reading_passage 
+      SET subject = ?, topic = ?, level = ?, sublevel = ?, title = ?, author = ?, content = ?
+      WHERE passage_id = ?
     `, [subject, topic, level, sublevel, title, author || null, content, id]);
     
     res.json({
@@ -269,7 +279,7 @@ router.delete('/reading-passages/:id', adminAuth, async (req, res) => {
     }
     
     // Check if passage exists first
-    const existing = await query('SELECT id FROM reading_passages WHERE id = ?', [id]);
+    const existing = await query('SELECT passage_id FROM reading_passage WHERE passage_id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({
         success: false,
@@ -277,7 +287,7 @@ router.delete('/reading-passages/:id', adminAuth, async (req, res) => {
       });
     }
     
-    const result = await query('DELETE FROM reading_passages WHERE id = ?', [id]);
+    const result = await query('DELETE FROM reading_passage WHERE passage_id = ?', [id]);
     console.log('Delete result:', result);
     
     res.json({

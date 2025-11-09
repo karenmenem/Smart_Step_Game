@@ -51,9 +51,25 @@ CREATE TABLE IF NOT EXISTS activity (
     FOREIGN KEY (section_id) REFERENCES section(section_id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS reading_passage (
+    passage_id INT AUTO_INCREMENT PRIMARY KEY,
+    subject VARCHAR(50),
+    topic VARCHAR(100),
+    level INT DEFAULT 1,
+    sublevel INT,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    author VARCHAR(200),
+    subject_id INT,
+    difficulty ENUM('easy', 'medium', 'hard') DEFAULT 'easy',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subject_id) REFERENCES subject(subject_id) ON DELETE SET NULL
+);
+
 CREATE TABLE IF NOT EXISTS question (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     activity_id INT NOT NULL,
+    passage_id INT,
     question_text TEXT NOT NULL,
     question_type ENUM('multiple_choice', 'true_false', 'fill_blank', 'drag_drop') NOT NULL,
     correct_answer TEXT NOT NULL,
@@ -66,7 +82,8 @@ CREATE TABLE IF NOT EXISTS question (
     points_value INT DEFAULT 1,
     order_index INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (activity_id) REFERENCES activity(activity_id) ON DELETE CASCADE
+    FOREIGN KEY (activity_id) REFERENCES activity(activity_id) ON DELETE CASCADE,
+    FOREIGN KEY (passage_id) REFERENCES reading_passage(passage_id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS child_progress (

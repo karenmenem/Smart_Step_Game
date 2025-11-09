@@ -109,8 +109,8 @@ function Dashboard() {
       37: "Division Intermediate L1", 38: "Division Intermediate L2",
       40: "Division Advanced L1", 41: "Division Advanced L2",
       43: "Comprehension Beginner L1", 44: "Comprehension Beginner L2",
-      45: "Comprehension Intermediate L1", 46: "Comprehension Intermediate L2",
-      47: "Comprehension Advanced L1", 48: "Comprehension Advanced L2"
+      46: "Comprehension Intermediate L1", 47: "Comprehension Intermediate L2",
+      49: "Comprehension Advanced L1", 50: "Comprehension Advanced L2"
     };
     return activityNames[activityId] || `Activity ${activityId}`;
   };

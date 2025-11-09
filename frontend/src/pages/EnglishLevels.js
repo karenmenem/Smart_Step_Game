@@ -37,22 +37,19 @@ function EnglishLevels() {
 		
 		setLoading(true);
 		try {
-			// Map topics to base activity IDs
-			// Comprehension: 43-48 (Beginner 43,44 / Intermediate 45,46 / Advanced 47,48)
-			// Grammar: 49-54 / Vocabulary: 55-60 / Picture Match: 61-66
-			const topicBaseIds = {
-				comprehension: 43,
-				grammar: 49,
-				vocabulary: 55,
-				picture_match: 61
+			// Map topics to activity IDs (actual IDs in database)
+			// Comprehension: 43,44,46,47,49,50 (Beginner 43,44 / Intermediate 46,47 / Advanced 49,50)
+			const activityIds = {
+				comprehension: {
+					beginner: [43, 44],
+					intermediate: [46, 47],
+					advanced: [49, 50]
+				}
 			};
 
-			const baseId = topicBaseIds[topic] || 43;
+			const ids = activityIds[topic] || activityIds.comprehension;
 
 			// Check access for each level
-			// Beginner: baseId, baseId+1
-			// Intermediate: baseId+2, baseId+3
-			// Advanced: baseId+4, baseId+5
 			const [
 				beginnerL2,
 				intermediateL1,
@@ -60,25 +57,32 @@ function EnglishLevels() {
 				advancedL1,
 				advancedL2
 			] = await Promise.all([
-				api.checkLevelAccess(userData.child.id, baseId + 1),
-				api.checkLevelAccess(userData.child.id, baseId + 2),
-				api.checkLevelAccess(userData.child.id, baseId + 3),
-				api.checkLevelAccess(userData.child.id, baseId + 4),
-				api.checkLevelAccess(userData.child.id, baseId + 5)
+				api.checkLevelAccess(userData.child.id, ids.beginner[1]),
+				api.checkLevelAccess(userData.child.id, ids.intermediate[0]),
+				api.checkLevelAccess(userData.child.id, ids.intermediate[1]),
+				api.checkLevelAccess(userData.child.id, ids.advanced[0]),
+				api.checkLevelAccess(userData.child.id, ids.advanced[1])
 			]);
+
+			console.log('Level Access Check Results:');
+			console.log('Beginner L2:', beginnerL2);
+			console.log('Intermediate L1:', intermediateL1);
+			console.log('Intermediate L2:', intermediateL2);
+			console.log('Advanced L1:', advancedL1);
+			console.log('Advanced L2:', advancedL2);
 
 			setLevelAccess({
 				beginner: {
 					level1: { allowed: true }, // Always accessible
-					level2: beginnerL2.success && beginnerL2.allowed ? beginnerL2 : { allowed: false, reason: beginnerL2.reason || 'Complete Sublevel 1 first' }
+					level2: beginnerL2.allowed ? { allowed: true } : { allowed: false, reason: beginnerL2.reason || 'Complete Sublevel 1 first' }
 				},
 				intermediate: {
-					level1: intermediateL1.success && intermediateL1.allowed ? intermediateL1 : { allowed: false, reason: intermediateL1.reason || 'Complete Beginner Sublevel 2 first' },
-					level2: intermediateL2.success && intermediateL2.allowed ? intermediateL2 : { allowed: false, reason: intermediateL2.reason || 'Complete Intermediate Sublevel 1 first' }
+					level1: intermediateL1.allowed ? { allowed: true } : { allowed: false, reason: intermediateL1.reason || 'Complete Beginner Sublevel 2 first' },
+					level2: intermediateL2.allowed ? { allowed: true } : { allowed: false, reason: intermediateL2.reason || 'Complete Intermediate Sublevel 1 first' }
 				},
 				advanced: {
-					level1: advancedL1.success && advancedL1.allowed ? advancedL1 : { allowed: false, reason: advancedL1.reason || 'Complete Intermediate Sublevel 2 first' },
-					level2: advancedL2.success && advancedL2.allowed ? advancedL2 : { allowed: false, reason: advancedL2.reason || 'Complete Advanced Sublevel 1 first' }
+					level1: advancedL1.allowed ? { allowed: true } : { allowed: false, reason: advancedL1.reason || 'Complete Intermediate Sublevel 2 first' },
+					level2: advancedL2.allowed ? { allowed: true } : { allowed: false, reason: advancedL2.reason || 'Complete Advanced Sublevel 1 first' }
 				}
 			});
 		} catch (error) {

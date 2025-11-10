@@ -64,25 +64,18 @@ function EnglishLevels() {
 				api.checkLevelAccess(userData.child.id, ids.advanced[1])
 			]);
 
-			console.log('Level Access Check Results:');
-			console.log('Beginner L2:', beginnerL2);
-			console.log('Intermediate L1:', intermediateL1);
-			console.log('Intermediate L2:', intermediateL2);
-			console.log('Advanced L1:', advancedL1);
-			console.log('Advanced L2:', advancedL2);
-
 			setLevelAccess({
 				beginner: {
 					level1: { allowed: true }, // Always accessible
-					level2: beginnerL2.allowed ? { allowed: true } : { allowed: false, reason: beginnerL2.reason || 'Complete Sublevel 1 first' }
+					level2: beginnerL2.success && beginnerL2.allowed ? beginnerL2 : { allowed: false, reason: beginnerL2.reason || 'Complete Sublevel 1 first' }
 				},
 				intermediate: {
-					level1: intermediateL1.allowed ? { allowed: true } : { allowed: false, reason: intermediateL1.reason || 'Complete Beginner Sublevel 2 first' },
-					level2: intermediateL2.allowed ? { allowed: true } : { allowed: false, reason: intermediateL2.reason || 'Complete Intermediate Sublevel 1 first' }
+					level1: intermediateL1.success && intermediateL1.allowed ? intermediateL1 : { allowed: false, reason: intermediateL1.reason || 'Complete Beginner Sublevel 2 first' },
+					level2: intermediateL2.success && intermediateL2.allowed ? intermediateL2 : { allowed: false, reason: intermediateL2.reason || 'Complete Intermediate Sublevel 1 first' }
 				},
 				advanced: {
-					level1: advancedL1.allowed ? { allowed: true } : { allowed: false, reason: advancedL1.reason || 'Complete Intermediate Sublevel 2 first' },
-					level2: advancedL2.allowed ? { allowed: true } : { allowed: false, reason: advancedL2.reason || 'Complete Advanced Sublevel 1 first' }
+					level1: advancedL1.success && advancedL1.allowed ? advancedL1 : { allowed: false, reason: advancedL1.reason || 'Complete Intermediate Sublevel 2 first' },
+					level2: advancedL2.success && advancedL2.allowed ? advancedL2 : { allowed: false, reason: advancedL2.reason || 'Complete Advanced Sublevel 1 first' }
 				}
 			});
 		} catch (error) {

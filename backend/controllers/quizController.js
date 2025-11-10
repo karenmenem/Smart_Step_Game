@@ -100,36 +100,25 @@ const saveQuizAttempt = async (req, res) => {
       });
     }
     
-    // Check if progress exists
-    const existingProgress = await query(
-      'SELECT * FROM child_progress WHERE child_id = ? AND activity_id = ?',
-      [childId, activityId]
-    );
-    
     const passed = (score / maxScore) >= 0.8; // 80% passing grade
     
-    if (existingProgress.length > 0) {
-      // Update existing progress
-      await query(
-        `UPDATE child_progress 
-        SET score = GREATEST(score, ?), 
-            max_score = ?,
-            attempts = attempts + 1,
-            completed = ?,
-            last_attempt = CURRENT_TIMESTAMP,
-            completed_at = CASE WHEN ? = 1 AND completed = 0 THEN CURRENT_TIMESTAMP ELSE completed_at END
-        WHERE child_id = ? AND activity_id = ?`,
-        [score, maxScore, passed, passed, childId, activityId]
-      );
-    } else {
-      // Insert new progress
-      await query(
-        `INSERT INTO child_progress 
+    // Use INSERT ON DUPLICATE KEY UPDATE to handle both insert and update
+    await query(
+      `INSERT INTO child_progress 
         (child_id, activity_id, score, max_score, completed, attempts, last_attempt, completed_at) 
-        VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?)`,
-        [childId, activityId, score, maxScore, passed, passed ? new Date() : null]
-      );
-    }
+        VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?)
+      ON DUPLICATE KEY UPDATE
+        score = GREATEST(score, VALUES(score)),
+        max_score = VALUES(max_score),
+        attempts = attempts + 1,
+        completed = VALUES(completed),
+        last_attempt = CURRENT_TIMESTAMP,
+        completed_at = CASE 
+          WHEN VALUES(completed) = 1 AND completed = 0 THEN CURRENT_TIMESTAMP 
+          ELSE completed_at 
+        END`,
+      [childId, activityId, score, maxScore, passed, passed ? new Date() : null]
+    );
     
     // Save individual answer attempts if provided
     if (answers && Array.isArray(answers)) {

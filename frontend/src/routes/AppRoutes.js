@@ -15,6 +15,7 @@ import EnglishQuiz from "../pages/EnglishQuiz";
 import AdminLogin from "../pages/AdminLogin";
 import AdminDashboard from "../pages/AdminDashboard";
 import AdminQuestionForm from "../pages/AdminQuestionForm";
+import ASLManager from "../pages/ASLManager";
 
 function AppRoutes() {
   return (
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/questions/add" element={<AdminQuestionForm />} />
         <Route path="/admin/questions/edit/:id" element={<AdminQuestionForm />} />
+        <Route path="/admin/asl" element={<ASLManager />} />
         <Route path="/admin/subjects/*" element={<AdminDashboard />} />
         <Route path="/admin/sections/*" element={<AdminDashboard />} />
         <Route path="/admin/activities/*" element={<AdminDashboard />} />

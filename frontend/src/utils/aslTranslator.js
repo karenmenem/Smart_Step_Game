@@ -1,7 +1,88 @@
 
+// Cache for ASL resources loaded from API
+let cachedResources = null;
+let resourceMap = { words: {}, numbers: {}, operations: {} };
+
+// Fetch ASL resources from backend
+export const loadASLResources = async () => {
+  if (cachedResources) {
+    return cachedResources;
+  }
+
+  try {
+    const response = await fetch('http://localhost:5000/api/asl/resources');
+    if (response.ok) {
+      const resources = await response.json();
+      cachedResources = resources;
+
+      // Build lookup maps for fast access
+      resources.forEach(resource => {
+        const path = `/asl/${resource.type}s/${resource.filename}`;
+        
+        // Add main value
+        if (resource.type === 'word') {
+          resourceMap.words[resource.value] = path;
+        } else if (resource.type === 'number') {
+          resourceMap.numbers[resource.value] = path;
+        } else if (resource.type === 'operation') {
+          resourceMap.operations[resource.value] = path;
+        }
+
+        // Add aliases
+        if (resource.aliases) {
+          const aliases = JSON.parse(resource.aliases);
+          aliases.forEach(alias => {
+            if (resource.type === 'operation') {
+              resourceMap.operations[alias] = path;
+            }
+          });
+        }
+      });
+
+      return resources;
+    }
+  } catch (error) {
+    console.error('Failed to load ASL resources from API, using fallback:', error);
+  }
+
+  return null;
+};
+
 const getWordVideoPath = (word) => {
+  // Try cached resources first
+  if (resourceMap.words[word]) {
+    return resourceMap.words[word];
+  }
+  // Fallback to dynamic path
   const cleanWord = word.toLowerCase().replace(/[^a-z0-9-]/g, '');
   return `/asl/words/${cleanWord}.mp4`;
+};
+
+const getNumberVideoPath = (number) => {
+  // Try cached resources first
+  if (resourceMap.numbers[number]) {
+    return resourceMap.numbers[number];
+  }
+  // Fallback to dynamic path
+  return `/asl/numbers/${number}.mp4`;
+};
+
+const getOperationVideoPath = (operation) => {
+  // Try cached resources first
+  if (resourceMap.operations[operation]) {
+    return resourceMap.operations[operation];
+  }
+  // Fallback to dynamic path based on common operations
+  const operationMap = {
+    'plus': 'plus.mp4',
+    'add': 'plus.mp4',
+    '+': 'plus.mp4',
+    'minus': 'minus.mp4',
+    'subtract': 'subtract.mp4',
+    '-': 'minus.mp4'
+  };
+  const filename = operationMap[operation] || `${operation}.mp4`;
+  return `/asl/operations/${filename}`;
 };
 
 const hasWordVideo = (word) => {
@@ -9,66 +90,17 @@ const hasWordVideo = (word) => {
 };
 
 export const ASL_RESOURCES = {
+  numbers: new Proxy({}, {
+    get: function(target, prop) {
+      return getNumberVideoPath(prop);
+    }
+  }),
   
-  numbers: {
-    0: '/asl/numbers/0.mp4',
-    1: '/asl/numbers/1.mp4',
-    2: '/asl/numbers/2.mp4',
-    3: '/asl/numbers/3.mp4',
-    4: '/asl/numbers/4.mp4',
-    5: '/asl/numbers/5.mp4',
-    6: '/asl/numbers/6.mp4',
-    7: '/asl/numbers/7.mp4',
-    8: '/asl/numbers/8.mp4',
-    9: '/asl/numbers/9.mp4',
-    10: '/asl/numbers/10.mp4',
-    11: '/asl/numbers/11.mp4',
-    12: '/asl/numbers/12.mp4',
-    13: '/asl/numbers/13.mp4',
-    14: '/asl/numbers/14.mp4',
-    15: '/asl/numbers/15.mp4',
-    16: '/asl/numbers/16.mp4',
-    17: '/asl/numbers/17.mp4',
-    18: '/asl/numbers/18.mp4',
-    19: '/asl/numbers/19.mp4',
-    20: '/asl/numbers/20.mp4',
-    21: '/asl/numbers/21.mp4',
-    22: '/asl/numbers/22.mp4',
-    23: '/asl/numbers/23.mp4',
-    24: '/asl/numbers/24.mp4',
-    25: '/asl/numbers/25.mp4',
-    26: '/asl/numbers/26.mp4',
-    27: '/asl/numbers/27.mp4',
-    28: '/asl/numbers/28.mp4',
-    29: '/asl/numbers/29.mp4',
-    30: '/asl/numbers/30.mp4',
-    40: '/asl/numbers/40.mp4',
-    50: '/asl/numbers/50.mp4',
-    60: '/asl/numbers/60.mp4',
-    70: '/asl/numbers/70.mp4',
-    80: '/asl/numbers/80.mp4',
-    90: '/asl/numbers/90.mp4',
-    100: '/asl/numbers/100.mp4',
-  },
-  
-  
-  operations: {
-    'plus': '/asl/operations/plus.mp4',
-    'add': '/asl/operations/plus.mp4',
-    '+': '/asl/operations/plus.mp4',
-    'minus': '/asl/operations/minus.mp4',
-    'subtract': '/asl/operations/minus.mp4',
-    '-': '/asl/operations/minus.mp4',
-    'times': '/asl/operations/times.mp4',
-    'multiply': '/asl/operations/times.mp4',
-    '×': '/asl/operations/times.mp4',
-    '*': '/asl/operations/times.mp4',
-    'divide': '/asl/operations/divide.mp4',
-    '÷': '/asl/operations/divide.mp4',
-    '/': '/asl/operations/divide.mp4',
-    'equals': '/asl/operations/equals.mp4',
-    '=': '/asl/operations/equals.mp4',
-  },
+  operations: new Proxy({}, {
+    get: function(target, prop) {
+      return getOperationVideoPath(prop);
+    }
+  }),
   
   words: new Proxy({}, {
     get: function(target, prop) {

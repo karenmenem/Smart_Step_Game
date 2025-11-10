@@ -142,6 +142,18 @@ CREATE TABLE IF NOT EXISTS admin (
     last_login TIMESTAMP NULL
 );
 
+-- ASL Resources Table (for managing ASL videos from admin panel)
+CREATE TABLE IF NOT EXISTS asl_resources (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('word', 'number', 'operation') NOT NULL,
+    value VARCHAR(100) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    aliases JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_type_value (type, value)
+);
+
 -- Insert default admin user (password: admin123)
 INSERT IGNORE INTO admin (username, password, email) VALUES
 ('admin', '$2b$10$rN7kYVZL.5lB9xJ0h3K5XOqPqPxJLKqWJ3xGz5mZ3kYVZL5lB9xJ0h', 'admin@smartstep.com');

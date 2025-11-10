@@ -1,7 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./styles/global.css"; // Add this line
+import "./styles/global.css";
 import App from "./App";
+import { loadASLResources } from "./utils/aslTranslator";
+
+// Load ASL resources on app startup
+loadASLResources();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

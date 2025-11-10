@@ -13,15 +13,11 @@ const getAllQuestions = async (req, res) => {
         a.name as activity_name,
         s.name as section_name,
         s.level,
-        sub.name as subject_name,
-        rp.passage_id,
-        rp.title as passage_title,
-        rp.content as passage_content
+        sub.name as subject_name
       FROM question q
       JOIN activity a ON q.activity_id = a.activity_id
       JOIN section s ON a.section_id = s.section_id
       JOIN subject sub ON s.subject_id = sub.subject_id
-      LEFT JOIN reading_passage rp ON q.passage_id = rp.passage_id
       WHERE 1=1
     `;
     const params = [];

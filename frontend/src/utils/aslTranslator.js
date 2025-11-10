@@ -1,4 +1,18 @@
 
+// Dynamically build words list from all available videos
+// This checks if the video file exists when needed
+const getWordVideoPath = (word) => {
+  const cleanWord = word.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  return `/asl/words/${cleanWord}.mp4`;
+};
+
+// Check if a word video exists (we'll try to load it and the browser will handle 404)
+const hasWordVideo = (word) => {
+  // For now, we'll just return the path and let the browser handle missing videos
+  // The ASLPlayer component will show text if the video fails to load
+  return getWordVideoPath(word);
+};
+
 export const ASL_RESOURCES = {
   
   numbers: {
@@ -62,48 +76,15 @@ export const ASL_RESOURCES = {
   },
   
   
-  words: {
-    
-    'what': '/asl/words/what.mp4',
-    'who': '/asl/words/who.mp4',
-    'where': '/asl/words/where.mp4',
-    'when': '/asl/words/when.mp4',
-    'why': '/asl/words/why.mp4',
-    'how': '/asl/words/how.mp4',
-    
-    
-    'is': '/asl/words/is.mp4',
-    'are': '/asl/words/are.mp4',
-    'was': '/asl/words/was.mp4',
-    'were': '/asl/words/were.mp4',
-    'have': '/asl/words/have.mp4',
-    'has': '/asl/words/has.mp4',
-    'go': '/asl/words/go.mp4',
-    'run': '/asl/words/run.mp4',
-    'jump': '/asl/words/jump.mp4',
-    'play': '/asl/words/play.mp4',
-    'read': '/asl/words/read.mp4',
-    'write': '/asl/words/write.mp4',
-    
-    
-    'i': '/asl/words/i.mp4',
-    'you': '/asl/words/you.mp4',
-    'he': '/asl/words/he.mp4',
-    'she': '/asl/words/she.mp4',
-    'we': '/asl/words/we.mp4',
-    'they': '/asl/words/they.mp4',
-    
-    
-    'cat': '/asl/words/cat.mp4',
-    'dog': '/asl/words/dog.mp4',
-    'house': '/asl/words/house.mp4',
-    'school': '/asl/words/school.mp4',
-    'book': '/asl/words/book.mp4',
-    'apple': '/asl/words/apple.mp4',
-    'water': '/asl/words/water.mp4',
-    
-    // Add more as needed
-  },
+  // Words are loaded dynamically - any word video in /asl/words/ will work
+  // Just add the .mp4 file to the folder and it will be automatically detected
+  words: new Proxy({}, {
+    get: function(target, prop) {
+      // Return the path to the word video
+      // The browser will handle 404 if the file doesn't exist
+      return getWordVideoPath(prop);
+    }
+  }),
   
   // Punctuation/special
   special: {
@@ -151,9 +132,15 @@ export const mathExpressionToASL = (expression) => {
 export const sentenceToASL = (sentence) => {
   const sequence = [];
   
+  console.log('sentenceToASL - Input text:', sentence);
+  console.log('sentenceToASL - Input length:', sentence?.length);
   
+  // Clean and split - handle newlines and multiple sentences
   const cleaned = sentence.toLowerCase().replace(/[^\w\s?!.]/g, '');
-  const words = cleaned.split(/\s+/);
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+  
+  console.log('sentenceToASL - Total words:', words.length);
+  console.log('sentenceToASL - First 10 words:', words.slice(0, 10));
   
   words.forEach(word => {
     
@@ -267,13 +254,39 @@ export const getASLFromQuestion = (question) => {
   
   // Priority 3: ASL signs array (numbers or sentence words) - handle both snake_case and camelCase
   const aslSigns = question.asl_signs || question.aslSigns;
+  const aslType = question.asl_type || question.aslType;
+  
+  console.log('getASLFromQuestion - aslSigns:', aslSigns);
+  console.log('getASLFromQuestion - aslType:', aslType);
+  
   if (aslSigns) {
     try {
       const signs = typeof aslSigns === 'string'
         ? JSON.parse(aslSigns)
         : aslSigns;
       
-      // Check if it's sentence format with words array
+      console.log('Parsed signs:', signs);
+      
+      // Check asl_type to determine format
+      if (aslType === 'sentence' && Array.isArray(signs)) {
+        // Sentence format: array of words ["who", "found", "the", "kitten"]
+        const wordSequence = signs.map(word => {
+          const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const resource = ASL_RESOURCES.words[cleanWord] || null;
+          console.log(`Word "${word}" -> cleanWord "${cleanWord}" -> resource:`, resource);
+          return {
+            type: 'word',
+            value: word,
+            resource: resource,
+            display: word,
+            needsTranslation: !resource
+          };
+        });
+        console.log('Word sequence:', wordSequence);
+        return wordSequence;
+      }
+      
+      // Check if it's sentence format with words array (legacy)
       if (signs.words && Array.isArray(signs.words)) {
         return signs.words.map(wordObj => ({
           type: 'word',
@@ -283,7 +296,7 @@ export const getASLFromQuestion = (question) => {
         }));
       }
       
-      // Legacy format: array of numbers/operations
+      // Number format: array of numbers/operations [2, 'minus', 3, 'equals']
       return signs.map(sign => {
         if (typeof sign === 'number' || /^\d+$/.test(sign)) {
           return {

@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { auth, api } from "../api/auth";
+import ASLPlayer from "../components/ASLPlayer";
 
 function EnglishQuiz() {
 	const navigate = useNavigate();
@@ -20,6 +21,15 @@ function EnglishQuiz() {
 	const [score, setScore] = useState(0);
 	const [totalPoints, setTotalPoints] = useState(0);
 	const [activityId, setActivityId] = useState(null);
+	const [isPlaying, setIsPlaying] = useState(false);
+	const [audioEnabled, setAudioEnabled] = useState(true);
+
+	// Memoize the passage question object to prevent re-renders
+	const passageQuestion = useMemo(() => ({
+		question_text: pinnedText,
+		asl_type: 'sentence',
+		aslType: 'sentence'
+	}), [pinnedText]);
 
 	const handleLogout = () => {
 		auth.logout();
@@ -28,6 +38,39 @@ function EnglishQuiz() {
 
 	const goToLevels = () => {
 		navigate(`/english/${topic}`);
+	};
+
+	const speakQuestion = () => {
+		if (!audioEnabled) return;
+		
+		const question = questions[currentQuestion];
+		if (!question) return;
+
+		if (isPlaying) {
+			window.speechSynthesis.cancel();
+			setIsPlaying(false);
+			return;
+		}
+
+		const text = question.question_text || question.text;
+		const utterance = new SpeechSynthesisUtterance(text);
+		utterance.rate = 0.9;
+		utterance.pitch = 1;
+		utterance.volume = 1;
+
+		utterance.onstart = () => setIsPlaying(true);
+		utterance.onend = () => setIsPlaying(false);
+		utterance.onerror = () => setIsPlaying(false);
+
+		window.speechSynthesis.speak(utterance);
+	};
+
+	const toggleAudio = () => {
+		setAudioEnabled(!audioEnabled);
+		if (isPlaying) {
+			window.speechSynthesis.cancel();
+			setIsPlaying(false);
+		}
 	};
 
 	useEffect(() => {
@@ -121,8 +164,20 @@ function EnglishQuiz() {
 						question_text: q.question,
 						question_type: q.type,
 						options: Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]'),
-						correct_answer: q.correct
+						correct_answer: q.correct,
+						aslSigns: q.asl_signs ? (Array.isArray(q.asl_signs) ? q.asl_signs : JSON.parse(q.asl_signs)) : null,
+						aslVideoUrl: q.asl_video_url || null,
+						aslType: q.asl_type || 'none'
 					}));
+					console.log('Loaded comprehension questions:', loadedQuestions);
+					if (loadedQuestions.length > 0) {
+						console.log('First question ASL data:', {
+							id: loadedQuestions[0]?.id,
+							aslSigns: loadedQuestions[0]?.aslSigns,
+							aslType: loadedQuestions[0]?.aslType,
+							hasASL: !!(loadedQuestions[0]?.aslSigns || loadedQuestions[0]?.aslVideoUrl)
+						});
+					}
 					setQuestions(loadedQuestions);
 				} else {
 					setQuestions([]);
@@ -406,6 +461,10 @@ function EnglishQuiz() {
 							<h3>📖 Reading Passage</h3>
 							<span className="pin-icon">📌</span>
 						</div>
+						
+						{/* ASL Player for the passage */}
+						<ASLPlayer question={passageQuestion} />
+						
 						<div className="pinned-text-content">
 							{passageTitle && (
 								<h4 className="passage-title">{passageTitle}</h4>
@@ -449,9 +508,30 @@ function EnglishQuiz() {
 							</div>
 							
 							<div className="question-content">
-								<p className="question-text">{question.question_text}</p>
+								<div className="question-text-container">
+									<h3 className="question-text">{question.question_text}</h3>
+									<button 
+										className={`speaker-btn ${isPlaying ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
+										onClick={speakQuestion}
+										onContextMenu={(e) => { e.preventDefault(); toggleAudio(); }}
+										title={
+											!audioEnabled ? "🔇 Audio is off - right-click to enable" : 
+											isPlaying ? "🔊 Click to stop | Right-click to disable audio" : 
+											"🔈 Click to hear the question | Right-click to disable audio"
+										}
+									>
+										{!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
+									</button>
+								</div>
 								
-								<div className="options-container">
+								{/* ASL Player - Shows ASL translation for comprehension questions */}
+								{question && (question.aslSigns || question.aslVideoUrl) && (
+									<ASLPlayer 
+										question={question}
+									/>
+								)}
+								
+								<div className="options-grid">
 									{(question.options || []).map((option, index) => {
 										const letters = ['A', 'B', 'C', 'D'];
 										return (

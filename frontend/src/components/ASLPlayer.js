@@ -12,11 +12,35 @@ const ASLPlayer = ({ question }) => {
 
   useEffect(() => {
     if (question) {
+      console.log('ASLPlayer - Received question:', question);
       const aslSequence = getASLFromQuestion(question);
+      console.log('ASLPlayer - Generated sequence LENGTH:', aslSequence.length);
+      console.log('ASLPlayer - First 5 items:', aslSequence.slice(0, 5));
+      console.log('ASLPlayer - Full sequence:', aslSequence);
       setSequence(aslSequence);
       setCurrentIndex(0);
     }
   }, [question]);
+
+  // Auto-advance for non-video signs (text/fingerspelling)
+  useEffect(() => {
+    if (!sequence || sequence.length === 0) return;
+    
+    const currentSign = sequence[currentIndex];
+    
+    // If current sign doesn't have a video resource, auto-advance after 1.5 seconds
+    if (currentSign && !currentSign.resource && currentSign.type !== 'video') {
+      const timer = setTimeout(() => {
+        if (currentIndex < sequence.length - 1) {
+          setCurrentIndex(currentIndex + 1);
+        } else {
+          setCurrentIndex(0); // Loop back to start
+        }
+      }, 1500); // 1.5 seconds per word
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, sequence]);
 
   // Videos auto-play and advance via onEnded event - no manual controls needed
 

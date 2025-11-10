@@ -24,6 +24,11 @@ function AdminDashboard() {
   const [showPassageModal, setShowPassageModal] = useState(false);
   const [editingPassage, setEditingPassage] = useState(null);
   const [selectedPassage, setSelectedPassage] = useState(null);
+  
+  // Question filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterSubject, setFilterSubject] = useState('all');
+  const [filterActivity, setFilterActivity] = useState('all');
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -191,6 +196,35 @@ function AdminDashboard() {
     localStorage.removeItem('adminData');
     navigate('/admin/login');
   };
+
+  // Filter questions based on search and filters
+  const filteredQuestions = questions.filter(q => {
+    const matchesSearch = searchTerm === '' || 
+      q.question_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.question_id.toString().includes(searchTerm);
+    
+    const matchesSubject = filterSubject === 'all' || 
+      q.subject_name === filterSubject;
+    
+    const matchesActivity = filterActivity === 'all' || 
+      q.activity_id.toString() === filterActivity;
+    
+    return matchesSearch && matchesSubject && matchesActivity;
+  });
+
+  // Get unique subjects and activities for filter dropdowns
+  const uniqueSubjects = [...new Set(questions.map(q => q.subject_name))];
+  
+  // Get unique activities
+  const activityMap = new Map();
+  questions.forEach(q => {
+    if (!activityMap.has(q.activity_id)) {
+      activityMap.set(q.activity_id, q.activity_name);
+    }
+  });
+  const uniqueActivities = Array.from(activityMap.entries())
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.id - b.id);
 
   const deleteItem = async (type, id) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
@@ -387,11 +421,69 @@ function AdminDashboard() {
           {activeTab === 'questions' && (
             <div className="admin-content">
               <div className="admin-content-header">
-                <h2>Manage Questions</h2>
+                <h2>Manage Questions ({filteredQuestions.length} of {questions.length})</h2>
                 <button className="admin-add-btn" onClick={() => navigate('/admin/questions/add')}>
                   + Add Question
                 </button>
               </div>
+              
+              {/* Filters Section */}
+              <div className="filters-section">
+                <div className="filter-group">
+                  <label>🔍 Search</label>
+                  <input
+                    type="text"
+                    placeholder="Search by question text or ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="filter-input"
+                  />
+                </div>
+                
+                <div className="filter-group">
+                  <label>📚 Subject</label>
+                  <select 
+                    value={filterSubject} 
+                    onChange={(e) => setFilterSubject(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="all">All Subjects</option>
+                    {uniqueSubjects.map(subject => (
+                      <option key={subject} value={subject}>{subject}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="filter-group">
+                  <label>🎯 Activity</label>
+                  <select 
+                    value={filterActivity} 
+                    onChange={(e) => setFilterActivity(e.target.value)}
+                    className="filter-select"
+                  >
+                    <option value="all">All Activities</option>
+                    {uniqueActivities.map(activity => (
+                      <option key={activity.id} value={activity.id}>
+                        {activity.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="filter-group">
+                  <button 
+                    className="clear-filters-btn"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setFilterSubject('all');
+                      setFilterActivity('all');
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
+              
               <div className="admin-table-container">
                 <table className="admin-table">
                   <thead>
@@ -408,51 +500,59 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {questions.map((q) => (
-                      <tr key={q.question_id}>
-                        <td>{q.question_id}</td>
-                        <td>{q.question_text}</td>
-                        <td>{q.subject_name}</td>
-                        <td>{q.level}</td>
-                        <td>{q.activity_name}</td>
-                        <td>
-                          <span style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            background: q.asl_type === 'video' ? '#e3f2fd' : 
-                                       q.asl_type === 'both' ? '#fff3e0' : '#e8f5e9',
-                            fontSize: '0.85rem'
-                          }}>
-                            {q.asl_type || 'numbers'}
-                          </span>
-                        </td>
-                        <td>
-                          {q.asl_type === 'video' || q.asl_type === 'both' ? (
-                            <a href={q.asl_video_url} target="_blank" rel="noopener noreferrer" 
-                               style={{color: '#667eea', textDecoration: 'none'}}>
-                              🎥 Video
-                            </a>
-                          ) : (
-                            q.asl_signs
-                          )}
-                        </td>
-                        <td>{q.points_value}</td>
-                        <td>
-                          <button
-                            className="admin-edit-btn"
-                            onClick={() => navigate(`/admin/questions/edit/${q.question_id}`)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="admin-delete-btn"
-                            onClick={() => deleteItem('question', q.question_id)}
-                          >
-                            Delete
-                          </button>
+                    {filteredQuestions.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" style={{textAlign: 'center', padding: '2rem', color: '#6c757d'}}>
+                          No questions found matching your filters
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      filteredQuestions.map((q) => (
+                        <tr key={q.question_id}>
+                          <td>{q.question_id}</td>
+                          <td>{q.question_text}</td>
+                          <td>{q.subject_name}</td>
+                          <td>{q.level}</td>
+                          <td>{q.activity_name}</td>
+                          <td>
+                            <span style={{
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              background: q.asl_type === 'video' ? '#e3f2fd' : 
+                                         q.asl_type === 'both' ? '#fff3e0' : '#e8f5e9',
+                              fontSize: '0.85rem'
+                            }}>
+                              {q.asl_type || 'numbers'}
+                            </span>
+                          </td>
+                          <td>
+                            {q.asl_type === 'video' || q.asl_type === 'both' ? (
+                              <a href={q.asl_video_url} target="_blank" rel="noopener noreferrer" 
+                                 style={{color: '#667eea', textDecoration: 'none'}}>
+                                🎥 Video
+                              </a>
+                            ) : (
+                              q.asl_signs
+                            )}
+                          </td>
+                          <td>{q.points_value}</td>
+                          <td>
+                            <button
+                              className="admin-edit-btn"
+                              onClick={() => navigate(`/admin/questions/edit/${q.question_id}`)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="admin-delete-btn"
+                              onClick={() => deleteItem('question', q.question_id)}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -960,6 +1060,80 @@ function AdminDashboard() {
           height: 100vh;
           font-size: 1.5rem;
           color: #667eea;
+        }
+
+        /* Filters Section */
+        .filters-section {
+          background: #f8f9fa;
+          padding: 1.5rem;
+          border-radius: 10px;
+          margin-bottom: 2rem;
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr auto;
+          gap: 1rem;
+          align-items: end;
+        }
+
+        .filter-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .filter-group label {
+          font-weight: 600;
+          color: #374151;
+          font-size: 0.9rem;
+        }
+
+        .filter-input,
+        .filter-select {
+          padding: 0.75rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 8px;
+          font-size: 1rem;
+          transition: all 0.3s;
+          background: white;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-input::placeholder {
+          color: #9ca3af;
+        }
+
+        .clear-filters-btn {
+          padding: 0.75rem 1.5rem;
+          background: #6b7280;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          transition: all 0.3s;
+          white-space: nowrap;
+        }
+
+        .clear-filters-btn:hover {
+          background: #4b5563;
+          transform: translateY(-2px);
+        }
+
+        @media (max-width: 1024px) {
+          .filters-section {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .filters-section {
+            grid-template-columns: 1fr;
+          }
         }
 
         /* Reading Passage Modal Styles */

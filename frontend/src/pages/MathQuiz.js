@@ -15,6 +15,27 @@ function MathQuiz() {
     return 30; // default
   };
   
+  // Get operation display text
+  const getOperationDisplay = () => {
+    const operationMap = {
+      'addition': '➕ Addition',
+      'subtraction': '➖ Subtraction',
+      'multiplication': '✖️ Multiplication',
+      'division': '➗ Division'
+    };
+    return operationMap[operation] || '➕ Addition';
+  };
+  
+  // Get level display text
+  const getLevelDisplay = () => {
+    const levelMap = {
+      'beginner': 'Beginner',
+      'intermediate': 'Intermediate',
+      'advanced': 'Advanced'
+    };
+    return `🌱 ${levelMap[level] || 'Beginner'} Level ${sublevel || '1'}`;
+  };
+  
   const [user, setUser] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
@@ -57,35 +78,35 @@ function MathQuiz() {
       
       if (operation === 'addition') {
         if (level === 'beginner') {
-          activityId = 6 + parseInt(sublevel || 1); // 7, 8, or 9
+          activityId = sublevel === '2' ? 8 : 7; // 7 or 8
         } else if (level === 'intermediate') {
-          activityId = 9 + parseInt(sublevel || 1); // 10, 11, or 12
+          activityId = sublevel === '2' ? 11 : 10; // 10 or 11
         } else if (level === 'advanced') {
-          activityId = 12 + parseInt(sublevel || 1); // 13, 14, or 15
+          activityId = sublevel === '2' ? 14 : 13; // 13 or 14
         }
       } else if (operation === 'subtraction') {
         if (level === 'beginner') {
-          activityId = 15 + parseInt(sublevel || 1); // 16, 17, or 18
+          activityId = sublevel === '2' ? 17 : 16; // 16 or 17
         } else if (level === 'intermediate') {
-          activityId = 18 + parseInt(sublevel || 1); // 19, 20, or 21
+          activityId = sublevel === '2' ? 20 : 19; // 19 or 20
         } else if (level === 'advanced') {
-          activityId = 21 + parseInt(sublevel || 1); // 22, 23, or 24
+          activityId = sublevel === '2' ? 23 : 22; // 22 or 23
         }
       } else if (operation === 'multiplication') {
         if (level === 'beginner') {
-          activityId = 24 + parseInt(sublevel || 1); // 25, 26, or 27
+          activityId = sublevel === '2' ? 26 : 25; // 25 or 26
         } else if (level === 'intermediate') {
-          activityId = 27 + parseInt(sublevel || 1); // 28, 29, or 30
+          activityId = sublevel === '2' ? 29 : 28; // 28 or 29
         } else if (level === 'advanced') {
-          activityId = 30 + parseInt(sublevel || 1); // 31, 32, or 33
+          activityId = sublevel === '2' ? 32 : 31; // 31 or 32
         }
       } else if (operation === 'division') {
         if (level === 'beginner') {
-          activityId = 33 + parseInt(sublevel || 1); // 34, 35, or 36
+          activityId = sublevel === '2' ? 35 : 34; // 34 or 35
         } else if (level === 'intermediate') {
-          activityId = 36 + parseInt(sublevel || 1); // 37, 38, or 39
+          activityId = sublevel === '2' ? 38 : 37; // 37 or 38
         } else if (level === 'advanced') {
-          activityId = 39 + parseInt(sublevel || 1); // 40, 41, or 42
+          activityId = sublevel === '2' ? 41 : 40; // 40 or 41
         }
       }
       
@@ -103,6 +124,9 @@ function MathQuiz() {
         api.getQuestions(activityId),
         api.getActivity(activityId)
       ]);
+      
+      console.log('Activity ID:', activityId);
+      console.log('Questions Response:', questionsResponse);
       
       if (questionsResponse.success && questionsResponse.data.length > 0) {
         setQuestions(questionsResponse.data);
@@ -707,8 +731,8 @@ function MathQuiz() {
           {!showResult && questions[currentQuestion] ? (
             <>
               <div className="question-header">
-                <h2 className="question-title">🌱 Beginner Level 1</h2>
-                <div className="question-operation">➕ Addition</div>
+                <h2 className="question-title">{getLevelDisplay()}</h2>
+                <div className="question-operation">{getOperationDisplay()}</div>
               </div>
               
               <div className="question-card">

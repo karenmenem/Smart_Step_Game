@@ -85,29 +85,29 @@ const checkLevelAccess = async (req, res) => {
       40: 38,
       41: 40,
       
-      // English Comprehension: Beginner (43, 44), Intermediate (45, 46), Advanced (47, 48)
+      // English Comprehension: Beginner (43, 44), Intermediate (46, 47), Advanced (49, 50)
       44: 43, // Beginner L2 requires Beginner L1
-      45: 44, // Intermediate L1 requires Beginner L2
-      46: 45, // Intermediate L2 requires Intermediate L1
-      47: 46, // Advanced L1 requires Intermediate L2
-      48: 47  // Advanced L2 requires Advanced L1
+      46: 44, // Intermediate L1 requires Beginner L2
+      47: 46, // Intermediate L2 requires Intermediate L1
+      49: 47, // Advanced L1 requires Intermediate L2
+      50: 49  // Advanced L2 requires Advanced L1
     };
     
     requiredActivityId = activityMap[parseInt(activityId)];
     
     // Special logic for English: Intermediate L1 and Advanced L1 require BOTH previous sublevels
-    // Intermediate L1 (45) requires both Beginner L1 (43) AND L2 (44)
-    // Advanced L1 (47) requires both Intermediate L1 (45) AND L2 (46)
-    const requiresBothSublevels = [45, 47]; // English Intermediate L1 and Advanced L1
+    // Intermediate L1 (46) requires both Beginner L1 (43) AND L2 (44)
+    // Advanced L1 (49) requires both Intermediate L1 (46) AND L2 (47)
+    const requiresBothSublevels = [46, 49]; // English Intermediate L1 and Advanced L1
     
     if (requiresBothSublevels.includes(parseInt(activityId))) {
       let requiredActivities = [];
-      if (parseInt(activityId) === 45) {
+      if (parseInt(activityId) === 46) {
         // Intermediate L1 requires both Beginner sublevels
         requiredActivities = [43, 44];
-      } else if (parseInt(activityId) === 47) {
+      } else if (parseInt(activityId) === 49) {
         // Advanced L1 requires both Intermediate sublevels
-        requiredActivities = [45, 46];
+        requiredActivities = [46, 47];
       }
       
       // Check both required activities

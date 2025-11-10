@@ -136,10 +136,10 @@ function EnglishQuiz() {
 			const activityMap = {
 				'Comprehension Beginner - Level 1': 43,
 				'Comprehension Beginner - Level 2': 44,
-				'Comprehension Intermediate - Level 1': 45,
-				'Comprehension Intermediate - Level 2': 46,
-				'Comprehension Advanced - Level 1': 47,
-				'Comprehension Advanced - Level 2': 48,
+				'Comprehension Intermediate - Level 1': 46,
+				'Comprehension Intermediate - Level 2': 47,
+				'Comprehension Advanced - Level 1': 49,
+				'Comprehension Advanced - Level 2': 50,
 			};
 			
 			// Build activity name from URL parameters

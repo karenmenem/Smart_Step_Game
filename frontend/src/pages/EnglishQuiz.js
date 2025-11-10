@@ -23,6 +23,7 @@ function EnglishQuiz() {
 	const [activityId, setActivityId] = useState(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [audioEnabled, setAudioEnabled] = useState(true);
+	const [isPlayingPassage, setIsPlayingPassage] = useState(false);
 
 	// Memoize the passage question object to prevent re-renders
 	const passageQuestion = useMemo(() => ({
@@ -71,6 +72,36 @@ function EnglishQuiz() {
 			window.speechSynthesis.cancel();
 			setIsPlaying(false);
 		}
+		if (isPlayingPassage) {
+			window.speechSynthesis.cancel();
+			setIsPlayingPassage(false);
+		}
+	};
+
+	const speakPassage = () => {
+		if (!audioEnabled) return;
+		if (!pinnedText) return;
+
+		if (isPlayingPassage) {
+			window.speechSynthesis.cancel();
+			setIsPlayingPassage(false);
+			return;
+		}
+
+		const fullText = (passageTitle ? passageTitle + '. ' : '') + 
+		                 (passageAuthor ? 'By ' + passageAuthor + '. ' : '') + 
+		                 pinnedText;
+		
+		const utterance = new SpeechSynthesisUtterance(fullText);
+		utterance.rate = 0.9;
+		utterance.pitch = 1;
+		utterance.volume = 1;
+
+		utterance.onstart = () => setIsPlayingPassage(true);
+		utterance.onend = () => setIsPlayingPassage(false);
+		utterance.onerror = () => setIsPlayingPassage(false);
+
+		window.speechSynthesis.speak(utterance);
 	};
 
 	useEffect(() => {
@@ -165,20 +196,11 @@ function EnglishQuiz() {
 						question_type: q.type,
 						options: Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]'),
 						correct_answer: q.correct,
-						aslSigns: q.asl_signs ? (Array.isArray(q.asl_signs) ? q.asl_signs : JSON.parse(q.asl_signs)) : null,
-						aslVideoUrl: q.asl_video_url || null,
-						aslType: q.asl_type || 'none'
-					}));
-					console.log('Loaded comprehension questions:', loadedQuestions);
-					if (loadedQuestions.length > 0) {
-						console.log('First question ASL data:', {
-							id: loadedQuestions[0]?.id,
-							aslSigns: loadedQuestions[0]?.aslSigns,
-							aslType: loadedQuestions[0]?.aslType,
-							hasASL: !!(loadedQuestions[0]?.aslSigns || loadedQuestions[0]?.aslVideoUrl)
-						});
-					}
-					setQuestions(loadedQuestions);
+					aslSigns: q.asl_signs ? (Array.isArray(q.asl_signs) ? q.asl_signs : JSON.parse(q.asl_signs)) : null,
+					aslVideoUrl: q.asl_video_url || null,
+					aslType: q.asl_type || 'none'
+				}));
+				setQuestions(loadedQuestions);
 				} else {
 					setQuestions([]);
 				}
@@ -459,7 +481,20 @@ function EnglishQuiz() {
 					<div className="pinned-text-container">
 						<div className="pinned-text-header">
 							<h3>📖 Reading Passage</h3>
-							<span className="pin-icon">📌</span>
+							<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+								<button
+									className={`speaker-btn ${isPlayingPassage ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
+									onClick={speakPassage}
+									title={
+										!audioEnabled ? "🔇 Audio is off - right-click question speaker to enable" : 
+										isPlayingPassage ? "🔊 Click to stop reading passage" : 
+										"🔈 Click to hear the passage"
+									}
+								>
+									{!audioEnabled ? '🔇' : (isPlayingPassage ? '🔊' : '🔈')}
+								</button>
+								<span className="pin-icon">📌</span>
+							</div>
 						</div>
 						
 						{/* ASL Player for the passage */}

@@ -1,15 +1,10 @@
 
-// Dynamically build words list from all available videos
-// This checks if the video file exists when needed
 const getWordVideoPath = (word) => {
   const cleanWord = word.toLowerCase().replace(/[^a-z0-9-]/g, '');
   return `/asl/words/${cleanWord}.mp4`;
 };
 
-// Check if a word video exists (we'll try to load it and the browser will handle 404)
 const hasWordVideo = (word) => {
-  // For now, we'll just return the path and let the browser handle missing videos
-  // The ASLPlayer component will show text if the video fails to load
   return getWordVideoPath(word);
 };
 
@@ -75,18 +70,12 @@ export const ASL_RESOURCES = {
     '=': '/asl/operations/equals.mp4',
   },
   
-  
-  // Words are loaded dynamically - any word video in /asl/words/ will work
-  // Just add the .mp4 file to the folder and it will be automatically detected
   words: new Proxy({}, {
     get: function(target, prop) {
-      // Return the path to the word video
-      // The browser will handle 404 if the file doesn't exist
       return getWordVideoPath(prop);
     }
   }),
   
-  // Punctuation/special
   special: {
     'question': '/asl/special/question.mp4',
     'exclamation': '/asl/special/exclamation.mp4',
@@ -132,26 +121,16 @@ export const mathExpressionToASL = (expression) => {
 export const sentenceToASL = (sentence) => {
   const sequence = [];
   
-  console.log('sentenceToASL - Input text:', sentence);
-  console.log('sentenceToASL - Input length:', sentence?.length);
-  
-  // Clean and split - handle newlines and multiple sentences
   const cleaned = sentence.toLowerCase().replace(/[^\w\s?!.]/g, '');
   const words = cleaned.split(/\s+/).filter(w => w.length > 0);
   
-  console.log('sentenceToASL - Total words:', words.length);
-  console.log('sentenceToASL - First 10 words:', words.slice(0, 10));
-  
   words.forEach(word => {
-    
     const punctuation = word.match(/[?!.]$/);
     const cleanWord = word.replace(/[?!.]$/, '');
     
-   
     if (/^\d+$/.test(cleanWord)) {
       sequence.push(...numberToASL(cleanWord));
     }
-    
     else if (ASL_RESOURCES.words[cleanWord]) {
       sequence.push({
         type: 'word',
@@ -160,12 +139,11 @@ export const sentenceToASL = (sentence) => {
         display: cleanWord
       });
     }
-    // Word not in dictionary - needs fingerspelling or custom video
     else {
       sequence.push({
         type: 'fingerspell',
         value: cleanWord,
-        resource: null, // Will need to fingerspell letter by letter
+        resource: null,
         display: cleanWord,
         needsTranslation: true
       });
@@ -188,35 +166,21 @@ export const sentenceToASL = (sentence) => {
   return sequence;
 };
 
-/**
- * Convert any text (auto-detect type) into ASL sequence
- */
 export const textToASL = (text) => {
-  // Check if it's a math expression
   if (/^[\d\s+\-×÷*/=]+$/.test(text)) {
     return mathExpressionToASL(text);
   }
   
-  // Check if it's just a number
   if (/^\d+$/.test(text)) {
     return numberToASL(text);
   }
   
-  // Otherwise treat as sentence
   return sentenceToASL(text);
 };
 
-/**
- * Get ASL sequence from database format
- * Handles different storage formats:
- * - asl_signs: JSON array of numbers [2, 3, 5]
- * - asl_video_url: JSON array of video URLs
- * - asl_image_url: JSON array of image URLs
- */
 export const getASLFromQuestion = (question) => {
   const sequence = [];
   
-  // Priority 1: Custom video URLs (handle both snake_case and camelCase)
   const videoUrl = question.asl_video_url || question.aslVideoUrl;
   if (videoUrl) {
     try {
@@ -234,7 +198,6 @@ export const getASLFromQuestion = (question) => {
     }
   }
   
-  // Priority 2: Custom image URLs (handle both snake_case and camelCase)
   const imageUrl = question.asl_image_url || question.aslImageUrl;
   if (imageUrl) {
     try {
@@ -252,12 +215,8 @@ export const getASLFromQuestion = (question) => {
     }
   }
   
-  // Priority 3: ASL signs array (numbers or sentence words) - handle both snake_case and camelCase
   const aslSigns = question.asl_signs || question.aslSigns;
   const aslType = question.asl_type || question.aslType;
-  
-  console.log('getASLFromQuestion - aslSigns:', aslSigns);
-  console.log('getASLFromQuestion - aslType:', aslType);
   
   if (aslSigns) {
     try {
@@ -265,15 +224,10 @@ export const getASLFromQuestion = (question) => {
         ? JSON.parse(aslSigns)
         : aslSigns;
       
-      console.log('Parsed signs:', signs);
-      
-      // Check asl_type to determine format
       if (aslType === 'sentence' && Array.isArray(signs)) {
-        // Sentence format: array of words ["who", "found", "the", "kitten"]
         const wordSequence = signs.map(word => {
           const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
           const resource = ASL_RESOURCES.words[cleanWord] || null;
-          console.log(`Word "${word}" -> cleanWord "${cleanWord}" -> resource:`, resource);
           return {
             type: 'word',
             value: word,
@@ -282,11 +236,9 @@ export const getASLFromQuestion = (question) => {
             needsTranslation: !resource
           };
         });
-        console.log('Word sequence:', wordSequence);
         return wordSequence;
       }
       
-      // Check if it's sentence format with words array (legacy)
       if (signs.words && Array.isArray(signs.words)) {
         return signs.words.map(wordObj => ({
           type: 'word',
@@ -296,7 +248,6 @@ export const getASLFromQuestion = (question) => {
         }));
       }
       
-      // Number format: array of numbers/operations [2, 'minus', 3, 'equals']
       return signs.map(sign => {
         if (typeof sign === 'number' || /^\d+$/.test(sign)) {
           return {

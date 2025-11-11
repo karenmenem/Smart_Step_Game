@@ -4,7 +4,7 @@ import { auth, api } from "../api/auth";
 
 function EnglishLevels() {
 	const navigate = useNavigate();
-	const { topic } = useParams(); // e.g., comprehension, grammar, vocabulary, picture match
+	const { topic } = useParams();
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [levelAccess, setLevelAccess] = useState({
@@ -37,8 +37,7 @@ function EnglishLevels() {
 		
 		setLoading(true);
 		try {
-			// Map topics to activity IDs (actual IDs in database)
-			// Comprehension: 43,44,46,47,49,50 (Beginner 43,44 / Intermediate 46,47 / Advanced 49,50)
+
 			const activityIds = {
 				comprehension: {
 					beginner: [43, 44],
@@ -49,7 +48,6 @@ function EnglishLevels() {
 
 			const ids = activityIds[topic] || activityIds.comprehension;
 
-			// Check access for each level
 			const [
 				beginnerL2,
 				intermediateL1,
@@ -66,7 +64,7 @@ function EnglishLevels() {
 
 			setLevelAccess({
 				beginner: {
-					level1: { allowed: true }, // Always accessible
+					level1: { allowed: true },
 					level2: beginnerL2.success && beginnerL2.allowed ? beginnerL2 : { allowed: false, reason: beginnerL2.reason || 'Complete Sublevel 1 first' }
 				},
 				intermediate: {
@@ -147,7 +145,6 @@ function EnglishLevels() {
 
 	return (
 		<div className="math-levels-layout">
-			{/* Header */}
 			<header className="math-levels-header">
 				<div className="math-levels-header-content">
 					<div className="math-levels-logo">
@@ -189,7 +186,6 @@ function EnglishLevels() {
 				</div>
 			</header>
 
-			{/* Main Content */}
 			<main className="math-levels-main">
 				<div className="math-levels-title-section">
 					<div className="operation-header">
@@ -204,7 +200,6 @@ function EnglishLevels() {
 				</div>
 
 				<div className="levels-container">
-					{/* Beginner Level */}
 					<div className="level-card beginner-card active">
 						<div className="level-header">
 							<div className="level-icon">🌱</div>
@@ -250,8 +245,6 @@ function EnglishLevels() {
 							</div>
 						</div>
 					</div>
-
-				{/* Intermediate Level */}
 				<div className={`level-card intermediate-card ${levelAccess.intermediate.level1.allowed ? 'active' : 'locked'}`}>
 					{!levelAccess.intermediate.level1.allowed && (
 						<div className="lock-overlay">

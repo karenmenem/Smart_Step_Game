@@ -1,16 +1,10 @@
 const { query } = require('../config/database');
 const { checkAndAwardAchievements, updateChildPoints } = require('./achievementController');
 
-/**
- * Check if a child can access a specific activity level
- * Returns: { allowed: boolean, reason: string, progress: object }
- */
 const checkLevelAccess = async (req, res) => {
   try {
     const { childId, activityId } = req.params;
     
-    // First, check if the child has ever attempted this activity
-    // If they have, it means it was unlocked before and should stay unlocked
     const hasAttempted = await query(
       'SELECT * FROM child_progress WHERE child_id = ? AND activity_id = ?',
       [childId, activityId]
@@ -25,7 +19,6 @@ const checkLevelAccess = async (req, res) => {
       });
     }
     
-    // Get activity info
     const activity = await query(
       'SELECT * FROM Activity WHERE activity_id = ?',
       [activityId]
@@ -40,8 +33,6 @@ const checkLevelAccess = async (req, res) => {
     
     const currentActivity = activity[0];
     
-    // Check if this is Level 1 (always accessible)
-    // Beginner Level 1: 7 (addition), 16 (subtraction), 25 (multiplication), 34 (division), 43 (comprehension)
     const isLevel1 = [7, 16, 25, 34, 43].includes(parseInt(activityId));
     
     if (isLevel1) {
@@ -52,65 +43,51 @@ const checkLevelAccess = async (req, res) => {
       });
     }
     
-    // For other levels, check previous level completion
     let requiredActivityId;
     
-    // Map activity IDs to required previous activity
     const activityMap = {
-      // Addition: Beginner (7, 8), Intermediate (10, 11), Advanced (13, 14)
-      8: 7,   // Beginner L2 requires Beginner L1
-      10: 8,  // Intermediate L1 requires Beginner L2
-      11: 10, // Intermediate L2 requires Intermediate L1
-      13: 11, // Advanced L1 requires Intermediate L2
-      14: 13, // Advanced L2 requires Advanced L1
+      8: 7,
+      10: 8, 
+      11: 10,
+      13: 11,
+      14: 13,
       
-      // Subtraction: Beginner (16, 17), Intermediate (19, 20), Advanced (22, 23)
       17: 16,
       19: 17,
       20: 19,
       22: 20,
       23: 22,
-      
-      // Multiplication: Beginner (25, 26), Intermediate (28, 29), Advanced (31, 32)
+
       26: 25,
       28: 26,
       29: 28,
       31: 29,
       32: 31,
-      
-      // Division: Beginner (34, 35), Intermediate (37, 38), Advanced (40, 41)
+   
       35: 34,
       37: 35,
       38: 37,
       40: 38,
       41: 40,
-      
-      // English Comprehension: Beginner (43, 44), Intermediate (46, 47), Advanced (49, 50)
-      44: 43, // Beginner L2 requires Beginner L1
-      46: 44, // Intermediate L1 requires Beginner L2
-      47: 46, // Intermediate L2 requires Intermediate L1
-      49: 47, // Advanced L1 requires Intermediate L2
-      50: 49  // Advanced L2 requires Advanced L1
+    
+      44: 43,
+      46: 44,
+      47: 46,
+      49: 47,
+      50: 49 
     };
     
     requiredActivityId = activityMap[parseInt(activityId)];
-    
-    // Special logic for English: Intermediate L1 and Advanced L1 require BOTH previous sublevels
-    // Intermediate L1 (46) requires both Beginner L1 (43) AND L2 (44)
-    // Advanced L1 (49) requires both Intermediate L1 (46) AND L2 (47)
-    const requiresBothSublevels = [46, 49]; // English Intermediate L1 and Advanced L1
+    const requiresBothSublevels = [46, 49];
     
     if (requiresBothSublevels.includes(parseInt(activityId))) {
       let requiredActivities = [];
       if (parseInt(activityId) === 46) {
-        // Intermediate L1 requires both Beginner sublevels
         requiredActivities = [43, 44];
       } else if (parseInt(activityId) === 49) {
-        // Advanced L1 requires both Intermediate sublevels
         requiredActivities = [46, 47];
       }
       
-      // Check both required activities
       for (const reqActivityId of requiredActivities) {
         const progress = await query(`
           SELECT * FROM child_progress 
@@ -141,7 +118,6 @@ const checkLevelAccess = async (req, res) => {
         }
       }
       
-      // Both sublevels completed with 80%+
       return res.json({
         success: true,
         allowed: true,
@@ -149,7 +125,6 @@ const checkLevelAccess = async (req, res) => {
       });
     }
     
-    // Standard logic for other levels (single prerequisite)
     const progress = await query(`
       SELECT * FROM child_progress 
       WHERE child_id = ? AND activity_id = ?
@@ -169,7 +144,6 @@ const checkLevelAccess = async (req, res) => {
     const lastProgress = progress[0];
     const percentage = (lastProgress.score / lastProgress.max_score) * 100;
     
-    // Check if scored 80% or higher
     if (percentage >= 80) {
       return res.json({
         success: true,
@@ -205,9 +179,6 @@ const checkLevelAccess = async (req, res) => {
   }
 };
 
-/**
- * Save quiz results and update progress
- */
 const saveQuizProgress = async (req, res) => {
   try {
     const { childId, activityId, score, maxScore } = req.body;
@@ -222,14 +193,12 @@ const saveQuizProgress = async (req, res) => {
     const percentage = (score / maxScore) * 100;
     const completed = percentage >= 80;
     
-    // Check if progress record exists
     const existing = await query(
       'SELECT * FROM child_progress WHERE child_id = ? AND activity_id = ?',
       [childId, activityId]
     );
     
     if (existing && existing.length > 0) {
-      // Update existing record
       await query(`
         UPDATE child_progress 
         SET score = ?, 
@@ -241,7 +210,6 @@ const saveQuizProgress = async (req, res) => {
         WHERE child_id = ? AND activity_id = ?
       `, [score, maxScore, completed ? 1 : 0, childId, activityId]);
     } else {
-      // Create new record
       await query(`
         INSERT INTO child_progress 
         (child_id, activity_id, score, max_score, completed, attempts, last_attempt, completed_at)
@@ -249,11 +217,8 @@ const saveQuizProgress = async (req, res) => {
       `, [childId, activityId, score, maxScore, completed ? 1 : 0]);
     }
     
-    // Award points - 10 points per correct answer
     const pointsEarned = score * 10;
     const newTotalPoints = await updateChildPoints(childId, pointsEarned);
-    
-    // Check and award achievements
     const newAchievements = await checkAndAwardAchievements(childId, activityId, score, maxScore);
     
     res.json({
@@ -276,9 +241,6 @@ const saveQuizProgress = async (req, res) => {
   }
 };
 
-/**
- * Get all progress for a child
- */
 const getChildProgress = async (req, res) => {
   try {
     const { childId } = req.params;

@@ -23,8 +23,7 @@ const getQuestions = async (req, res) => {
       ORDER BY order_index ASC`,
       [activityId]
     );
-    
-    // Parse JSON fields
+ 
     const parsedQuestions = questions.map(q => ({
       ...q,
       options: JSON.parse(q.options || '[]'),
@@ -45,7 +44,6 @@ const getQuestions = async (req, res) => {
   }
 };
 
-// Get activity details
 const getActivity = async (req, res) => {
   try {
     const { activityId } = req.params;
@@ -88,7 +86,6 @@ const getActivity = async (req, res) => {
   }
 };
 
-// Save quiz attempt
 const saveQuizAttempt = async (req, res) => {
   try {
     const { childId, activityId, score, maxScore, answers } = req.body;
@@ -100,9 +97,8 @@ const saveQuizAttempt = async (req, res) => {
       });
     }
     
-    const passed = (score / maxScore) >= 0.8; // 80% passing grade
+    const passed = (score / maxScore) >= 0.8; 
     
-    // Use INSERT ON DUPLICATE KEY UPDATE to handle both insert and update
     await query(
       `INSERT INTO child_progress 
         (child_id, activity_id, score, max_score, completed, attempts, last_attempt, completed_at) 
@@ -120,7 +116,6 @@ const saveQuizAttempt = async (req, res) => {
       [childId, activityId, score, maxScore, passed, passed ? new Date() : null]
     );
     
-    // Save individual answer attempts if provided
     if (answers && Array.isArray(answers)) {
       for (const answer of answers) {
         await query(
@@ -139,7 +134,6 @@ const saveQuizAttempt = async (req, res) => {
       }
     }
     
-    // Update child's total points
     const activity = await query('SELECT points_value FROM activity WHERE activity_id = ?', [activityId]);
     if (activity.length > 0 && passed) {
       await query(
@@ -147,8 +141,7 @@ const saveQuizAttempt = async (req, res) => {
         [activity[0].points_value, childId]
       );
     }
-    
-    // Check and award achievements
+  
     await checkAchievements(childId);
     
     res.json({
@@ -171,7 +164,6 @@ const saveQuizAttempt = async (req, res) => {
   }
 };
 
-// Get child's progress
 const getChildProgress = async (req, res) => {
   try {
     const { childId } = req.params;
@@ -212,7 +204,6 @@ const getChildProgress = async (req, res) => {
   }
 };
 
-// Get child's achievements
 const getChildAchievements = async (req, res) => {
   try {
     const { childId } = req.params;
@@ -247,10 +238,9 @@ const getChildAchievements = async (req, res) => {
   }
 };
 
-// Helper function to check and award achievements
 const checkAchievements = async (childId) => {
   try {
-    // Get child's stats
+ 
     const childStats = await query(
       `SELECT 
         c.total_points,
@@ -269,20 +259,16 @@ const checkAchievements = async (childId) => {
     
     const stats = childStats[0];
     
-    // Check achievements
     const achievementsToAward = [];
     
-    // First Steps - Complete first activity
     if (stats.completed_activities >= 1) {
       achievementsToAward.push(1);
     }
-    
-    // Quick Learner - Complete 5 activities in one day
+
     if (stats.today_completions >= 5) {
       achievementsToAward.push(2);
     }
     
-    // Math Wizard - Complete all level 1 math
     const mathLevel1 = await query(
       `SELECT COUNT(*) as total, 
         SUM(cp.completed) as completed
@@ -295,8 +281,7 @@ const checkAchievements = async (childId) => {
     if (mathLevel1[0].completed >= mathLevel1[0].total && mathLevel1[0].total > 0) {
       achievementsToAward.push(3);
     }
-    
-    // Award new achievements
+   
     for (const achievementId of achievementsToAward) {
       await query(
         'INSERT IGNORE INTO child_achievement (child_id, achievement_id) VALUES (?, ?)',
@@ -309,7 +294,6 @@ const checkAchievements = async (childId) => {
   }
 };
 
-// Get all activities for a subject and level
 const getActivitiesByLevel = async (req, res) => {
   try {
     const { subject, level } = req.params;

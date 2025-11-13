@@ -26,12 +26,12 @@ function Profile() {
       // If no children array but there's a child object, create the array
       if (childrenList.length === 0 && userData.child) {
         childrenList = [userData.child];
-        // Update localStorage with the corrected data
+        // Update sessionStorage with the corrected data
         const updatedUserData = {
           ...userData,
           children: childrenList
         };
-        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+        sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
       }
       
       setChildren(childrenList);
@@ -78,7 +78,7 @@ function Profile() {
           children: newChildren
         };
         setUser(updatedUserData);
-        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+        sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
         
         console.log('Child added successfully:', response.data);
       } else {
@@ -104,7 +104,7 @@ function Profile() {
     };
     setUser(updatedUserData);
     
-    localStorage.setItem('userData', JSON.stringify(updatedUserData));
+    sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
     
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'currentChild',

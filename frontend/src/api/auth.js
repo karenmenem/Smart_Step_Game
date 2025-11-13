@@ -40,7 +40,7 @@ export const api = {
 
   addChild: async (childData) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/auth/add-child`, {
         method: 'POST',
         headers: {
@@ -60,7 +60,7 @@ export const api = {
 
   getChildren: async (parentId) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('authToken');
       const response = await fetch(`${API_BASE_URL}/auth/children/${parentId}`, {
         method: 'GET',
         headers: {
@@ -78,7 +78,7 @@ export const api = {
   },
 
   getAuthHeaders: () => {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : ''
@@ -233,29 +233,29 @@ export const api = {
 
 export const auth = {
   login: (tokenData) => {
-    localStorage.setItem('authToken', tokenData.token);
-    localStorage.setItem('userData', JSON.stringify(tokenData.data));
+    sessionStorage.setItem('authToken', tokenData.token);
+    sessionStorage.setItem('userData', JSON.stringify(tokenData.data));
     console.log('User logged in successfully');
   },
 
   logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('currentChild');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('userData');
+    sessionStorage.removeItem('currentChild');
     console.log('User logged out');
   },
 
   getCurrentUser: () => {
-    const userData = localStorage.getItem('userData');
+    const userData = sessionStorage.getItem('userData');
     return userData ? JSON.parse(userData) : null;
   },
 
   setCurrentChild: (child) => {
-    localStorage.setItem('currentChild', JSON.stringify(child));
+    sessionStorage.setItem('currentChild', JSON.stringify(child));
   },
 
   getCurrentChild: () => {
-    const childData = localStorage.getItem('currentChild');
+    const childData = sessionStorage.getItem('currentChild');
     if (childData) {
       return JSON.parse(childData);
     }
@@ -265,8 +265,8 @@ export const auth = {
   },
 
   isAuthenticated: () => {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
+    const token = sessionStorage.getItem('authToken');
+    const userData = sessionStorage.getItem('userData');
     return !!(token && userData);
   }
 };

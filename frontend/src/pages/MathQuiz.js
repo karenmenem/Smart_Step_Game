@@ -411,14 +411,14 @@ function MathQuiz() {
       if (result.success) {
         console.log('Quiz results saved successfully:', result.data);
         
-        // Update user's total points in local storage
+        // Update user's total points in session storage
         if (result.data.passed) {
           const updatedUser = { ...user };
           if (updatedUser.child) {
             updatedUser.child.totalPoints = (updatedUser.child.totalPoints || 0) + (activityInfo?.points || 100);
           }
           setUser(updatedUser);
-          localStorage.setItem('userData', JSON.stringify(updatedUser));
+          sessionStorage.setItem('userData', JSON.stringify(updatedUser));
         }
       }
     } catch (error) {

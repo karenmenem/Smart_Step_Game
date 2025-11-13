@@ -24,6 +24,7 @@ function EnglishQuiz() {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [audioEnabled, setAudioEnabled] = useState(true);
 	const [isPlayingPassage, setIsPlayingPassage] = useState(false);
+	const [showASL, setShowASL] = useState(false); // State to toggle ASL display
 
 	// Memoize the passage question object to prevent re-renders
 	const passageQuestion = useMemo(() => ({
@@ -121,6 +122,7 @@ function EnglishQuiz() {
 			setPinnedText("");
 			setPassageTitle("");
 			setPassageAuthor("");
+			setShowASL(false); // Reset ASL display
 			
 			const userData = auth.getCurrentUser();
 			const currentChild = auth.getCurrentChild();
@@ -128,6 +130,11 @@ function EnglishQuiz() {
 			loadQuizContent();
 		}
 	}, [navigate, topic, level, sublevel]);
+
+	// Reset ASL display when moving to a new question
+	useEffect(() => {
+		setShowASL(false);
+	}, [currentQuestion]);
 
 	const loadQuizContent = async () => {
 		setLoading(true);
@@ -196,11 +203,18 @@ function EnglishQuiz() {
 						question_type: q.type,
 						options: Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]'),
 						correct_answer: q.correct,
-					aslSigns: q.asl_signs ? (Array.isArray(q.asl_signs) ? q.asl_signs : JSON.parse(q.asl_signs)) : null,
-					aslVideoUrl: q.asl_video_url || null,
-					aslType: q.asl_type || 'none'
-				}));
-				setQuestions(loadedQuestions);
+						aslSigns: q.aslSigns || null,
+						aslVideoUrl: q.aslVideoUrl || null,
+						aslType: q.aslType || 'none'
+					}));
+					console.log('Loaded questions with ASL data:', loadedQuestions.map(q => ({ 
+						id: q.id, 
+						text: q.question_text.substring(0, 30), 
+						aslType: q.aslType,
+						hasAslSigns: !!q.aslSigns,
+						hasAslVideo: !!q.aslVideoUrl
+					})));
+					setQuestions(loadedQuestions);
 				} else {
 					setQuestions([]);
 				}
@@ -545,25 +559,40 @@ function EnglishQuiz() {
 							<div className="question-content">
 								<div className="question-text-container">
 									<h3 className="question-text">{question.question_text}</h3>
+									<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+										<button 
+											className={`speaker-btn ${isPlaying ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
+											onClick={speakQuestion}
+											onContextMenu={(e) => { e.preventDefault(); toggleAudio(); }}
+											title={
+												!audioEnabled ? "🔇 Audio is off - right-click to enable" : 
+												isPlaying ? "🔊 Click to stop | Right-click to disable audio" : 
+												"🔈 Click to hear the question | Right-click to disable audio"
+											}
+										>
+									{!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
+								</button>
+								{/* ASL Toggle Button - Only show if question has ASL */}
+								{console.log('Current question:', question, 'ASL Type:', question.aslType)}
+								{question.aslType && question.aslType !== 'none' && (
 									<button 
-										className={`speaker-btn ${isPlaying ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
-										onClick={speakQuestion}
-										onContextMenu={(e) => { e.preventDefault(); toggleAudio(); }}
-										title={
-											!audioEnabled ? "🔇 Audio is off - right-click to enable" : 
-											isPlaying ? "🔊 Click to stop | Right-click to disable audio" : 
-											"🔈 Click to hear the question | Right-click to disable audio"
-										}
-									>
-										{!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
-									</button>
+										className={`asl-toggle-btn ${showASL ? 'active' : ''}`}
+										onClick={() => setShowASL(!showASL)}
+										title={showASL ? "Hide ASL video" : "Show ASL video"}
+										>
+											🤟 ASL
+										</button>
+									)}
+									</div>
 								</div>
 								
 								{/* ASL Player - Shows ASL translation for comprehension questions */}
-								{question && (question.aslSigns || question.aslVideoUrl) && (
-									<ASLPlayer 
-										question={question}
-									/>
+								{showASL && question && question.aslType && question.aslType !== 'none' && (
+									<div className="asl-video-container">
+										<ASLPlayer 
+											question={question}
+										/>
+									</div>
 								)}
 								
 								<div className="options-grid">

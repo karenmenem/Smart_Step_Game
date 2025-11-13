@@ -9,6 +9,7 @@ const ASLPlayer = ({ question }) => {
   useEffect(() => {
     if (question) {
       const aslSequence = getASLFromQuestion(question);
+      console.log('ASL Sequence generated:', aslSequence);
       setSequence(aslSequence);
       setCurrentIndex(0);
     }
@@ -33,12 +34,15 @@ const ASLPlayer = ({ question }) => {
   }, [currentIndex, sequence]);
 
   if (!sequence || sequence.length === 0) {
+    console.log('ASLPlayer: No sequence available', { sequence, question });
     return (
       <div className="asl-player-empty">
         <p>No ASL translation available</p>
       </div>
     );
   }
+  
+  console.log('ASLPlayer rendering with sequence length:', sequence.length, 'currentIndex:', currentIndex);
 
   const currentSign = sequence[currentIndex];
 

@@ -573,7 +573,6 @@ function EnglishQuiz() {
 									{!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
 								</button>
 								{/* ASL Toggle Button - Only show if question has ASL */}
-								{console.log('Current question:', question, 'ASL Type:', question.aslType)}
 								{question.aslType && question.aslType !== 'none' && (
 									<button 
 										className={`asl-toggle-btn ${showASL ? 'active' : ''}`}

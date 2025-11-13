@@ -6,6 +6,7 @@ let resourceMap = { words: {}, numbers: {}, operations: {} };
 // Fetch ASL resources from backend
 export const loadASLResources = async () => {
   if (cachedResources) {
+    console.log('ASL resources already cached:', Object.keys(resourceMap.words).length, 'words');
     return cachedResources;
   }
 
@@ -39,10 +40,19 @@ export const loadASLResources = async () => {
         }
       });
 
+      console.log('ASL resources loaded:', {
+        words: Object.keys(resourceMap.words).length,
+        numbers: Object.keys(resourceMap.numbers).length,
+        operations: Object.keys(resourceMap.operations).length,
+        sampleWords: Object.keys(resourceMap.words).slice(0, 10)
+      });
+
       return resources;
+    } else {
+      console.error('Failed to load ASL resources: HTTP', response.status);
     }
   } catch (error) {
-    console.error('Failed to load ASL resources from API, using fallback:', error);
+    console.error('Failed to load ASL resources from API:', error);
   }
 
   return null;
@@ -256,7 +266,8 @@ export const getASLFromQuestion = (question) => {
         ? JSON.parse(aslSigns)
         : aslSigns;
       
-      if (aslType === 'sentence' && Array.isArray(signs)) {
+      // If aslType is sentence and signs array is empty, fall through to auto-generation
+      if (aslType === 'sentence' && Array.isArray(signs) && signs.length > 0) {
         const wordSequence = signs.map(word => {
           const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
           const resource = ASL_RESOURCES.words[cleanWord] || null;

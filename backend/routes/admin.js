@@ -25,7 +25,11 @@ const {
   createAchievement,
   updateAchievement,
   deleteAchievement,
-  getDashboardStats
+  getDashboardStats,
+  getHomepageSettings,
+  updateHomepageSetting,
+  bulkUpdateHomepageSettings,
+  resetHomepageSettings
 } = require('../controllers/adminController');
 
 // ==================== ADMIN AUTH ====================
@@ -528,5 +532,19 @@ router.delete('/questions/:id', adminAuth, async (req, res) => {
     });
   }
 });
+
+// ==================== HOMEPAGE SETTINGS ====================
+
+// Get all homepage settings
+router.get('/homepage-settings', adminAuth, getHomepageSettings);
+
+// Update single homepage setting
+router.put('/homepage-settings/:id', adminAuth, updateHomepageSetting);
+
+// Bulk update homepage settings
+router.post('/homepage-settings/bulk-update', adminAuth, bulkUpdateHomepageSettings);
+
+// Reset homepage settings to defaults
+router.post('/homepage-settings/reset', adminAuth, resetHomepageSettings);
 
 module.exports = router;

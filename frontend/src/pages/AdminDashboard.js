@@ -383,6 +383,12 @@ function AdminDashboard() {
           >
             🏆 Achievements
           </button>
+          <button
+            className={`admin-nav-btn ${activeTab === 'homepage' ? 'active' : ''}`}
+            onClick={() => navigate('/admin/homepage-customizer')}
+          >
+            🎨 Homepage Customizer
+          </button>
         </nav>
 
         <main className="admin-main">

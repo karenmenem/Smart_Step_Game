@@ -1,8 +1,6 @@
 const { query } = require('../config/database');
 
-// ==================== QUESTIONS MANAGEMENT ====================
 
-// Get all questions with filters
 const getAllQuestions = async (req, res) => {
   try {
     const { activityId, subject, level } = req.query;
@@ -49,7 +47,7 @@ const getAllQuestions = async (req, res) => {
   }
 };
 
-// Create new question
+
 const createQuestion = async (req, res) => {
   try {
     console.log('Received request body:', req.body);
@@ -79,7 +77,7 @@ const createQuestion = async (req, res) => {
       orderIndex
     } = req.body;
     
-    // Try all possible field name variations
+    
     const actId = activity_id || activityId || req.body['activity_id'] || req.body['activityId'];
     const qText = question_text || questionText || req.body['question_text'] || req.body['questionText'];
     const qType = question_type || questionType || req.body['question_type'] || req.body['questionType'];
@@ -118,7 +116,7 @@ const createQuestion = async (req, res) => {
     
     console.log('✅ VALIDATION PASSED');
     
-    // Parse options if it's a string
+    
     let optionsData = options;
     if (typeof options === 'string') {
       try {
@@ -128,7 +126,7 @@ const createQuestion = async (req, res) => {
       }
     }
     
-    // Parse ASL signs if it's a string
+    
     let aslSignsData = aslS;
     if (typeof aslS === 'string' && aslS.trim()) {
       try {
@@ -138,7 +136,6 @@ const createQuestion = async (req, res) => {
       }
     }
     
-    // Get passage_id if provided
     const passageId = req.body.passage_id || req.body.passageId || null;
     
     const result = await query(
@@ -677,6 +674,124 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
+// Homepage Settings Management
+const getHomepageSettings = async (req, res) => {
+  try {
+    const settings = await query('SELECT * FROM homepage_settings ORDER BY category, setting_key');
+    
+    // Group settings by category
+    const groupedSettings = settings.reduce((acc, setting) => {
+      if (!acc[setting.category]) {
+        acc[setting.category] = [];
+      }
+      acc[setting.category].push(setting);
+      return acc;
+    }, {});
+    
+    res.json({
+      success: true,
+      data: {
+        settings,
+        grouped: groupedSettings
+      }
+    });
+  } catch (error) {
+    console.error('Get homepage settings error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch homepage settings' });
+  }
+};
+
+const updateHomepageSetting = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { setting_value } = req.body;
+    const adminId = req.admin.admin_id;
+    
+    await query(
+      'UPDATE homepage_settings SET setting_value = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
+      [setting_value, adminId, id]
+    );
+    
+    const updated = await query('SELECT * FROM homepage_settings WHERE id = ?', [id]);
+    
+    res.json({
+      success: true,
+      message: 'Homepage setting updated successfully',
+      data: updated[0]
+    });
+  } catch (error) {
+    console.error('Update homepage setting error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update homepage setting' });
+  }
+};
+
+const bulkUpdateHomepageSettings = async (req, res) => {
+  try {
+    const { settings } = req.body; // Array of {id, setting_value}
+    const adminId = req.admin.admin_id;
+    
+    if (!Array.isArray(settings)) {
+      return res.status(400).json({ success: false, message: 'Settings must be an array' });
+    }
+    
+    // Update all settings in a transaction
+    for (const setting of settings) {
+      await query(
+        'UPDATE homepage_settings SET setting_value = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
+        [setting.setting_value, adminId, setting.id]
+      );
+    }
+    
+    const updated = await query('SELECT * FROM homepage_settings ORDER BY category, setting_key');
+    
+    res.json({
+      success: true,
+      message: 'Homepage settings updated successfully',
+      data: updated
+    });
+  } catch (error) {
+    console.error('Bulk update homepage settings error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update homepage settings' });
+  }
+};
+
+const resetHomepageSettings = async (req, res) => {
+  try {
+    const adminId = req.admin.admin_id;
+    
+    // Reset to default values by re-running the default inserts
+    const defaultSettings = [
+      ['header_background_color', '#ffffff'],
+      ['header_text_color', '#333333'],
+      ['logo_text', 'SmartStep'],
+      ['logo_accent_text', 'Step'],
+      ['logo_accent_color', '#ff6b6b'],
+      ['main_title', 'Make Learning Fun<br/>with Smart Step!'],
+      ['main_subtitle', 'Let\'s learn with words, numbers, and signs!'],
+      ['primary_button_bg', '#4CAF50'],
+      ['secondary_button_bg', '#2196F3'],
+    ];
+    
+    for (const [key, value] of defaultSettings) {
+      await query(
+        'UPDATE homepage_settings SET setting_value = ?, updated_by = ?, updated_at = NOW() WHERE setting_key = ?',
+        [value, adminId, key]
+      );
+    }
+    
+    const updated = await query('SELECT * FROM homepage_settings ORDER BY category, setting_key');
+    
+    res.json({
+      success: true,
+      message: 'Homepage settings reset to defaults',
+      data: updated
+    });
+  } catch (error) {
+    console.error('Reset homepage settings error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reset homepage settings' });
+  }
+};
+
 module.exports = {
   // Questions
   getAllQuestions,
@@ -704,5 +819,10 @@ module.exports = {
   updateAchievement,
   deleteAchievement,
   // Dashboard
-  getDashboardStats
+  getDashboardStats,
+  // Homepage Settings
+  getHomepageSettings,
+  updateHomepageSetting,
+  bulkUpdateHomepageSettings,
+  resetHomepageSettings
 };

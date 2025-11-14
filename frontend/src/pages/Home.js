@@ -10,6 +10,96 @@ function Home() {
   const [progress, setProgress] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({});
+
+  // Fetch homepage settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/homepage');
+        const data = await response.json();
+        if (data.success) {
+          setSettings(data.data);
+          applyCustomStyles(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching homepage settings:', error);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  // Apply custom CSS and dynamic styles
+  const applyCustomStyles = (settings) => {
+    const style = document.createElement('style');
+    style.id = 'homepage-dynamic-styles';
+    
+    // Remove existing dynamic styles
+    const existing = document.getElementById('homepage-dynamic-styles');
+    if (existing) {
+      existing.remove();
+    }
+
+    style.textContent = `
+      .ma-header {
+        background-color: ${settings.header_background_color || '#ffffff'} !important;
+        color: ${settings.header_text_color || '#333333'} !important;
+      }
+      
+      .logo-accent {
+        color: ${settings.logo_accent_color || '#ff6b6b'} !important;
+      }
+      
+      .ma-nav-btn {
+        background-color: ${settings.nav_button_bg_color || '#f0f0f0'} !important;
+        color: ${settings.nav_button_text_color || '#333333'} !important;
+      }
+      
+      .ma-nav-btn:hover {
+        background-color: ${settings.nav_button_hover_bg || '#e0e0e0'} !important;
+      }
+      
+      .ma-main {
+        background-color: ${settings.main_background_color || '#f8f9fa'} !important;
+      }
+      
+      .ma-main-title {
+        color: ${settings.main_title_color || '#2c3e50'} !important;
+      }
+      
+      .ma-subtitle {
+        color: ${settings.main_subtitle_color || '#7f8c8d'} !important;
+      }
+      
+      .ma-btn-primary {
+        background-color: ${settings.primary_button_bg || '#4CAF50'} !important;
+        color: ${settings.primary_button_text || '#ffffff'} !important;
+      }
+      
+      .ma-btn-primary:hover {
+        background-color: ${settings.primary_button_hover_bg || '#45a049'} !important;
+      }
+      
+      .ma-btn-secondary {
+        background-color: ${settings.secondary_button_bg || '#2196F3'} !important;
+        color: ${settings.secondary_button_text || '#ffffff'} !important;
+      }
+      
+      .ma-btn-secondary:hover {
+        background-color: ${settings.secondary_button_hover_bg || '#0b7dda'} !important;
+      }
+      
+      .ma-bubble {
+        background-color: ${settings.bubble_color || '#ff6b6b'} !important;
+        color: ${settings.bubble_text_color || '#ffffff'} !important;
+      }
+      
+      ${settings.custom_css || ''}
+    `;
+    
+    document.head.appendChild(style);
+  };
 
   useEffect(() => {
     const updateUserData = async () => {
@@ -211,33 +301,62 @@ function Home() {
       </header>
 
       <main className="ma-main">
-        <div className="ma-right-bubbles">
-          <div className="ma-bubble ma-bubble-1">+</div>
-          <div className="ma-bubble ma-bubble-2">A</div>
-          <div className="ma-bubble ma-bubble-3">÷</div>
-          <div className="ma-bubble ma-bubble-4">B</div>
-          <div className="ma-bubble ma-bubble-5">=</div>
-          <div className="ma-bubble ma-bubble-6">C</div>
-        </div>
+        {settings.show_math_bubbles !== false && (
+          <div className="ma-right-bubbles">
+            {(settings.math_bubbles && settings.math_bubbles.length > 0 ? settings.math_bubbles : [
+              {symbol: '+', position: 1},
+              {symbol: 'A', position: 2},
+              {symbol: '÷', position: 3},
+              {symbol: 'B', position: 4},
+              {symbol: '=', position: 5},
+              {symbol: 'C', position: 6}
+            ]).map((bubble, index) => (
+              <div key={index} className={`ma-bubble ma-bubble-${bubble.position}`}>
+                {bubble.symbol}
+              </div>
+            ))}
+          </div>
+        )}
 
-        <div className="ma-english-designs">
-          <div className="ma-english-item ma-item-1">ABC</div>
-          <div className="ma-english-item ma-item-2">📖</div>
-          <div className="ma-english-item ma-item-3">✏️</div>
-          <div className="ma-english-item ma-item-4">123</div>
-        </div>
+        {settings.show_english_items !== false && (
+          <div className="ma-english-designs">
+            {(settings.english_items && settings.english_items.length > 0 ? settings.english_items : [
+              {symbol: 'ABC', position: 1},
+              {symbol: '📖', position: 2},
+              {symbol: '✏️', position: 3},
+              {symbol: '123', position: 4}
+            ]).map((item, index) => (
+              <div key={index} className={`ma-english-item ma-item-${item.position}`}>
+                {item.symbol}
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="ma-content">
-          <h1 className="ma-main-title">Make Learning Fun<br/>with Smart Step!</h1>
-          <p className="ma-subtitle">Let's learn with words, numbers, and signs!</p>
+          <h1 
+            className="ma-main-title"
+            dangerouslySetInnerHTML={{ 
+              __html: settings.main_title || 'Make Learning Fun<br/>with Smart Step!' 
+            }}
+          />
+          <p className="ma-subtitle">
+            {settings.main_subtitle || "Let's learn with words, numbers, and signs!"}
+          </p>
           
           <div className="ma-buttons">
-            <button className="ma-btn ma-btn-secondary" onClick={() => navigate("/dashboard")}>
-              📊 Go to Dashboard
-            </button>
-            <button className="ma-btn ma-btn-primary" onClick={() => navigate("/subjects")}>
-              Play Now
-            </button>
+            {(settings.cta_buttons && settings.cta_buttons.length > 0 ? settings.cta_buttons : [
+              {text: '📊 Go to Dashboard', action: 'dashboard', type: 'secondary'},
+              {text: 'Play Now', action: 'subjects', type: 'primary'}
+            ]).map((btn, index) => (
+              <button 
+                key={index}
+                className={`ma-btn ma-btn-${btn.type}`} 
+                onClick={() => navigate(`/${btn.action}`)}
+              >
+                {btn.text}
+              </button>
+            ))}
           </div>
 
           {user && (
@@ -285,44 +404,36 @@ function Home() {
         </div>
 
         <div className="ma-features-section">
-          <h2 className="ma-features-title">Why Kids Love Smart Step</h2>
+          <h2 className="ma-features-title">
+            {settings.features_title || 'Why Kids Love Smart Step'}
+          </h2>
           
-          <div className="ma-feature-item">
-            <div className="ma-feature-separator ma-separator-orange"></div>
-            <div className="ma-feature-icon">🎮</div>
-            <h3 className="ma-feature-heading">Interactive Learning</h3>
-            <p className="ma-feature-description">Learn math and English through fun, engaging games that make education enjoyable!</p>
-          </div>
-
-          <div className="ma-feature-item">
-            <div className="ma-feature-separator ma-separator-blue"></div>
-            <div className="ma-feature-icon">📚</div>
-            <h3 className="ma-feature-heading">Multiple Subjects</h3>
-            <p className="ma-feature-description">Master both mathematics and English language skills in one comprehensive platform!</p>
-          </div>
-
-          <div className="ma-feature-item">
-            <div className="ma-feature-separator ma-separator-green"></div>
-            <div className="ma-feature-icon">🏆</div>
-            <h3 className="ma-feature-heading">Earn Achievements</h3>
-            <p className="ma-feature-description">Collect badges and unlock rewards as you progress and improve your skills!</p>
-          </div>
-
-          <div className="ma-feature-item">
-            <div className="ma-feature-separator ma-separator-purple"></div>
-            <div className="ma-feature-icon">📊</div>
-            <h3 className="ma-feature-heading">Track Progress</h3>
-            <p className="ma-feature-description">Monitor your learning journey with detailed progress tracking and personalized feedback!</p>
-          </div>
+          {(settings.features_list && settings.features_list.length > 0 ? settings.features_list : [
+            {icon: '🎮', title: 'Interactive Learning', description: 'Learn math and English through fun, engaging games that make education enjoyable!', color: 'orange'},
+            {icon: '📚', title: 'Multiple Subjects', description: 'Master both mathematics and English language skills in one comprehensive platform!', color: 'blue'},
+            {icon: '🏆', title: 'Earn Achievements', description: 'Collect badges and unlock rewards as you progress and improve your skills!', color: 'green'},
+            {icon: '📊', title: 'Track Progress', description: 'Monitor your learning journey with detailed progress tracking and personalized feedback!', color: 'purple'}
+          ]).map((feature, index) => (
+            <div key={index} className="ma-feature-item">
+              <div className={`ma-feature-separator ma-separator-${feature.color}`}></div>
+              <div className="ma-feature-icon">{feature.icon}</div>
+              <h3 className="ma-feature-heading">{feature.title}</h3>
+              <p className="ma-feature-description">{feature.description}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="ma-progress-section">
-          <div className="ma-emoji">😊</div>
-          <div className="ma-progress-bar">
-            <div className="ma-progress-fill"></div>
+        {settings.show_progress_bar !== false && (
+          <div className="ma-progress-section">
+            <div className="ma-emoji">{settings.progress_bar_emoji || '😊'}</div>
+            <div className="ma-progress-bar">
+              <div className="ma-progress-fill"></div>
+            </div>
+            <p className="ma-progress-text">
+              {settings.progress_bar_text || 'What We Learn in Smart Step!'}
+            </p>
           </div>
-          <p className="ma-progress-text">What We Learn in Smart Step!</p>
-        </div>
+        )}
 
       </main>
     </div>

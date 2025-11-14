@@ -16,6 +16,7 @@ import AdminLogin from "../pages/AdminLogin";
 import AdminDashboard from "../pages/AdminDashboard";
 import AdminQuestionForm from "../pages/AdminQuestionForm";
 import ASLManager from "../pages/ASLManager";
+import HomepageCustomizer from "../pages/HomepageCustomizer";
 
 function AppRoutes() {
   return (
@@ -37,6 +38,7 @@ function AppRoutes() {
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/homepage-customizer" element={<HomepageCustomizer />} />
         <Route path="/admin/questions/add" element={<AdminQuestionForm />} />
         <Route path="/admin/questions/edit/:id" element={<AdminQuestionForm />} />
         <Route path="/admin/asl" element={<ASLManager />} />

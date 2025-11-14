@@ -37,6 +37,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/achievements', require('./routes/achievements'));
 app.use('/api/asl', require('./routes/asl'));
+app.use('/api/homepage', require('./routes/homepage'));
 
 app.get('/api/health', (req, res) => {
   res.json({ 

@@ -20,7 +20,7 @@ const ASLManager = () => {
 
   const loadResources = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/asl/resources');
+      const response = await fetch('http://localhost:5001/api/asl/resources');
       if (response.ok) {
         const data = await response.json();
         setResources(data);
@@ -50,7 +50,7 @@ const ASLManager = () => {
     formData.append('video', uploadForm.video);
 
     try {
-      const response = await fetch('http://localhost:5000/api/asl/upload', {
+      const response = await fetch('http://localhost:5001/api/asl/upload', {
         method: 'POST',
         body: formData
       });
@@ -77,7 +77,7 @@ const ASLManager = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/asl/${id}`, {
+      const response = await fetch(`http://localhost:5001/api/asl/${id}`, {
         method: 'DELETE'
       });
 
@@ -95,6 +95,12 @@ const ASLManager = () => {
   const filteredResources = filter === 'all' 
     ? resources 
     : resources.filter(r => r.type === filter);
+
+  // Helper to get video file URL
+  const getVideoUrl = (resource) => {
+    // Videos are stored in public/asl/{type}s/{filename}
+    return `/asl/${resource.type}s/${resource.filename}`;
+  };
 
   return (
     <div className="asl-manager">
@@ -219,7 +225,13 @@ const ASLManager = () => {
                     </span>
                   </td>
                   <td>{resource.value}</td>
-                  <td>{resource.filename}</td>
+                  <td>
+                    {resource.filename ? (
+                      <a href={getVideoUrl(resource)} target="_blank" rel="noopener noreferrer">
+                        {resource.filename}
+                      </a>
+                    ) : '-'}
+                  </td>
                   <td>
                     {resource.aliases ? JSON.parse(resource.aliases).join(', ') : '-'}
                   </td>

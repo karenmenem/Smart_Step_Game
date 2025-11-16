@@ -150,7 +150,7 @@ function MathLevels() {
                 <div className="math-levels-user-info">
                   {user.child?.profile_picture ? (
                     <img 
-                      src={`http://localhost:5000/${user.child.profile_picture}`} 
+                      src={`http://localhost:5001/${user.child.profile_picture}`} 
                       alt="Profile" 
                       className="math-levels-profile-avatar"
                       onError={(e) => {

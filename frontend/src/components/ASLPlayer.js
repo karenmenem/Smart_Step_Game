@@ -1,19 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { getASLFromQuestion, isASLComplete, getMissingASLResources } from '../utils/aslTranslator';
+import { getASLFromQuestion, isASLComplete, getMissingASLResources, loadASLResources } from '../utils/aslTranslator';
 import '../styles/ASLPlayer.css';
 
 const ASLPlayer = ({ question }) => {
   const [sequence, setSequence] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [resourcesLoaded, setResourcesLoaded] = useState(false);
+
+  // Load ASL resources when component mounts
+  useEffect(() => {
+    loadASLResources().then(() => {
+      console.log('ASL resources loaded in ASLPlayer');
+      setResourcesLoaded(true);
+    }).catch(err => {
+      console.error('Failed to load ASL resources in ASLPlayer:', err);
+      setResourcesLoaded(true); // Still set to true to avoid blocking
+    });
+  }, []);
 
   useEffect(() => {
-    if (question) {
+    if (question && resourcesLoaded) {
       const aslSequence = getASLFromQuestion(question);
       console.log('ASL Sequence generated:', aslSequence);
+      console.log('First item:', aslSequence[0]);
       setSequence(aslSequence);
       setCurrentIndex(0);
     }
-  }, [question]);
+  }, [question, resourcesLoaded]);
 
   useEffect(() => {
     if (!sequence || sequence.length === 0) return;

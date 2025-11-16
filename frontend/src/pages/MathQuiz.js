@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { auth, api } from "../api/auth";
 import ASLPlayer from "../components/ASLPlayer";
+import { loadASLResources } from "../utils/aslTranslator";
 
 function MathQuiz() {
   const navigate = useNavigate();
@@ -61,6 +62,13 @@ function MathQuiz() {
       const userData = auth.getCurrentUser();
       const currentChild = auth.getCurrentChild();
       setUser({ ...userData, child: currentChild });
+      
+      // Load ASL resources from backend
+      loadASLResources().then(() => {
+        console.log('ASL resources loaded for MathQuiz');
+      }).catch(err => {
+        console.error('Failed to load ASL resources:', err);
+      });
       
       // Fetch questions from database
       loadQuizData();

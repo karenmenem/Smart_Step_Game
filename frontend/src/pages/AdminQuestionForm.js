@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 function AdminQuestionForm() {
   const navigate = useNavigate();
@@ -23,6 +23,14 @@ function AdminQuestionForm() {
     difficulty_level: 1,
     points_value: 10,
     order_index: 1
+  });
+
+  // Separate state for MCQ options for easier input
+  const [mcqOptions, setMcqOptions] = useState({
+    option1: '',
+    option2: '',
+    option3: '',
+    option4: ''
   });
 
   const [activities, setActivities] = useState([]);
@@ -150,6 +158,23 @@ function AdminQuestionForm() {
           order_index: q.order_index || 1
         });
         
+        // Parse existing options into separate fields
+        if (q.options) {
+          try {
+            const parsedOptions = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+            if (Array.isArray(parsedOptions)) {
+              setMcqOptions({
+                option1: parsedOptions[0] || '',
+                option2: parsedOptions[1] || '',
+                option3: parsedOptions[2] || '',
+                option4: parsedOptions[3] || ''
+              });
+            }
+          } catch (e) {
+            console.error('Error parsing options:', e);
+          }
+        }
+        
         // Set selected activity for edit mode
         const activity = activities.find(a => a.activity_id === q.activity_id);
         if (activity) {
@@ -171,16 +196,32 @@ function AdminQuestionForm() {
       [name]: value
     }));
 
-    // If activity changes, find and store the selected activity
+    // If activity changes, find and set the selected activity
     if (name === 'activity_id') {
       const activity = activities.find(a => a.activity_id === parseInt(value));
       setSelectedActivity(activity);
     }
   };
 
+  const handleMcqOptionChange = (e) => {
+    const { name, value } = e.target;
+    setMcqOptions(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // Build options array from separate inputs
+    const optionsArray = [
+      mcqOptions.option1.trim(),
+      mcqOptions.option2.trim(),
+      mcqOptions.option3.trim(),
+      mcqOptions.option4.trim()
+    ].filter(opt => opt !== ''); // Remove empty options
     
     // Validate required fields
     if (!formData.activity_id) {
@@ -195,8 +236,8 @@ function AdminQuestionForm() {
       setError('Please enter the correct answer');
       return;
     }
-    if (!formData.options || formData.options.trim() === '') {
-      setError('Please enter options');
+    if (optionsArray.length < 2) {
+      setError('Please enter at least 2 options');
       return;
     }
     
@@ -209,12 +250,18 @@ function AdminQuestionForm() {
       
       const method = isEditMode ? 'PUT' : 'POST';
 
-      console.log('Submitting form data:', formData);
+      // Prepare submission data with options as JSON string
+      const submissionData = {
+        ...formData,
+        options: JSON.stringify(optionsArray)
+      };
+
+      console.log('Submitting form data:', submissionData);
 
       const response = await fetch(url, {
         method: method,
         headers: getHeaders(),
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submissionData)
       });
 
       const data = await response.json();
@@ -330,18 +377,57 @@ function AdminQuestionForm() {
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Options (JSON format) *</label>
-              <textarea
-                name="options"
-                value={formData.options}
-                onChange={handleChange}
-                required
-                rows={3}
-                placeholder='["27", "25", "28", "30"]'
-              />
-              <small>Enter as JSON array: ["option1", "option2", "option3", "option4"]</small>
+          <div className="form-section">
+            <h3>📝 Multiple Choice Options</h3>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label>Option 1 *</label>
+                <input
+                  type="text"
+                  name="option1"
+                  value={mcqOptions.option1}
+                  onChange={handleMcqOptionChange}
+                  required
+                  placeholder="First option"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Option 2 *</label>
+                <input
+                  type="text"
+                  name="option2"
+                  value={mcqOptions.option2}
+                  onChange={handleMcqOptionChange}
+                  required
+                  placeholder="Second option"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Option 3</label>
+                <input
+                  type="text"
+                  name="option3"
+                  value={mcqOptions.option3}
+                  onChange={handleMcqOptionChange}
+                  placeholder="Third option (optional)"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Option 4</label>
+                <input
+                  type="text"
+                  name="option4"
+                  value={mcqOptions.option4}
+                  onChange={handleMcqOptionChange}
+                  placeholder="Fourth option (optional)"
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -352,68 +438,9 @@ function AdminQuestionForm() {
                 value={formData.correct_answer}
                 onChange={handleChange}
                 required
-                placeholder="e.g., 27"
+                placeholder="Enter the correct answer exactly as shown in options"
               />
-            </div>
-          </div>
-
-          <div className="form-section">
-            <h3>ASL Integration</h3>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label>ASL Type</label>
-                <select
-                  name="asl_type"
-                  value={formData.asl_type}
-                  onChange={handleChange}
-                >
-                  <option value="none">None</option>
-                  <option value="numbers">Numbers Only</option>
-                  <option value="video">Video URLs</option>
-                  <option value="images">Image URLs</option>
-                  <option value="both">Numbers + Video/Images</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>ASL Signs (JSON format)</label>
-                <input
-                  type="text"
-                  name="asl_signs"
-                  value={formData.asl_signs}
-                  onChange={handleChange}
-                  placeholder='[15, 12] or {"num1": 15, "num2": 12}'
-                />
-                <small>For numbers in the question. Format: [15, 12]</small>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label>ASL Video URL (JSON format)</label>
-              <textarea
-                name="asl_video_url"
-                value={formData.asl_video_url}
-                onChange={handleChange}
-                rows={3}
-                placeholder='{"num1": "https://...", "num2": "https://..."}'
-              />
-              <small>For separate videos per number: {`{"num1": "url1", "num2": "url2"}`}</small>
-            </div>
-
-            <div className="form-group">
-              <label>ASL Image URL (JSON format) 🖼️</label>
-              <textarea
-                name="asl_image_url"
-                value={formData.asl_image_url}
-                onChange={handleChange}
-                rows={3}
-                placeholder='{"num1": "https://example.com/asl-15.png", "num2": "https://example.com/asl-12.png"}'
-              />
-              <small>For ASL sign images per number: {`{"num1": "image_url1", "num2": "image_url2"}`}</small>
-              <small style={{display: 'block', marginTop: '5px', color: '#667eea'}}>
-                💡 Tip: Upload images to Imgur or use direct image URLs
-              </small>
+              <small style={{color: '#667eea'}}>💡 Tip: Copy and paste from one of the options above</small>
             </div>
           </div>
 

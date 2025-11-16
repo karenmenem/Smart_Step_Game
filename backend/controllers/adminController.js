@@ -705,7 +705,7 @@ const updateHomepageSetting = async (req, res) => {
   try {
     const { id } = req.params;
     const { setting_value } = req.body;
-    const adminId = req.admin.admin_id;
+    const adminId = req.admin.adminId || req.admin.admin_id;
     
     await query(
       'UPDATE homepage_settings SET setting_value = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
@@ -728,7 +728,7 @@ const updateHomepageSetting = async (req, res) => {
 const bulkUpdateHomepageSettings = async (req, res) => {
   try {
     const { settings } = req.body; // Array of {id, setting_value}
-    const adminId = req.admin.admin_id;
+    const adminId = req.admin.adminId || req.admin.admin_id;
     
     if (!Array.isArray(settings)) {
       return res.status(400).json({ success: false, message: 'Settings must be an array' });
@@ -757,7 +757,7 @@ const bulkUpdateHomepageSettings = async (req, res) => {
 
 const resetHomepageSettings = async (req, res) => {
   try {
-    const adminId = req.admin.admin_id;
+    const adminId = req.admin.adminId || req.admin.admin_id;
     
     // Reset to default values by re-running the default inserts
     const defaultSettings = [

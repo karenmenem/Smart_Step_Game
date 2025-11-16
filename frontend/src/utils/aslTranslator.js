@@ -11,7 +11,7 @@ export const loadASLResources = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/asl/resources');
+    const response = await fetch('http://localhost:5001/api/asl/resources');
     if (response.ok) {
       const resources = await response.json();
       cachedResources = resources;
@@ -20,13 +20,13 @@ export const loadASLResources = async () => {
       resources.forEach(resource => {
         const path = `/asl/${resource.type}s/${resource.filename}`;
         
-        // Add main value
+        // Add main value (case-insensitive for words)
         if (resource.type === 'word') {
-          resourceMap.words[resource.value] = path;
+          resourceMap.words[resource.value.toLowerCase()] = path;
         } else if (resource.type === 'number') {
-          resourceMap.numbers[resource.value] = path;
+          resourceMap.numbers[resource.value.toString()] = path;
         } else if (resource.type === 'operation') {
-          resourceMap.operations[resource.value] = path;
+          resourceMap.operations[resource.value.toLowerCase()] = path;
         }
 
         // Add aliases
@@ -34,7 +34,9 @@ export const loadASLResources = async () => {
           const aliases = JSON.parse(resource.aliases);
           aliases.forEach(alias => {
             if (resource.type === 'operation') {
-              resourceMap.operations[alias] = path;
+              resourceMap.operations[alias.toLowerCase()] = path;
+            } else if (resource.type === 'word') {
+              resourceMap.words[alias.toLowerCase()] = path;
             }
           });
         }
@@ -59,9 +61,10 @@ export const loadASLResources = async () => {
 };
 
 const getWordVideoPath = (word) => {
-  // Try cached resources first
-  if (resourceMap.words[word]) {
-    return resourceMap.words[word];
+  // Try cached resources first (case-insensitive)
+  const lowerWord = word.toLowerCase();
+  if (resourceMap.words[lowerWord]) {
+    return resourceMap.words[lowerWord];
   }
   // Fallback to dynamic path
   const cleanWord = word.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -70,17 +73,19 @@ const getWordVideoPath = (word) => {
 
 const getNumberVideoPath = (number) => {
   // Try cached resources first
-  if (resourceMap.numbers[number]) {
-    return resourceMap.numbers[number];
+  const numStr = number.toString();
+  if (resourceMap.numbers[numStr]) {
+    return resourceMap.numbers[numStr];
   }
   // Fallback to dynamic path
-  return `/asl/numbers/${number}.mp4`;
+  return `/asl/numbers/${numStr}.mp4`;
 };
 
 const getOperationVideoPath = (operation) => {
-  // Try cached resources first
-  if (resourceMap.operations[operation]) {
-    return resourceMap.operations[operation];
+  // Try cached resources first (case-insensitive)
+  const lowerOp = operation.toLowerCase();
+  if (resourceMap.operations[lowerOp]) {
+    return resourceMap.operations[lowerOp];
   }
   // Fallback to dynamic path based on common operations
   const operationMap = {
@@ -128,6 +133,18 @@ export const ASL_RESOURCES = {
 
 export const numberToASL = (number) => {
   const numStr = number.toString();
+  
+  // First, try to use the complete number if we have a video for it
+  if (ASL_RESOURCES.numbers[numStr]) {
+    return [{
+      type: 'number',
+      value: numStr,
+      resource: ASL_RESOURCES.numbers[numStr],
+      display: numStr
+    }];
+  }
+  
+  // Otherwise, split into individual digits
   return numStr.split('').map(digit => ({
     type: 'number',
     value: digit,
@@ -191,15 +208,16 @@ export const sentenceToASL = (sentence) => {
       });
     }
     
-    // Add punctuation sign
+    // Add punctuation sign - check resources first
     if (punctuation) {
       const punct = punctuation[0];
-      if (punct === '?') {
+      const punctResource = resourceMap[punct];
+      if (punctResource) {
         sequence.push({
-          type: 'special',
-          value: 'question',
-          resource: ASL_RESOURCES.special.question,
-          display: '?'
+          type: 'word',
+          value: punct,
+          resource: punctResource.filename,
+          display: punct
         });
       }
     }
@@ -221,6 +239,11 @@ export const textToASL = (text) => {
 };
 
 export const getASLFromQuestion = (question) => {
+  console.log('getASLFromQuestion called with:', question);
+  console.log('Question keys:', Object.keys(question));
+  console.log('Question text field:', question.question_text);
+  console.log('ASL type:', question.asl_type);
+  console.log('ASL signs:', question.asl_signs);
   const sequence = [];
   
   const videoUrl = question.asl_video_url || question.aslVideoUrl;
@@ -267,7 +290,9 @@ export const getASLFromQuestion = (question) => {
         : aslSigns;
       
       // If aslType is sentence and signs array is empty, fall through to auto-generation
-      if (aslType === 'sentence' && Array.isArray(signs) && signs.length > 0) {
+      if (aslType === 'sentence' && Array.isArray(signs) && signs.length === 0) {
+        // Empty array - skip to auto-generation below
+      } else if (aslType === 'sentence' && Array.isArray(signs) && signs.length > 0) {
         const wordSequence = signs.map(word => {
           const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
           const resource = ASL_RESOURCES.words[cleanWord] || null;
@@ -280,42 +305,42 @@ export const getASLFromQuestion = (question) => {
           };
         });
         return wordSequence;
-      }
-      
-      if (signs.words && Array.isArray(signs.words)) {
+      } else if (signs.words && Array.isArray(signs.words)) {
         return signs.words.map(wordObj => ({
           type: 'word',
           value: wordObj.word,
           resource: wordObj.video,
           display: wordObj.word
         }));
+      } else if (Array.isArray(signs) && signs.length > 0) {
+        return signs.map(sign => {
+          if (typeof sign === 'number' || /^\d+$/.test(sign)) {
+            return {
+              type: 'number',
+              value: sign,
+              resource: ASL_RESOURCES.numbers[sign],
+              display: sign.toString()
+            };
+          } else {
+            return {
+              type: 'operation',
+              value: sign,
+              resource: ASL_RESOURCES.operations[sign.toLowerCase()],
+              display: sign
+            };
+          }
+        });
       }
-      
-      return signs.map(sign => {
-        if (typeof sign === 'number' || /^\d+$/.test(sign)) {
-          return {
-            type: 'number',
-            value: sign,
-            resource: ASL_RESOURCES.numbers[sign],
-            display: sign.toString()
-          };
-        } else {
-          return {
-            type: 'operation',
-            value: sign,
-            resource: ASL_RESOURCES.operations[sign.toLowerCase()],
-            display: sign
-          };
-        }
-      });
     } catch (e) {
       console.error('Error parsing asl_signs:', e);
     }
   }
   
   // Fallback: Auto-generate from question text
-  if (question.question_text) {
-    return textToASL(question.question_text);
+  if (question.question_text || question.question) {
+    const questionText = question.question_text || question.question;
+    console.log('Auto-generating ASL from question text:', questionText);
+    return textToASL(questionText);
   }
   
   return sequence;

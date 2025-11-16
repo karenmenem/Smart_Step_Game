@@ -175,7 +175,7 @@ function Profile() {
                     <div className="child-avatar">
                       {child.profile_picture ? (
                         <img 
-                          src={`http://localhost:5000/${child.profile_picture}`} 
+                          src={`http://localhost:5001/${child.profile_picture}`} 
                           alt={child.name}
                           onError={(e) => {
                             e.target.style.display = 'none';

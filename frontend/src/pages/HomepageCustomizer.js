@@ -59,6 +59,17 @@ function HomepageCustomizer() {
         setting.id === id ? { ...setting, setting_value: value } : setting
       )
     );
+    
+    // Also update grouped settings to reflect changes immediately
+    setGroupedSettings(prevGrouped => {
+      const newGrouped = { ...prevGrouped };
+      Object.keys(newGrouped).forEach(category => {
+        newGrouped[category] = newGrouped[category].map(setting =>
+          setting.id === id ? { ...setting, setting_value: value } : setting
+        );
+      });
+      return newGrouped;
+    });
   };
 
   const handleSave = async () => {

@@ -147,7 +147,7 @@ function EnglishQuiz() {
 				const levelNum = levelMap[level.toLowerCase()] || parseInt(level) || 1;
 				const sublevelNum = parseInt(sublevel) || 1;
 				
-				const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+				const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 				const response = await fetch(`${API_URL}/quiz/reading-passage/English/comprehension/${levelNum}/${sublevelNum}`);
 				const data = await response.json();
 				
@@ -190,7 +190,7 @@ function EnglishQuiz() {
 			
 			if (currentActivityId) {
 				// Fetch questions for this activity
-				const questionsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/quiz/questions/${currentActivityId}`, {
+				const questionsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/quiz/questions/${currentActivityId}`, {
 					headers: api.getAuthHeaders()
 				});
 				const questionsData = await questionsResponse.json();

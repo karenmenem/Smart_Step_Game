@@ -221,6 +221,14 @@ const saveQuizProgress = async (req, res) => {
     const newTotalPoints = await updateChildPoints(childId, pointsEarned);
     const newAchievements = await checkAndAwardAchievements(childId, activityId, score, maxScore);
     
+    // Check and update child level if they completed a level
+    if (completed) {
+      await updateChildLevel(childId, activityId);
+    }
+    
+    // Update minutes played and streak
+    await updateChildActivity(childId);
+    
     res.json({
       success: true,
       message: 'Progress saved',
@@ -245,17 +253,33 @@ const getChildProgress = async (req, res) => {
   try {
     const { childId } = req.params;
     
+    // Get progress data
     const progress = await query(`
-      SELECT cp.*, a.name as activity_name 
+      SELECT cp.*, a.name as activity_name, s.name as subject_name
       FROM child_progress cp
-      JOIN Activity a ON cp.activity_id = a.activity_id
+      JOIN activity a ON cp.activity_id = a.activity_id
+      JOIN section s ON a.section_id = s.section_id
       WHERE cp.child_id = ?
-      ORDER BY cp.activity_id
+      ORDER BY cp.last_attempt DESC
+    `, [childId]);
+    
+    // Calculate percentage for each progress entry
+    const progressWithPercentage = progress.map(p => ({
+      ...p,
+      percentage: p.max_score > 0 ? Math.round((p.score / p.max_score) * 100) : 0
+    }));
+    
+    // Get child stats
+    const [childStats] = await query(`
+      SELECT minutes_played, day_streak, last_activity_date
+      FROM child
+      WHERE child_id = ?
     `, [childId]);
     
     res.json({
       success: true,
-      data: progress
+      data: progressWithPercentage,
+      stats: childStats[0] || { minutes_played: 0, day_streak: 0, last_activity_date: null }
     });
     
   } catch (error) {
@@ -265,6 +289,109 @@ const getChildProgress = async (req, res) => {
       message: 'Failed to get progress',
       error: error.message
     });
+  }
+};
+
+const updateChildLevel = async (childId, activityId) => {
+  try {
+    // Get activity details to determine subject
+    const [activities] = await query(`
+      SELECT a.*, s.subject_id, sub.name as subject_name, s.level
+      FROM activity a
+      JOIN section s ON a.section_id = s.section_id
+      JOIN subject sub ON s.subject_id = sub.subject_id
+      WHERE a.activity_id = ?
+    `, [activityId]);
+    
+    if (activities.length === 0) return;
+    
+    const activity = activities[0];
+    const subjectId = activity.subject_id;
+    const currentLevel = activity.level;
+    const subjectName = activity.subject_name.toLowerCase();
+    
+    // Check if all activities in current level are completed
+    const [levelActivities] = await query(`
+      SELECT a.activity_id
+      FROM activity a
+      JOIN section s ON a.section_id = s.section_id
+      WHERE s.subject_id = ? AND s.level = ?
+    `, [subjectId, currentLevel]);
+    
+    const activityIds = levelActivities.map(a => a.activity_id);
+    
+    // Get completed activities for this level
+    const [completedActivities] = await query(`
+      SELECT activity_id
+      FROM child_progress
+      WHERE child_id = ? AND activity_id IN (?) AND completed = 1
+    `, [childId, activityIds]);
+    
+    // If all activities in this level are completed, update child level
+    if (completedActivities.length === levelActivities.length) {
+      const newLevel = currentLevel + 1;
+      
+      if (subjectName === 'math' || subjectName === 'mathematics') {
+        await query(`
+          UPDATE child 
+          SET current_math_level = ?
+          WHERE child_id = ? AND current_math_level < ?
+        `, [newLevel, childId, newLevel]);
+        console.log(`Updated child ${childId} math level to ${newLevel}`);
+      } else if (subjectName === 'english') {
+        await query(`
+          UPDATE child 
+          SET current_english_level = ?
+          WHERE child_id = ? AND current_english_level < ?
+        `, [newLevel, childId, newLevel]);
+        console.log(`Updated child ${childId} english level to ${newLevel}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating child level:', error);
+  }
+};
+
+const updateChildActivity = async (childId) => {
+  try {
+    const [child] = await query('SELECT last_activity_date, day_streak FROM child WHERE child_id = ?', [childId]);
+    
+    if (child.length === 0) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const lastDate = child[0].last_activity_date;
+    let newStreak = child[0].day_streak || 0;
+    
+    if (lastDate) {
+      const lastActivityDate = new Date(lastDate).toISOString().split('T')[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      if (lastActivityDate === yesterdayStr) {
+        // Consecutive day - increment streak
+        newStreak += 1;
+      } else if (lastActivityDate !== today) {
+        // Streak broken - reset to 1
+        newStreak = 1;
+      }
+      // If same day, keep current streak
+    } else {
+      // First activity ever
+      newStreak = 1;
+    }
+    
+    // Update child with new streak and add 5 minutes (average quiz time)
+    await query(`
+      UPDATE child 
+      SET minutes_played = minutes_played + 5,
+          day_streak = ?,
+          last_activity_date = ?
+      WHERE child_id = ?
+    `, [newStreak, today, childId]);
+    
+  } catch (error) {
+    console.error('Error updating child activity:', error);
   }
 };
 

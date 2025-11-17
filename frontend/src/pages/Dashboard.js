@@ -33,6 +33,11 @@ function Dashboard() {
     try {
       setLoading(true);
       
+      // Fetch fresh child data with updated points
+      const childResponse = await fetch(`http://localhost:5001/api/children/${childData.id}`);
+      const childRes = await childResponse.json();
+      const freshChildData = childRes.success ? childRes.data : childData;
+      
       // Fetch all dashboard data in parallel
       const [achievementsRes, progressRes] = await Promise.all([
         api.getAchievements(childData.id),
@@ -73,7 +78,7 @@ function Dashboard() {
           currentStreak: childStats.day_streak || 0,
           bestScore: Math.round(bestScore),
           recentActivities: recent,
-          totalPoints: childData.total_points || 0
+          totalPoints: freshChildData.total_points || 0
         }));
       }
       

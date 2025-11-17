@@ -204,7 +204,7 @@ function Home() {
           
           <nav className="ma-nav ma-nav-desktop">
             <button className="ma-nav-btn" onClick={() => navigate("/")}>🏠</button>
-            <button className="ma-nav-btn" onClick={() => navigate("/achievements")}>Achievements</button>
+            <button className="ma-nav-btn" onClick={() => navigate("/achievements")}> 🏆 Achievements</button>
             <div className="ma-user-section">
               {user ? (
                 <>
@@ -375,7 +375,7 @@ function Home() {
                     </div>
                     <div className="ma-child-info">
                       <h3>Playing as: {user.child.name}</h3>
-                      <p>Age: {user.child.age} • Math Level: {user.child.mathLevel} • English Level: {user.child.englishLevel}</p>
+                      <p>Age: {user.child.age} • {progress.filter(p => p.completed).length} Activities Completed</p>
                     </div>
                   </div>
                 ) : (

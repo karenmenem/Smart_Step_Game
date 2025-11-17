@@ -14,6 +14,8 @@ function Profile() {
     age: "",
     profilePicture: null
   });
+  const [childrenProgress, setChildrenProgress] = useState({});
+  const [childrenData, setChildrenData] = useState({});
 
   useEffect(() => {
     if (auth.isAuthenticated()) {
@@ -35,6 +37,33 @@ function Profile() {
       }
       
       setChildren(childrenList);
+      
+      // Fetch fresh data for each child from database
+      childrenList.forEach(async (child) => {
+        try {
+          // Fetch progress
+          const progressRes = await api.getChildProgress(child.id);
+          if (progressRes.success) {
+            const completedCount = progressRes.data.filter(p => p.completed).length;
+            setChildrenProgress(prev => ({
+              ...prev,
+              [child.id]: completedCount
+            }));
+          }
+          
+          // Fetch fresh child data including total_points
+          const response = await fetch(`http://localhost:5001/api/children/${child.id}`);
+          const childDataRes = await response.json();
+          if (childDataRes.success) {
+            setChildrenData(prev => ({
+              ...prev,
+              [child.id]: childDataRes.data
+            }));
+          }
+        } catch (err) {
+          console.error(`Failed to fetch data for child ${child.id}:`, err);
+        }
+      });
       
       // Set the first child as current if not already set
       if (childrenList.length > 0 && !auth.getCurrentChild()) {
@@ -191,9 +220,8 @@ function Profile() {
                       <h4>{child.name}</h4>
                       <p>Age: {child.age}</p>
                       <div className="child-progress">
-                        <span>Math Level: {child.mathLevel}</span>
-                        <span>English Level: {child.englishLevel}</span>
-                        <span>Points: {child.totalPoints || 0}</span>
+                        <span>📚 {childrenProgress[child.id] || 0} Activities Completed</span>
+                        <span>🌟 Points: {childrenData[child.id]?.total_points || child.totalPoints || 0}</span>
                       </div>
                     </div>
                     <div className="select-child-btn">

@@ -270,7 +270,7 @@ const getChildProgress = async (req, res) => {
     }));
     
     // Get child stats
-    const [childStats] = await query(`
+    const childStats = await query(`
       SELECT minutes_played, day_streak, last_activity_date
       FROM child
       WHERE child_id = ?

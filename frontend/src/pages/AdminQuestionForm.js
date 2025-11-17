@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 function AdminQuestionForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const isEditMode = !!id;
+  
+  // Get activity_id from URL query params
+  const queryParams = new URLSearchParams(location.search);
+  const returnActivityId = queryParams.get('activity_id');
 
   const [formData, setFormData] = useState({
     activity_id: '',
@@ -275,7 +280,12 @@ function AdminQuestionForm() {
 
       if (data.success) {
         alert(isEditMode ? 'Question updated successfully!' : 'Question added successfully!');
-        navigate('/admin/dashboard');
+        // Navigate back to questions tab with activity filter if we came from an activity
+        if (returnActivityId) {
+          navigate(`/admin/dashboard?tab=questions&activity=${returnActivityId}`);
+        } else {
+          navigate('/admin/dashboard');
+        }
       } else {
         const errorMsg = data.message || 'Failed to save question';
         const debugInfo = data.debug ? JSON.stringify(data.debug, null, 2) : '';

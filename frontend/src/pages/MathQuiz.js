@@ -4,6 +4,16 @@ import { auth, api } from "../api/auth";
 import ASLPlayer from "../components/ASLPlayer";
 import { loadASLResources } from "../utils/aslTranslator";
 
+// Shuffle array utility function
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 function MathQuiz() {
   const navigate = useNavigate();
   const { operation, level, sublevel } = useParams();
@@ -137,10 +147,18 @@ function MathQuiz() {
       console.log('Questions Response:', questionsResponse);
       
       if (questionsResponse.success && questionsResponse.data.length > 0) {
-        setQuestions(questionsResponse.data);
+        const shuffledQuestions = shuffleArray(questionsResponse.data).map(q => ({
+          ...q,
+          options: q.options ? shuffleArray([...q.options]) : q.options
+        }));
+        setQuestions(shuffledQuestions);
       } else {
         console.error('Failed to load questions, using fallback');
-        setQuestions(getFallbackQuestions());
+        const shuffledFallback = shuffleArray(getFallbackQuestions()).map(q => ({
+          ...q,
+          options: shuffleArray([...q.options])
+        }));
+        setQuestions(shuffledFallback);
       }
       
       if (activityResponse.success) {

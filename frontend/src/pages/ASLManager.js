@@ -13,6 +13,7 @@ const ASLManager = () => {
   });
   const [message, setMessage] = useState('');
   const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadResources();
@@ -96,6 +97,14 @@ const ASLManager = () => {
     ? resources 
     : resources.filter(r => r.type === filter);
 
+  // Apply search filter
+  const searchedResources = searchTerm 
+    ? filteredResources.filter(r => 
+        r.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (r.aliases && r.aliases.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : filteredResources;
+
   // Helper to get video file URL
   const getVideoUrl = (resource) => {
     // Videos are stored in public/asl/{type}s/{filename}
@@ -174,32 +183,52 @@ const ASLManager = () => {
       {/* Resources Table */}
       <div className="asl-resources-section">
         <div className="resources-header">
-          <h2>ASL Resources ({filteredResources.length})</h2>
-          <div className="filter-buttons">
-            <button 
-              className={filter === 'all' ? 'active' : ''}
-              onClick={() => setFilter('all')}
-            >
-              All
-            </button>
-            <button 
-              className={filter === 'word' ? 'active' : ''}
-              onClick={() => setFilter('word')}
-            >
-              Words
-            </button>
-            <button 
-              className={filter === 'number' ? 'active' : ''}
-              onClick={() => setFilter('number')}
-            >
-              Numbers
-            </button>
-            <button 
-              className={filter === 'operation' ? 'active' : ''}
-              onClick={() => setFilter('operation')}
-            >
-              Operations
-            </button>
+          <h2>ASL Resources ({searchedResources.length})</h2>
+          <div className="filter-controls">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="🔍 Search by word or operation..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              {searchTerm && (
+                <button 
+                  className="clear-search"
+                  onClick={() => setSearchTerm('')}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="filter-buttons">
+              <button 
+                className={filter === 'all' ? 'active' : ''}
+                onClick={() => setFilter('all')}
+              >
+                All
+              </button>
+              <button 
+                className={filter === 'word' ? 'active' : ''}
+                onClick={() => setFilter('word')}
+              >
+                Words
+              </button>
+              <button 
+                className={filter === 'number' ? 'active' : ''}
+                onClick={() => setFilter('number')}
+              >
+                Numbers
+              </button>
+              <button 
+                className={filter === 'operation' ? 'active' : ''}
+                onClick={() => setFilter('operation')}
+              >
+                Operations
+              </button>
+            </div>
           </div>
         </div>
 
@@ -217,7 +246,7 @@ const ASLManager = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredResources.map((resource) => (
+              {searchedResources.map((resource) => (
                 <tr key={resource.id}>
                   <td>
                     <span className={`type-badge ${resource.type}`}>

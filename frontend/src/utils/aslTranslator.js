@@ -1,12 +1,8 @@
-
-// Cache for ASL resources loaded from API
 let cachedResources = null;
 let resourceMap = { words: {}, numbers: {}, operations: {} };
 
-// Fetch ASL resources from backend
 export const loadASLResources = async () => {
   if (cachedResources) {
-    console.log('ASL resources already cached:', Object.keys(resourceMap.words).length, 'words');
     return cachedResources;
   }
 
@@ -15,8 +11,6 @@ export const loadASLResources = async () => {
     if (response.ok) {
       const resources = await response.json();
       cachedResources = resources;
-
-      // Build lookup maps for fast access
       resources.forEach(resource => {
         const path = `/asl/${resource.type}s/${resource.filename}`;
         
@@ -40,16 +34,7 @@ export const loadASLResources = async () => {
         }
       });
 
-      console.log('ASL resources loaded:', {
-        words: Object.keys(resourceMap.words).length,
-        numbers: Object.keys(resourceMap.numbers).length,
-        operations: Object.keys(resourceMap.operations).length,
-        sampleWords: Object.keys(resourceMap.words).slice(0, 10)
-      });
-
       return resources;
-    } else {
-      console.error('Failed to load ASL resources: HTTP', response.status);
     }
   } catch (error) {
     console.error('Failed to load ASL resources from API:', error);
@@ -59,21 +44,18 @@ export const loadASLResources = async () => {
 };
 
 const getWordVideoPath = (word) => {
-  // Try cached resources first
   if (resourceMap.words[word]) {
     return resourceMap.words[word];
   }
-  // Fallback to dynamic path
+ 
   const cleanWord = word.toLowerCase().replace(/[^a-z0-9-]/g, '');
   return `/asl/words/${cleanWord}.mp4`;
 };
 
 const getNumberVideoPath = (number) => {
-  // Try cached resources first
   if (resourceMap.numbers[number]) {
     return resourceMap.numbers[number];
   }
-  // Fallback to dynamic path
   return `/asl/numbers/${number}.mp4`;
 };
 
@@ -82,7 +64,7 @@ const getOperationVideoPath = (operation) => {
   if (resourceMap.operations[operation]) {
     return resourceMap.operations[operation];
   }
-  // Fallback to dynamic path based on common operations
+  
   const operationMap = {
     'plus': 'plus.mp4',
     'add': 'plus.mp4',
@@ -190,8 +172,7 @@ export const sentenceToASL = (sentence) => {
         needsTranslation: true
       });
     }
-    
-    // Add punctuation sign
+  
     if (punctuation) {
       const punct = punctuation[0];
       if (punct === '?') {

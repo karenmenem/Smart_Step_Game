@@ -207,14 +207,7 @@ function EnglishQuiz() {
 						aslVideoUrl: q.aslVideoUrl || null,
 						aslType: q.aslType || 'none'
 					}));
-					console.log('Loaded questions with ASL data:', loadedQuestions.map(q => ({ 
-						id: q.id, 
-						text: q.question_text.substring(0, 30), 
-						aslType: q.aslType,
-						hasAslSigns: !!q.aslSigns,
-						hasAslVideo: !!q.aslVideoUrl
-					})));
-					setQuestions(loadedQuestions);
+				setQuestions(loadedQuestions);
 				} else {
 					setQuestions([]);
 				}

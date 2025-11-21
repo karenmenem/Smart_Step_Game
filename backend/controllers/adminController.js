@@ -139,10 +139,10 @@ const createQuestion = async (req, res) => {
     const passageId = req.body.passage_id || req.body.passageId || null;
     
     const result = await query(
-      `INSERT INTO Question 
+      `INSERT INTO question 
       (activity_id, passage_id, question_text, question_type, correct_answer, options, asl_signs, 
-       asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index, is_active) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         actId,
         passageId,
@@ -157,7 +157,8 @@ const createQuestion = async (req, res) => {
         explanation || null,
         diffLevel,
         ptsValue,
-        ordIdx
+        ordIdx,
+        req.body.is_active !== false ? 1 : 0
       ]
     );
     
@@ -178,6 +179,7 @@ const updateQuestion = async (req, res) => {
     console.log('\n=== UPDATE QUESTION DEBUG ===');
     console.log('Question ID:', req.params.questionId);
     console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('is_active value:', req.body.is_active, 'type:', typeof req.body.is_active);
     
     const { questionId } = req.params;
     const {
@@ -249,31 +251,39 @@ const updateQuestion = async (req, res) => {
     
     console.log('Executing UPDATE query...');
     
-    // Convert undefined to null for all parameters
+    // Helper function to convert empty strings to null
+    const toNullIfEmpty = (value) => {
+      if (value === '' || value === undefined) return null;
+      return value;
+    };
+    
+    // Convert undefined/empty strings to null for all parameters
     const params = [
-      actId ?? null,
-      passageId,
-      qText ?? null,
-      qType ?? null,
-      correctAns ?? null,
+      toNullIfEmpty(actId),
+      toNullIfEmpty(passageId),
+      toNullIfEmpty(qText),
+      toNullIfEmpty(qType),
+      toNullIfEmpty(correctAns),
       optionsData ? (typeof optionsData === 'string' ? optionsData : JSON.stringify(optionsData)) : null,
       aslSignsData ? (typeof aslSignsData === 'string' ? aslSignsData : JSON.stringify(aslSignsData)) : null,
-      aslVid ?? null,
-      aslImg ?? null,
-      aslT ?? null,
-      explanation ?? null,
-      diffLevel ?? null,
-      ptsValue ?? null,
-      ordIdx ?? null,
-      questionId
+      toNullIfEmpty(aslVid),
+      toNullIfEmpty(aslImg),
+      toNullIfEmpty(aslT),
+      toNullIfEmpty(explanation),
+      toNullIfEmpty(diffLevel),
+      toNullIfEmpty(ptsValue),
+      toNullIfEmpty(ordIdx)
     ];
     
     console.log('Query parameters:', params.map((p, i) => `${i}: ${p === null ? 'NULL' : typeof p === 'string' ? p.substring(0, 30) + '...' : p}`));
     
+    const isActiveValue = req.body.is_active ? 1 : 0;
+    console.log('is_active to save:', isActiveValue);
+    
     const result = await query(
-      `UPDATE Question SET 
+      `UPDATE question SET 
         activity_id = COALESCE(?, activity_id),
-        passage_id = ?,
+        passage_id = COALESCE(?, passage_id),
         question_text = COALESCE(?, question_text),
         question_type = COALESCE(?, question_type),
         correct_answer = COALESCE(?, correct_answer),
@@ -285,9 +295,10 @@ const updateQuestion = async (req, res) => {
         explanation = COALESCE(?, explanation),
         difficulty_level = COALESCE(?, difficulty_level),
         points_value = COALESCE(?, points_value),
-        order_index = COALESCE(?, order_index)
+        order_index = COALESCE(?, order_index),
+        is_active = ?
       WHERE question_id = ?`,
-      params
+      [...params, isActiveValue, questionId]
     );
     
     console.log('Update result:', result);

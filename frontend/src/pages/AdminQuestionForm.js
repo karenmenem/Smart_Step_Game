@@ -27,7 +27,8 @@ function AdminQuestionForm() {
     explanation: '',
     difficulty_level: 1,
     points_value: 10,
-    order_index: 1
+    order_index: 1,
+    is_active: true
   });
 
   // Separate state for MCQ options for easier input
@@ -61,16 +62,19 @@ function AdminQuestionForm() {
     }
   }, [id, navigate]);
 
-  // Auto-select passage when activity changes
+  // Auto-select passage and filter passages when activity changes
   useEffect(() => {
     if (formData.activity_id && selectedActivity) {
       // Check if it's a comprehension activity
       const activityName = selectedActivity.name?.toLowerCase() || '';
       if (activityName.includes('comprehension')) {
         autoSelectPassage(selectedActivity);
+        filterPassagesByActivity(selectedActivity);
       }
+    } else {
+      setFilteredPassages([]);
     }
-  }, [formData.activity_id, selectedActivity]);
+  }, [formData.activity_id, selectedActivity, passages]);
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
@@ -136,6 +140,29 @@ function AdminQuestionForm() {
     }
   };
 
+  const filterPassagesByActivity = (activity) => {
+    // Extract level and sublevel from activity
+    const activityName = activity.name || '';
+    const sectionName = activity.section_name || '';
+    
+    // Determine level (1=Beginner, 2=Intermediate, 3=Advanced)
+    let level = 1;
+    if (sectionName.includes('Intermediate')) level = 2;
+    else if (sectionName.includes('Advanced')) level = 3;
+    
+    // Extract sublevel from activity name (Level 1, Level 2)
+    const sublevelMatch = activityName.match(/Level (\d+)/i);
+    const sublevel = sublevelMatch ? parseInt(sublevelMatch[1]) : 1;
+    
+    // Filter passages to only show matching level and sublevel
+    const filtered = passages.filter(p => 
+      p.level === level && p.sublevel === sublevel && p.topic?.toLowerCase() === 'comprehension'
+    );
+    
+    setFilteredPassages(filtered);
+    console.log(`Filtered passages: ${filtered.length} for Level ${level}, Sublevel ${sublevel}`);
+  };
+
   const loadQuestion = async () => {
     try {
       setLoading(true);
@@ -160,7 +187,8 @@ function AdminQuestionForm() {
           explanation: q.explanation || '',
           difficulty_level: q.difficulty_level || 1,
           points_value: q.points_value || 10,
-          order_index: q.order_index || 1
+          order_index: q.order_index || 1,
+          is_active: q.is_active !== 0  // Convert to boolean
         });
         
         // Parse existing options into separate fields
@@ -280,11 +308,46 @@ function AdminQuestionForm() {
 
       if (data.success) {
         alert(isEditMode ? 'Question updated successfully!' : 'Question added successfully!');
-        // Navigate back to questions tab with activity filter if we came from an activity
-        if (returnActivityId) {
-          navigate(`/admin/dashboard?tab=questions&activity=${returnActivityId}`);
+        
+        // When adding a new question, stay on the form and reset it
+        if (!isEditMode) {
+          // Reset form for next question
+          setFormData({
+            activity_id: formData.activity_id, // Keep same activity
+            passage_id: formData.passage_id,   // Keep same passage if comprehension
+            question_text: '',
+            question_type: 'multiple_choice',
+            correct_answer: '',
+            options: '',
+            asl_signs: '',
+            asl_video_url: '',
+            asl_image_url: '',
+            asl_type: 'none',
+            explanation: '',
+            difficulty_level: 1,
+            points_value: 10,
+            order_index: 1,
+            is_active: true
+          });
+          
+          // Reset MCQ options
+          setMcqOptions({
+            option1: '',
+            option2: '',
+            option3: '',
+            option4: ''
+          });
+          
+          // Scroll to top
+          window.scrollTo(0, 0);
+          
         } else {
-          navigate('/admin/dashboard');
+          // When editing, navigate back to questions tab with activity filter
+          if (returnActivityId) {
+            navigate(`/admin/dashboard?tab=questions&activity=${returnActivityId}`);
+          } else {
+            navigate('/admin/dashboard');
+          }
         }
       } else {
         const errorMsg = data.message || 'Failed to save question';
@@ -361,7 +424,7 @@ function AdminQuestionForm() {
                 onChange={handleChange}
               >
                 <option value="">No Passage</option>
-                {passages.map(passage => (
+                {filteredPassages.map(passage => (
                   <option key={passage.id} value={passage.id}>
                     {passage.title} (Level {passage.level}, Sublevel {passage.sublevel})
                   </option>
@@ -370,6 +433,11 @@ function AdminQuestionForm() {
               {formData.passage_id && (
                 <small style={{ color: 'green' }}>
                   ✓ Passage auto-selected based on activity level
+                </small>
+              )}
+              {filteredPassages.length === 0 && (
+                <small style={{ color: 'red' }}>
+                  ⚠️ No passages available for this activity level
                 </small>
               )}
             </div>
@@ -389,68 +457,100 @@ function AdminQuestionForm() {
 
           <div className="form-section">
             <h3>📝 Multiple Choice Options</h3>
+            <small style={{color: '#667eea', marginBottom: '10px', display: 'block'}}>
+              💡 Select the correct answer by clicking the radio button next to it
+            </small>
             
             <div className="form-row">
               <div className="form-group">
                 <label>Option 1 *</label>
-                <input
-                  type="text"
-                  name="option1"
-                  value={mcqOptions.option1}
-                  onChange={handleMcqOptionChange}
-                  required
-                  placeholder="First option"
-                />
+                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    checked={formData.correct_answer === mcqOptions.option1}
+                    onChange={() => setFormData({ ...formData, correct_answer: mcqOptions.option1 })}
+                    style={{width: '20px', height: '20px', margin: 0, cursor: 'pointer'}}
+                  />
+                  <input
+                    type="text"
+                    name="option1"
+                    value={mcqOptions.option1}
+                    onChange={handleMcqOptionChange}
+                    required
+                    placeholder="First option"
+                    style={{flex: 1}}
+                  />
+                </div>
               </div>
 
               <div className="form-group">
                 <label>Option 2 *</label>
-                <input
-                  type="text"
-                  name="option2"
-                  value={mcqOptions.option2}
-                  onChange={handleMcqOptionChange}
-                  required
-                  placeholder="Second option"
-                />
+                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    checked={formData.correct_answer === mcqOptions.option2}
+                    onChange={() => setFormData({ ...formData, correct_answer: mcqOptions.option2 })}
+                    style={{width: '20px', height: '20px', margin: 0, cursor: 'pointer'}}
+                  />
+                  <input
+                    type="text"
+                    name="option2"
+                    value={mcqOptions.option2}
+                    onChange={handleMcqOptionChange}
+                    required
+                    placeholder="Second option"
+                    style={{flex: 1}}
+                  />
+                </div>
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label>Option 3</label>
-                <input
-                  type="text"
-                  name="option3"
-                  value={mcqOptions.option3}
-                  onChange={handleMcqOptionChange}
-                  placeholder="Third option (optional)"
-                />
+                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    checked={formData.correct_answer === mcqOptions.option3}
+                    onChange={() => setFormData({ ...formData, correct_answer: mcqOptions.option3 })}
+                    style={{width: '20px', height: '20px', margin: 0, cursor: 'pointer'}}
+                    disabled={!mcqOptions.option3}
+                  />
+                  <input
+                    type="text"
+                    name="option3"
+                    value={mcqOptions.option3}
+                    onChange={handleMcqOptionChange}
+                    placeholder="Third option (optional)"
+                    style={{flex: 1}}
+                  />
+                </div>
               </div>
 
               <div className="form-group">
                 <label>Option 4</label>
-                <input
-                  type="text"
-                  name="option4"
-                  value={mcqOptions.option4}
-                  onChange={handleMcqOptionChange}
-                  placeholder="Fourth option (optional)"
-                />
+                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                  <input
+                    type="radio"
+                    name="correctAnswer"
+                    checked={formData.correct_answer === mcqOptions.option4}
+                    onChange={() => setFormData({ ...formData, correct_answer: mcqOptions.option4 })}
+                    style={{width: '20px', height: '20px', margin: 0, cursor: 'pointer'}}
+                    disabled={!mcqOptions.option4}
+                  />
+                  <input
+                    type="text"
+                    name="option4"
+                    value={mcqOptions.option4}
+                    onChange={handleMcqOptionChange}
+                    placeholder="Fourth option (optional)"
+                    style={{flex: 1}}
+                  />
+                </div>
               </div>
-            </div>
-
-            <div className="form-group">
-              <label>Correct Answer *</label>
-              <input
-                type="text"
-                name="correct_answer"
-                value={formData.correct_answer}
-                onChange={handleChange}
-                required
-                placeholder="Enter the correct answer exactly as shown in options"
-              />
-              <small style={{color: '#667eea'}}>💡 Tip: Copy and paste from one of the options above</small>
             </div>
           </div>
 
@@ -499,6 +599,41 @@ function AdminQuestionForm() {
               rows={3}
               placeholder="Explanation shown after answering..."
             />
+          </div>
+
+          <div className="form-group">
+            <label>ASL Type</label>
+            <select
+              name="asl_type"
+              value={formData.asl_type}
+              onChange={handleChange}
+            >
+              <option value="none">None (No ASL)</option>
+              <option value="sentence">Sentence (Auto-translate question text)</option>
+              <option value="words">Words (Specific word signs)</option>
+              <option value="numbers">Numbers (For math questions)</option>
+            </select>
+            <small style={{color: '#667eea', marginTop: '5px', display: 'block'}}>
+              💡 For English questions, select "Sentence". For math, select "Numbers" or "Words".
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                name="is_active"
+                checked={formData.is_active !== false}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                ✓ Active (Show in quiz)
+              </span>
+            </label>
+            <small style={{ color: '#666', marginLeft: '30px', display: 'block', marginTop: '5px' }}>
+              Uncheck to disable this question without deleting it. Only 10 active questions will show in quiz.
+            </small>
           </div>
 
           <div className="form-actions">

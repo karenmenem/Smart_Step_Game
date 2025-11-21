@@ -178,6 +178,12 @@ function EnglishQuiz() {
 				'Comprehension Intermediate - Level 2': 47,
 				'Comprehension Advanced - Level 1': 49,
 				'Comprehension Advanced - Level 2': 50,
+				'Grammar Beginner - Level 1': 61,
+				'Grammar Beginner - Level 2': 62,
+				'Grammar Intermediate - Level 1': 64,
+				'Grammar Intermediate - Level 2': 65,
+				'Grammar Advanced - Level 1': 67,
+				'Grammar Advanced - Level 2': 68,
 			};
 			
 			// Build activity name from URL parameters
@@ -556,6 +562,15 @@ function EnglishQuiz() {
 								<h2 className="question-title">Question {currentQuestion + 1}</h2>
 							</div>
 							
+							{/* ASL Player - Show above question for grammar, below for comprehension */}
+							{topic === 'grammar' && question && question.aslType && question.aslType !== 'none' && (
+								<div className="asl-video-container">
+									<ASLPlayer 
+										question={question}
+									/>
+								</div>
+							)}
+							
 							<div className="question-content">
 								<div className="question-text-container">
 									<h3 className="question-text">{question.question_text}</h3>
@@ -571,30 +586,28 @@ function EnglishQuiz() {
 											}
 										>
 									{!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
-								</button>
-								{/* ASL Toggle Button - Only show if question has ASL */}
-								{question.aslType && question.aslType !== 'none' && (
-									<button 
-										className={`asl-toggle-btn ${showASL ? 'active' : ''}`}
-										onClick={() => setShowASL(!showASL)}
-										title={showASL ? "Hide ASL video" : "Show ASL video"}
-										>
-											🤟 ASL
-										</button>
-									)}
-									</div>
-								</div>
-								
-								{/* ASL Player - Shows ASL translation for comprehension questions */}
-								{showASL && question && question.aslType && question.aslType !== 'none' && (
-									<div className="asl-video-container">
-										<ASLPlayer 
-											question={question}
-										/>
-									</div>
+							</button>
+							{/* ASL Toggle Button - Only show for comprehension, not grammar */}
+							{topic === 'comprehension' && question.aslType && question.aslType !== 'none' && (
+								<button 
+									className={`asl-toggle-btn ${showASL ? 'active' : ''}`}
+									onClick={() => setShowASL(!showASL)}
+									title={showASL ? "Hide ASL video" : "Show ASL video"}
+									>
+										🤟 ASL
+									</button>
 								)}
-								
-								<div className="options-grid">
+								</div>
+							</div>
+							
+							{/* ASL Player - Show below question for comprehension when toggled */}
+							{topic === 'comprehension' && showASL && question && question.aslType && question.aslType !== 'none' && (
+								<div className="asl-video-container">
+									<ASLPlayer 
+										question={question}
+									/>
+								</div>
+							)}								<div className="options-grid">
 									{(question.options || []).map((option, index) => {
 										const letters = ['A', 'B', 'C', 'D'];
 										return (

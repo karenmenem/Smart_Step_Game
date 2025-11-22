@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import '../styles/AdminStyles.css';
 import { 
   getReadingPassages, createReadingPassage, updateReadingPassage, deleteReadingPassage,
   getDashboardStats
@@ -37,13 +38,17 @@ function AdminDashboard() {
     const tab = queryParams.get('tab');
     const activityId = queryParams.get('activity');
     
-    if (tab) {
+    // Check if there's a tab in the navigation state
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    } else if (tab) {
       setActiveTab(tab);
     }
+    
     if (activityId) {
       setFilterActivity(activityId);
     }
-  }, [location.search]);
+  }, [location.search, location.state]);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');

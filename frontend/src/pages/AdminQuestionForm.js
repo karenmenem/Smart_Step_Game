@@ -620,6 +620,67 @@ function AdminQuestionForm() {
           </div>
 
           <div className="form-group">
+            <label style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              ASL Signs
+              <button 
+                type="button"
+                onClick={() => {
+                  const questionText = formData.question_text;
+                  const aslType = formData.asl_type;
+                  let extracted = [];
+
+                  if (aslType === 'numbers') {
+                    // Extract all numbers from the question
+                    const numbers = questionText.match(/\d+/g);
+                    extracted = numbers || [];
+                  } else if (aslType === 'words' || aslType === 'sentence') {
+                    // Extract meaningful words (remove common stop words)
+                    const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can', 'she', 'he', 'it', 'they', 'them', 'their', 'what', 'when', 'where', 'who', 'which', 'how', 'many', 'much'];
+                    
+                    // Remove emojis and special characters, split into words
+                    const cleaned = questionText.replace(/[^\w\s]/g, '').toLowerCase();
+                    const words = cleaned.split(/\s+/)
+                      .filter(w => w.length > 2 && !stopWords.includes(w))
+                      .slice(0, 15); // Limit to 15 words
+                    
+                    extracted = words;
+                  }
+
+                  if (extracted.length > 0) {
+                    setFormData({...formData, asl_signs: JSON.stringify(extracted)});
+                    alert(`✓ Extracted ${extracted.length} ${aslType === 'numbers' ? 'numbers' : 'words'}:\n${extracted.join(', ')}`);
+                  } else {
+                    alert('⚠️ No content found to extract. Make sure question text is filled and ASL type is selected.');
+                  }
+                }}
+                style={{
+                  padding: '5px 12px',
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '600'
+                }}
+              >
+                🪄 Auto-Extract
+              </button>
+            </label>
+            <textarea
+              name="asl_signs"
+              value={formData.asl_signs}
+              onChange={handleChange}
+              rows={3}
+              placeholder='Auto-extracted JSON array like ["word1","word2"] or click Auto-Extract button'
+              style={{fontFamily: 'monospace', fontSize: '0.9rem'}}
+            />
+            <small style={{color: '#666', marginTop: '5px', display: 'block'}}>
+              Click "Auto-Extract" to automatically get words/numbers from your question, or manually enter JSON array
+            </small>
+          </div>
+
+          <div className="form-group">
             <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
               <input
                 type="checkbox"

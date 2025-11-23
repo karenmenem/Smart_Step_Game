@@ -136,6 +136,43 @@ function EnglishQuiz() {
 		setShowASL(false);
 	}, [currentQuestion]);
 
+	// Keyboard support for Arduino buzzer buttons (A, B, C, D) and Enter for Continue
+	useEffect(() => {
+		if (!questions || questions.length === 0 || quizComplete) return;
+
+		const handleKeyPress = (e) => {
+			const key = e.key.toUpperCase();
+			const currentOptions = questions[currentQuestion]?.options || [];
+			
+			// Enter/Return key triggers Continue button
+			if (e.key === 'Enter' && showResult && !quizComplete) {
+				e.preventDefault();
+				console.log('⏎ Enter pressed → Moving to next question');
+				showFeedbackAndMoveNext();
+				return;
+			}
+			
+			// Map keys A, B, C, D to option indices 0, 1, 2, 3
+			const keyMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+			
+			if (keyMap.hasOwnProperty(key) && currentOptions[keyMap[key]] && !showResult) {
+				const selectedOption = currentOptions[keyMap[key]];
+				const question = questions[currentQuestion];
+				console.log(`🎮 Arduino Button ${key} pressed → Selecting: ${selectedOption}`);
+				
+				// Update answer and trigger submission
+				handleAnswer(question.id, selectedOption);
+				// Trigger the "Continue" button action after a brief delay
+				setTimeout(() => {
+					showFeedbackAndMoveNext();
+				}, 100);
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyPress);
+		return () => window.removeEventListener('keydown', handleKeyPress);
+	}, [questions, currentQuestion, showResult, quizComplete, answers]);
+
 	const loadQuizContent = async () => {
 		setLoading(true);
 		

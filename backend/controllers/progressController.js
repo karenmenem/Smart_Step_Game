@@ -33,7 +33,8 @@ const checkLevelAccess = async (req, res) => {
     
     const currentActivity = activity[0];
     
-    const isLevel1 = [7, 16, 25, 34, 43].includes(parseInt(activityId));
+    // Level 1 activities are always accessible (Beginner - Level 1)
+    const isLevel1 = [7, 16, 25, 34, 43, 61].includes(parseInt(activityId));
     
     if (isLevel1) {
       return res.json({
@@ -46,30 +47,35 @@ const checkLevelAccess = async (req, res) => {
     let requiredActivityId;
     
     const activityMap = {
+      // Addition
       8: 7,
       10: 8, 
       11: 10,
       13: 11,
       14: 13,
       
+      // Subtraction
       17: 16,
       19: 17,
       20: 19,
       22: 20,
       23: 22,
 
+      // Vocabulary
       26: 25,
       28: 26,
       29: 28,
       31: 29,
       32: 31,
    
-      35: 34,
-      37: 35,
-      38: 37,
-      40: 38,
-      41: 40,
+      // Grammar
+      62: 61,
+      64: 62,
+      65: 64,
+      67: 65,
+      68: 67,
     
+      // Comprehension
       44: 43,
       46: 44,
       47: 46,
@@ -78,14 +84,18 @@ const checkLevelAccess = async (req, res) => {
     };
     
     requiredActivityId = activityMap[parseInt(activityId)];
-    const requiresBothSublevels = [46, 49];
+    const requiresBothSublevels = [46, 49, 64, 67];
     
     if (requiresBothSublevels.includes(parseInt(activityId))) {
       let requiredActivities = [];
       if (parseInt(activityId) === 46) {
-        requiredActivities = [43, 44];
+        requiredActivities = [43, 44]; // Comprehension
       } else if (parseInt(activityId) === 49) {
-        requiredActivities = [46, 47];
+        requiredActivities = [46, 47]; // Comprehension
+      } else if (parseInt(activityId) === 64) {
+        requiredActivities = [61, 62]; // Grammar
+      } else if (parseInt(activityId) === 67) {
+        requiredActivities = [64, 65]; // Grammar
       }
       
       for (const reqActivityId of requiredActivities) {

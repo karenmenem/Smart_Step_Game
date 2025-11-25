@@ -4,7 +4,7 @@ import '../styles/AdminStyles.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
-function AdminQuestionForm() {
+function AdminQuestionForm({ isTeacher = false, onSuccess }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
@@ -49,9 +49,9 @@ function AdminQuestionForm() {
   const [imageFiles, setImageFiles] = useState({ num1: null, num2: null });
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
+    const token = isTeacher ? localStorage.getItem('teacherToken') : localStorage.getItem('adminToken');
     if (!token) {
-      navigate('/admin/login');
+      navigate(isTeacher ? '/teacher/login' : '/admin/login');
       return;
     }
     
@@ -61,7 +61,7 @@ function AdminQuestionForm() {
     if (isEditMode) {
       loadQuestion();
     }
-  }, [id, navigate]);
+  }, [id, navigate, isTeacher]);
 
   // Auto-select passage and filter passages when activity changes
   useEffect(() => {
@@ -77,10 +77,13 @@ function AdminQuestionForm() {
     }
   }, [formData.activity_id, selectedActivity, passages]);
 
-  const getHeaders = () => ({
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-  });
+  const getHeaders = () => {
+    const token = isTeacher ? localStorage.getItem('teacherToken') : localStorage.getItem('adminToken');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+  };
 
   const loadActivities = async () => {
     try {
@@ -278,9 +281,10 @@ function AdminQuestionForm() {
     setLoading(true);
 
     try {
+      const baseUrl = isTeacher ? `${API_BASE_URL}/teacher` : `${API_BASE_URL}/admin`;
       const url = isEditMode 
-        ? `${API_BASE_URL}/admin/questions/${id}`
-        : `${API_BASE_URL}/admin/questions`;
+        ? `${baseUrl}/questions/${id}`
+        : `${baseUrl}/questions`;
       
       const method = isEditMode ? 'PUT' : 'POST';
 
@@ -308,7 +312,13 @@ function AdminQuestionForm() {
       }
 
       if (data.success) {
-        alert(isEditMode ? 'Question updated successfully!' : 'Question added successfully!');
+        alert(isEditMode ? 'Question updated successfully!' : (data.message || 'Question added successfully!'));
+        
+        // For teachers, call onSuccess callback if provided
+        if (isTeacher && onSuccess) {
+          onSuccess();
+          return;
+        }
         
         // When adding a new question, stay on the form and reset it
         if (!isEditMode) {
@@ -373,9 +383,11 @@ function AdminQuestionForm() {
     <div className="admin-form-page">
       <div className="admin-form-container">
         <div className="admin-form-header">
-          <button onClick={() => navigate('/admin/dashboard')} className="back-btn">
-            ← Back to Dashboard
-          </button>
+          {!isTeacher && (
+            <button onClick={() => navigate('/admin/dashboard')} className="back-btn">
+              ← Back to Dashboard
+            </button>
+          )}
           <h1>{isEditMode ? 'Edit Question' : 'Add New Question'}</h1>
         </div>
 

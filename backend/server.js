@@ -38,6 +38,8 @@ app.use('/api/progress', require('./routes/progress'));
 app.use('/api/achievements', require('./routes/achievements'));
 app.use('/api/asl', require('./routes/asl'));
 app.use('/api/homepage', require('./routes/homepage'));
+app.use('/api/teacher', require('./routes/teacherRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
 
 // Get individual child data with updated points
 app.get('/api/children/:childId', async (req, res) => {

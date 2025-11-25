@@ -409,6 +409,12 @@ function AdminDashboard() {
           >
             🎨 Homepage Customizer
           </button>
+          <button
+            className="admin-nav-btn"
+            onClick={() => navigate('/admin/approvals')}
+          >
+            ✅ Teacher Approvals
+          </button>
         </nav>
 
         <main className="admin-main">

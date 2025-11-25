@@ -29,7 +29,16 @@ const {
   getHomepageSettings,
   updateHomepageSetting,
   bulkUpdateHomepageSettings,
-  resetHomepageSettings
+  resetHomepageSettings,
+  getPendingTeachers,
+  getAllTeachers,
+  approveTeacher,
+  rejectTeacher,
+  getPendingContent,
+  approveContent,
+  rejectContent,
+  getAdminNotifications,
+  markNotificationRead
 } = require('../controllers/adminController');
 
 
@@ -531,14 +540,23 @@ router.delete('/questions/:id', adminAuth, async (req, res) => {
 
 
 router.get('/homepage-settings', adminAuth, getHomepageSettings);
-
-
 router.put('/homepage-settings/:id', adminAuth, updateHomepageSetting);
-
-
 router.post('/homepage-settings/bulk-update', adminAuth, bulkUpdateHomepageSettings);
-
-
 router.post('/homepage-settings/reset', adminAuth, resetHomepageSettings);
+
+// Teacher Management
+router.get('/teachers/pending', adminAuth, getPendingTeachers);
+router.get('/teachers', adminAuth, getAllTeachers);
+router.post('/teachers/:teacherId/approve', adminAuth, approveTeacher);
+router.post('/teachers/:teacherId/reject', adminAuth, rejectTeacher);
+
+// Content Approval
+router.get('/content/pending', adminAuth, getPendingContent);
+router.post('/content/:contentId/approve', adminAuth, approveContent);
+router.post('/content/:contentId/reject', adminAuth, rejectContent);
+
+// Notifications
+router.get('/notifications', adminAuth, getAdminNotifications);
+router.put('/notifications/:notificationId/read', adminAuth, markNotificationRead);
 
 module.exports = router;

@@ -229,6 +229,7 @@ function EnglishQuiz() {
 			const activityName = `${topicCap} ${levelCap} - Level ${sublevel}`;
 			
 			const currentActivityId = activityMap[activityName];
+			console.log('🎯 Loading quiz:', activityName, '→ Activity ID:', currentActivityId);
 			setActivityId(currentActivityId);
 			
 			if (currentActivityId) {
@@ -250,7 +251,10 @@ function EnglishQuiz() {
 						aslVideoUrl: q.aslVideoUrl || null,
 						aslType: q.aslType || 'none'
 					}));
-				setQuestions(loadedQuestions);
+					
+					// Shuffle questions
+					const shuffledQuestions = shuffleArray(loadedQuestions);
+					setQuestions(shuffledQuestions);
 				} else {
 					setQuestions([]);
 				}
@@ -263,6 +267,16 @@ function EnglishQuiz() {
 		}
 
 		setLoading(false);
+	};
+	
+	// Shuffle array helper function
+	const shuffleArray = (array) => {
+		const shuffled = [...array];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+		}
+		return shuffled;
 	};
 
 	const handleAnswer = (questionId, answer) => {
@@ -529,21 +543,19 @@ function EnglishQuiz() {
 				{/* Pinned Text Section for Comprehension */}
 				{pinnedText && (
 					<div className="pinned-text-container">
-						<div className="pinned-text-header">
-							<h3>📖 Reading Passage</h3>
+						<div className="pinned-text-header" style={{ justifyContent: 'flex-end' }}>
 							<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 								<button
 									className={`speaker-btn ${isPlayingPassage ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
 									onClick={speakPassage}
 									title={
 										!audioEnabled ? "🔇 Audio is off - right-click question speaker to enable" : 
-										isPlayingPassage ? "🔊 Click to stop reading passage" : 
-										"🔈 Click to hear the passage"
+										isPlayingPassage ? "🔊 Click to stop reading" : 
+										"🔈 Click to hear the story"
 									}
 								>
 									{!audioEnabled ? '🔇' : (isPlayingPassage ? '🔊' : '🔈')}
 								</button>
-								<span className="pin-icon">📌</span>
 							</div>
 						</div>
 						
@@ -580,8 +592,8 @@ function EnglishQuiz() {
 									Great job! You got it right!
 								</div>
 							) : (
-								<div className="correct-answer-text">
-									The correct answer is {question.correct_answer}
+								<div className="feedback-message" style={{color: '#ff6b6b'}}>
+									Try again! Think carefully about your answer.
 								</div>
 							)}
 						</div>

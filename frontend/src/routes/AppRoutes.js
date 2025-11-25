@@ -20,6 +20,10 @@ import AdminSectionForm from "../pages/AdminSectionForm";
 import AdminActivityForm from "../pages/AdminActivityForm";
 import ASLManager from "../pages/ASLManager";
 import HomepageCustomizer from "../pages/HomepageCustomizer";
+import TeacherLogin from "../pages/TeacherLogin";
+import TeacherRegister from "../pages/TeacherRegister";
+import TeacherDashboard from "../pages/TeacherDashboard";
+import AdminApprovals from "../pages/AdminApprovals";
 
 function AppRoutes() {
   return (
@@ -41,6 +45,7 @@ function AppRoutes() {
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/approvals" element={<AdminApprovals />} />
         <Route path="/admin/homepage-customizer" element={<HomepageCustomizer />} />
         <Route path="/admin/questions/add" element={<AdminQuestionForm />} />
         <Route path="/admin/questions/edit/:id" element={<AdminQuestionForm />} />
@@ -51,6 +56,10 @@ function AppRoutes() {
         <Route path="/admin/activities/add" element={<AdminActivityForm />} />
         <Route path="/admin/activities/edit/:id" element={<AdminActivityForm />} />
         <Route path="/admin/asl" element={<ASLManager />} />
+        {/* Teacher Routes */}
+        <Route path="/teacher/login" element={<TeacherLogin />} />
+        <Route path="/teacher/register" element={<TeacherRegister />} />
+        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
       </Routes>
     </Router>
   );

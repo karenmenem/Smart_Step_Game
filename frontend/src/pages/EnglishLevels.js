@@ -43,6 +43,16 @@ function EnglishLevels() {
 					beginner: [43, 44],
 					intermediate: [46, 47],
 					advanced: [49, 50]
+				},
+				grammar: {
+					beginner: [61, 62],
+					intermediate: [64, 65],
+					advanced: [67, 68]
+				},
+				vocabulary: {
+					beginner: [25, 26],
+					intermediate: [28, 29],
+					advanced: [31, 32]
 				}
 			};
 

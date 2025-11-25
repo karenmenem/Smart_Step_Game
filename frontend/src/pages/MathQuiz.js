@@ -854,7 +854,7 @@ function MathQuiz() {
               <p className="result-message">
                 {selectedAnswer === questions[currentQuestion].correct 
                   ? "Great job! You got it right!" 
-                  : `The correct answer is ${questions[currentQuestion].correct}`}
+                  : "Try again! Think carefully about your answer."}
               </p>
             </div>
           ) : null}

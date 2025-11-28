@@ -131,23 +131,52 @@ function EnglishQuiz() {
 		}
 	}, [navigate, topic, level, sublevel]);
 
-	// Reset ASL display when moving to a new question
 	useEffect(() => {
 		setShowASL(false);
 	}, [currentQuestion]);
 
+	useEffect(() => {
+		if (!questions || questions.length === 0 || quizComplete) return;
+
+		const handleKeyPress = (e) => {
+			const key = e.key.toUpperCase();
+			const currentOptions = questions[currentQuestion]?.options || [];
+			
+			if (e.key === 'Enter' && showResult && !quizComplete) {
+				e.preventDefault();
+				console.log('⏎ Enter pressed → Moving to next question');
+				showFeedbackAndMoveNext();
+				return;
+			}
+			
+			const keyMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+			
+			if (keyMap.hasOwnProperty(key) && currentOptions[keyMap[key]] && !showResult) {
+				const selectedOption = currentOptions[keyMap[key]];
+				const question = questions[currentQuestion];
+				console.log(`🎮 Arduino Button ${key} pressed → Selecting: ${selectedOption}`);
+				
+				handleAnswer(question.id, selectedOption);
+				setTimeout(() => {
+					showFeedbackAndMoveNext();
+				}, 100);
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyPress);
+		return () => window.removeEventListener('keydown', handleKeyPress);
+	}, [questions, currentQuestion, showResult, quizComplete, answers]);
+
 	const loadQuizContent = async () => {
 		setLoading(true);
 		
-		// Fetch pinned text for comprehension from database
 		if (topic === "comprehension") {
 			try {
-				// Convert level name to number: beginner=1, intermediate=2, advanced=3
 				const levelMap = { 'beginner': 1, 'intermediate': 2, 'advanced': 3 };
 				const levelNum = levelMap[level.toLowerCase()] || parseInt(level) || 1;
 				const sublevelNum = parseInt(sublevel) || 1;
 				
-				const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+				const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 				const response = await fetch(`${API_URL}/quiz/reading-passage/English/comprehension/${levelNum}/${sublevelNum}`);
 				const data = await response.json();
 				
@@ -168,9 +197,7 @@ function EnglishQuiz() {
 			}
 		}
 
-		// Load actual questions from database
 		try {
-			// Map activity names to IDs (temporary solution)
 			const activityMap = {
 				'Comprehension Beginner - Level 1': 43,
 				'Comprehension Beginner - Level 2': 44,
@@ -178,25 +205,29 @@ function EnglishQuiz() {
 				'Comprehension Intermediate - Level 2': 47,
 				'Comprehension Advanced - Level 1': 49,
 				'Comprehension Advanced - Level 2': 50,
+				'Grammar Beginner - Level 1': 61,
+				'Grammar Beginner - Level 2': 62,
+				'Grammar Intermediate - Level 1': 64,
+				'Grammar Intermediate - Level 2': 65,
+				'Grammar Advanced - Level 1': 67,
+				'Grammar Advanced - Level 2': 68,
 			};
 			
-			// Build activity name from URL parameters
 			const topicCap = topic.charAt(0).toUpperCase() + topic.slice(1);
 			const levelCap = level.charAt(0).toUpperCase() + level.slice(1);
 			const activityName = `${topicCap} ${levelCap} - Level ${sublevel}`;
 			
 			const currentActivityId = activityMap[activityName];
+			console.log('🎯 Loading quiz:', activityName, '→ Activity ID:', currentActivityId);
 			setActivityId(currentActivityId);
 			
 			if (currentActivityId) {
-				// Fetch questions for this activity
-				const questionsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/quiz/questions/${currentActivityId}`, {
+				const questionsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/quiz/questions/${currentActivityId}`, {
 					headers: api.getAuthHeaders()
 				});
 				const questionsData = await questionsResponse.json();
 				
 				if (questionsData.success && questionsData.data && questionsData.data.length > 0) {
-					// Map database questions to the format expected by the UI
 					const loadedQuestions = questionsData.data.map(q => ({
 						id: q.id,
 						question_text: q.question,
@@ -207,7 +238,9 @@ function EnglishQuiz() {
 						aslVideoUrl: q.aslVideoUrl || null,
 						aslType: q.aslType || 'none'
 					}));
-				setQuestions(loadedQuestions);
+					
+					const shuffledQuestions = shuffleArray(loadedQuestions);
+					setQuestions(shuffledQuestions);
 				} else {
 					setQuestions([]);
 				}
@@ -220,6 +253,15 @@ function EnglishQuiz() {
 		}
 
 		setLoading(false);
+	};
+	
+	const shuffleArray = (array) => {
+		const shuffled = [...array];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+		}
+		return shuffled;
 	};
 
 	const handleAnswer = (questionId, answer) => {
@@ -241,28 +283,23 @@ function EnglishQuiz() {
 
 	const showFeedbackAndMoveNext = () => {
 		const question = questions[currentQuestion];
-		// Use the latest answers state
 		setAnswers(currentAnswers => {
 			const userAnswer = currentAnswers[question.id];
 			const correct = userAnswer === question.correct_answer;
 			
-			// Show result
 			setIsCorrect(correct);
 			setShowResult(true);
-			
-			// Auto move to next question after 2 seconds
 			setTimeout(() => {
 				setShowResult(false);
 				if (currentQuestion < questions.length - 1) {
 					setCurrentQuestion(currentQuestion + 1);
 					setTimeLeft(60);
 				} else {
-					// Last question - show completion screen
 					finishQuiz(currentAnswers);
 				}
 			}, 2000);
 			
-			return currentAnswers; // Return unchanged to not update state
+			return currentAnswers;
 		});
 	};
 
@@ -272,7 +309,6 @@ function EnglishQuiz() {
 		setScore(correctAnswers);
 		setQuizComplete(true);
 
-		// Save quiz progress to backend
 		try {
 			const childId = user?.child?.id;
 			if (childId && activityId) {
@@ -297,19 +333,17 @@ function EnglishQuiz() {
 	const previousQuestion = () => {
 		if (currentQuestion > 0) {
 			setCurrentQuestion(currentQuestion - 1);
-			setTimeLeft(60); // Reset timer when going back
+			setTimeLeft(60); 
 			setShowResult(false);
 		}
 	};
 
-	// Timer effect
 	useEffect(() => {
 		if (loading || questions.length === 0 || showResult) return;
 
 		const timer = setInterval(() => {
 			setTimeLeft((prevTime) => {
 				if (prevTime <= 1) {
-					// Time's up - show feedback then move to next question
 					showFeedbackAndMoveNext();
 					return 60;
 				}
@@ -346,11 +380,10 @@ function EnglishQuiz() {
 		);
 	}
 
-	// Quiz Completion Screen
 	if (quizComplete) {
 		const percentage = Math.round((score / questions.length) * 100);
 		const passed = percentage >= 80;
-		const pointsEarned = score * 10; // 10 points per correct answer
+		const pointsEarned = score * 10;
 
 		const getNextLevel = () => {
 			const levelMap = { 'beginner': 1, 'intermediate': 2, 'advanced': 3 };
@@ -358,14 +391,12 @@ function EnglishQuiz() {
 			const currentSublevelNum = parseInt(sublevel);
 
 			if (currentSublevelNum < 2) {
-				// Move to next sublevel
 				return { level, sublevel: currentSublevelNum + 1 };
 			} else if (currentLevelNum < 3) {
-				// Move to next level
 				const nextLevelName = currentLevelNum === 1 ? 'intermediate' : 'advanced';
 				return { level: nextLevelName, sublevel: 1 };
 			}
-			return null; // No next level
+			return null;
 		};
 
 		const nextLevel = getNextLevel();
@@ -417,19 +448,19 @@ function EnglishQuiz() {
 							<div className="total-points-text">Total Points: {totalPoints + pointsEarned}</div>
 						</div>
 
-						<div className="results-actions">
-							<button className="retry-btn" onClick={() => window.location.reload()}>
+						<div className="results-buttons">
+							<button className="quiz-btn secondary-btn" onClick={() => window.location.reload()}>
 								🔄 Try Again
 							</button>
 							{passed && nextLevel && (
 								<button 
-									className="next-level-btn"
+									className="quiz-btn primary-btn"
 									onClick={() => navigate(`/english/${topic}/quiz/${nextLevel.level}/${nextLevel.sublevel}`)}
 								>
 									🚀 Next Level
 								</button>
 							)}
-							<button className="back-btn" onClick={goToLevels}>
+							<button className="quiz-btn tertiary-btn" onClick={goToLevels}>
 								📚 Back to Levels
 							</button>
 						</div>
@@ -486,21 +517,19 @@ function EnglishQuiz() {
 				{/* Pinned Text Section for Comprehension */}
 				{pinnedText && (
 					<div className="pinned-text-container">
-						<div className="pinned-text-header">
-							<h3>📖 Reading Passage</h3>
+						<div className="pinned-text-header" style={{ justifyContent: 'flex-end' }}>
 							<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 								<button
 									className={`speaker-btn ${isPlayingPassage ? 'playing' : ''} ${!audioEnabled ? 'audio-off' : 'audio-on'}`}
 									onClick={speakPassage}
 									title={
 										!audioEnabled ? "🔇 Audio is off - right-click question speaker to enable" : 
-										isPlayingPassage ? "🔊 Click to stop reading passage" : 
-										"🔈 Click to hear the passage"
+										isPlayingPassage ? "🔊 Click to stop reading" : 
+										"🔈 Click to hear the story"
 									}
 								>
 									{!audioEnabled ? '🔇' : (isPlayingPassage ? '🔊' : '🔈')}
 								</button>
-								<span className="pin-icon">📌</span>
 							</div>
 						</div>
 						
@@ -537,8 +566,8 @@ function EnglishQuiz() {
 									Great job! You got it right!
 								</div>
 							) : (
-								<div className="correct-answer-text">
-									The correct answer is {question.correct_answer}
+								<div className="feedback-message" style={{color: '#ff6b6b'}}>
+									Try again! Think carefully about your answer.
 								</div>
 							)}
 						</div>
@@ -548,6 +577,15 @@ function EnglishQuiz() {
 							<div className="question-header">
 								<h2 className="question-title">Question {currentQuestion + 1}</h2>
 							</div>
+							
+							{/* ASL Player - Show above question for grammar, below for comprehension */}
+							{topic === 'grammar' && question && question.aslType && question.aslType !== 'none' && (
+								<div className="asl-video-container">
+									<ASLPlayer 
+										question={question}
+									/>
+								</div>
+							)}
 							
 							<div className="question-content">
 								<div className="question-text-container">
@@ -564,30 +602,28 @@ function EnglishQuiz() {
 											}
 										>
 									{!audioEnabled ? '🔇' : (isPlaying ? '🔊' : '🔈')}
-								</button>
-								{/* ASL Toggle Button - Only show if question has ASL */}
-								{question.aslType && question.aslType !== 'none' && (
-									<button 
-										className={`asl-toggle-btn ${showASL ? 'active' : ''}`}
-										onClick={() => setShowASL(!showASL)}
-										title={showASL ? "Hide ASL video" : "Show ASL video"}
-										>
-											🤟 ASL
-										</button>
-									)}
-									</div>
-								</div>
-								
-								{/* ASL Player - Shows ASL translation for comprehension questions */}
-								{showASL && question && question.aslType && question.aslType !== 'none' && (
-									<div className="asl-video-container">
-										<ASLPlayer 
-											question={question}
-										/>
-									</div>
+							</button>
+							{/* ASL Toggle Button - Only show for comprehension, not grammar */}
+							{topic === 'comprehension' && question.aslType && question.aslType !== 'none' && (
+								<button 
+									className={`asl-toggle-btn ${showASL ? 'active' : ''}`}
+									onClick={() => setShowASL(!showASL)}
+									title={showASL ? "Hide ASL video" : "Show ASL video"}
+									>
+										🤟 ASL
+									</button>
 								)}
-								
-								<div className="options-grid">
+								</div>
+							</div>
+							
+							{/* ASL Player - Show below question for comprehension when toggled */}
+							{topic === 'comprehension' && showASL && question && question.aslType && question.aslType !== 'none' && (
+								<div className="asl-video-container">
+									<ASLPlayer 
+										question={question}
+									/>
+								</div>
+							)}								<div className="options-grid">
 									{(question.options || []).map((option, index) => {
 										const letters = ['A', 'B', 'C', 'D'];
 										return (

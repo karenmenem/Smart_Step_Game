@@ -15,8 +15,15 @@ import EnglishQuiz from "../pages/EnglishQuiz";
 import AdminLogin from "../pages/AdminLogin";
 import AdminDashboard from "../pages/AdminDashboard";
 import AdminQuestionForm from "../pages/AdminQuestionForm";
+import AdminSubjectForm from "../pages/AdminSubjectForm";
+import AdminSectionForm from "../pages/AdminSectionForm";
+import AdminActivityForm from "../pages/AdminActivityForm";
 import ASLManager from "../pages/ASLManager";
 import HomepageCustomizer from "../pages/HomepageCustomizer";
+import TeacherLogin from "../pages/TeacherLogin";
+import TeacherRegister from "../pages/TeacherRegister";
+import TeacherDashboard from "../pages/TeacherDashboard";
+import AdminApprovals from "../pages/AdminApprovals";
 
 function AppRoutes() {
   return (
@@ -38,14 +45,21 @@ function AppRoutes() {
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/approvals" element={<AdminApprovals />} />
         <Route path="/admin/homepage-customizer" element={<HomepageCustomizer />} />
         <Route path="/admin/questions/add" element={<AdminQuestionForm />} />
         <Route path="/admin/questions/edit/:id" element={<AdminQuestionForm />} />
+        <Route path="/admin/subjects/add" element={<AdminSubjectForm />} />
+        <Route path="/admin/subjects/edit/:id" element={<AdminSubjectForm />} />
+        <Route path="/admin/sections/add" element={<AdminSectionForm />} />
+        <Route path="/admin/sections/edit/:id" element={<AdminSectionForm />} />
+        <Route path="/admin/activities/add" element={<AdminActivityForm />} />
+        <Route path="/admin/activities/edit/:id" element={<AdminActivityForm />} />
         <Route path="/admin/asl" element={<ASLManager />} />
-        <Route path="/admin/subjects/*" element={<AdminDashboard />} />
-        <Route path="/admin/sections/*" element={<AdminDashboard />} />
-        <Route path="/admin/activities/*" element={<AdminDashboard />} />
-        <Route path="/admin/achievements/*" element={<AdminDashboard />} />
+        {/* Teacher Routes */}
+        <Route path="/teacher/login" element={<TeacherLogin />} />
+        <Route path="/teacher/register" element={<TeacherRegister />} />
+        <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
       </Routes>
     </Router>
   );

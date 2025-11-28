@@ -38,6 +38,39 @@ app.use('/api/progress', require('./routes/progress'));
 app.use('/api/achievements', require('./routes/achievements'));
 app.use('/api/asl', require('./routes/asl'));
 app.use('/api/homepage', require('./routes/homepage'));
+app.use('/api/teacher', require('./routes/teacherRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
+
+// Get individual child data with updated points
+app.get('/api/children/:childId', async (req, res) => {
+  try {
+    const { query } = require('./config/database');
+    const { childId } = req.params;
+    
+    const children = await query(
+      'SELECT child_id as id, name, age, total_points, profile_picture FROM child WHERE child_id = ?',
+      [childId]
+    );
+    
+    if (!children || children.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Child not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: children[0]
+    });
+  } catch (error) {
+    console.error('Error fetching child:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch child data'
+    });
+  }
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ 

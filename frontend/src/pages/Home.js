@@ -16,7 +16,7 @@ function Home() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/homepage');
+        const response = await fetch('http://localhost:5001/api/homepage');
         const data = await response.json();
         if (data.success) {
           setSettings(data.data);
@@ -204,15 +204,14 @@ function Home() {
           
           <nav className="ma-nav ma-nav-desktop">
             <button className="ma-nav-btn" onClick={() => navigate("/")}>🏠</button>
-            <button className="ma-nav-btn">Dashboard</button>
-            <button className="ma-nav-btn" onClick={() => navigate("/achievements")}>Achievements</button>
+            <button className="ma-nav-btn" onClick={() => navigate("/achievements")}> 🏆 Achievements</button>
             <div className="ma-user-section">
               {user ? (
                 <>
                   <div className="ma-user-info">
                     {user.child?.profile_picture ? (
                       <img 
-                        src={`http://localhost:5000/${user.child.profile_picture}`} 
+                        src={`http://localhost:5001/${user.child.profile_picture}`}
                         alt="Profile" 
                         className="ma-profile-avatar"
                         onError={(e) => {
@@ -251,9 +250,6 @@ function Home() {
         <div className={`ma-mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
           <button className="ma-mobile-nav-btn" onClick={() => setIsMobileMenuOpen(false)}>
             🏠 Home
-          </button>
-          <button className="ma-mobile-nav-btn" onClick={() => setIsMobileMenuOpen(false)}>
-            📊 Dashboard
           </button>
           <button className="ma-mobile-nav-btn" onClick={() => { navigate("/achievements"); setIsMobileMenuOpen(false); }}>
             🏆 Achievements
@@ -367,7 +363,7 @@ function Home() {
                     <div className="ma-child-avatar">
                       {user.child.profile_picture ? (
                         <img 
-                          src={`http://localhost:5000/${user.child.profile_picture}`} 
+                          src={`http://localhost:5001/${user.child.profile_picture}`} 
                           alt={user.child.name}
                           onError={(e) => e.target.style.display = 'none'}
                         />
@@ -379,7 +375,7 @@ function Home() {
                     </div>
                     <div className="ma-child-info">
                       <h3>Playing as: {user.child.name}</h3>
-                      <p>Age: {user.child.age} • Math Level: {user.child.mathLevel} • English Level: {user.child.englishLevel}</p>
+                      <p>Age: {user.child.age} • {progress.filter(p => p.completed).length} Activities Completed</p>
                     </div>
                   </div>
                 ) : (

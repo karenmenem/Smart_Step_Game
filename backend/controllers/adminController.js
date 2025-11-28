@@ -138,11 +138,16 @@ const createQuestion = async (req, res) => {
     
     const passageId = req.body.passage_id || req.body.passageId || null;
     
+    // Determine creator type - check if request is from admin or teacher
+    const createdByType = req.userType || 'admin';
+    const createdById = createdByType === 'teacher' ? req.teacherId : (req.admin?.adminId || req.admin?.admin_id);
+    
     const result = await query(
-      `INSERT INTO Question 
+      `INSERT INTO question 
       (activity_id, passage_id, question_text, question_type, correct_answer, options, asl_signs, 
-       asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index, is_active,
+       created_by_type, created_by_id, has_required_asl) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         actId,
         passageId,
@@ -157,7 +162,11 @@ const createQuestion = async (req, res) => {
         explanation || null,
         diffLevel,
         ptsValue,
-        ordIdx
+        ordIdx,
+        req.body.is_active !== false ? 1 : 0,
+        createdByType,
+        createdById,
+        true // Admin-created questions are assumed to have ASL if needed
       ]
     );
     
@@ -178,6 +187,7 @@ const updateQuestion = async (req, res) => {
     console.log('\n=== UPDATE QUESTION DEBUG ===');
     console.log('Question ID:', req.params.questionId);
     console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('is_active value:', req.body.is_active, 'type:', typeof req.body.is_active);
     
     const { questionId } = req.params;
     const {
@@ -249,31 +259,39 @@ const updateQuestion = async (req, res) => {
     
     console.log('Executing UPDATE query...');
     
-    // Convert undefined to null for all parameters
+    // Helper function to convert empty strings to null
+    const toNullIfEmpty = (value) => {
+      if (value === '' || value === undefined) return null;
+      return value;
+    };
+    
+    // Convert undefined/empty strings to null for all parameters
     const params = [
-      actId ?? null,
-      passageId,
-      qText ?? null,
-      qType ?? null,
-      correctAns ?? null,
+      toNullIfEmpty(actId),
+      toNullIfEmpty(passageId),
+      toNullIfEmpty(qText),
+      toNullIfEmpty(qType),
+      toNullIfEmpty(correctAns),
       optionsData ? (typeof optionsData === 'string' ? optionsData : JSON.stringify(optionsData)) : null,
       aslSignsData ? (typeof aslSignsData === 'string' ? aslSignsData : JSON.stringify(aslSignsData)) : null,
-      aslVid ?? null,
-      aslImg ?? null,
-      aslT ?? null,
-      explanation ?? null,
-      diffLevel ?? null,
-      ptsValue ?? null,
-      ordIdx ?? null,
-      questionId
+      toNullIfEmpty(aslVid),
+      toNullIfEmpty(aslImg),
+      toNullIfEmpty(aslT),
+      toNullIfEmpty(explanation),
+      toNullIfEmpty(diffLevel),
+      toNullIfEmpty(ptsValue),
+      toNullIfEmpty(ordIdx)
     ];
     
     console.log('Query parameters:', params.map((p, i) => `${i}: ${p === null ? 'NULL' : typeof p === 'string' ? p.substring(0, 30) + '...' : p}`));
     
+    const isActiveValue = req.body.is_active ? 1 : 0;
+    console.log('is_active to save:', isActiveValue);
+    
     const result = await query(
-      `UPDATE Question SET 
+      `UPDATE question SET 
         activity_id = COALESCE(?, activity_id),
-        passage_id = ?,
+        passage_id = COALESCE(?, passage_id),
         question_text = COALESCE(?, question_text),
         question_type = COALESCE(?, question_type),
         correct_answer = COALESCE(?, correct_answer),
@@ -285,9 +303,10 @@ const updateQuestion = async (req, res) => {
         explanation = COALESCE(?, explanation),
         difficulty_level = COALESCE(?, difficulty_level),
         points_value = COALESCE(?, points_value),
-        order_index = COALESCE(?, order_index)
+        order_index = COALESCE(?, order_index),
+        is_active = ?
       WHERE question_id = ?`,
-      params
+      [...params, isActiveValue, questionId]
     );
     
     console.log('Update result:', result);
@@ -705,7 +724,7 @@ const updateHomepageSetting = async (req, res) => {
   try {
     const { id } = req.params;
     const { setting_value } = req.body;
-    const adminId = req.admin.admin_id;
+    const adminId = req.admin.adminId || req.admin.admin_id;
     
     await query(
       'UPDATE homepage_settings SET setting_value = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
@@ -728,7 +747,7 @@ const updateHomepageSetting = async (req, res) => {
 const bulkUpdateHomepageSettings = async (req, res) => {
   try {
     const { settings } = req.body; // Array of {id, setting_value}
-    const adminId = req.admin.admin_id;
+    const adminId = req.admin.adminId || req.admin.admin_id;
     
     if (!Array.isArray(settings)) {
       return res.status(400).json({ success: false, message: 'Settings must be an array' });
@@ -757,7 +776,7 @@ const bulkUpdateHomepageSettings = async (req, res) => {
 
 const resetHomepageSettings = async (req, res) => {
   try {
-    const adminId = req.admin.admin_id;
+    const adminId = req.admin.adminId || req.admin.admin_id;
     
     // Reset to default values by re-running the default inserts
     const defaultSettings = [
@@ -789,6 +808,254 @@ const resetHomepageSettings = async (req, res) => {
   } catch (error) {
     console.error('Reset homepage settings error:', error);
     res.status(500).json({ success: false, message: 'Failed to reset homepage settings' });
+  }
+};
+
+// ==================== TEACHER APPROVAL MANAGEMENT ====================
+
+// Get all pending teachers
+const getPendingTeachers = async (req, res) => {
+  try {
+    const teachers = await query(
+      'SELECT id, name, email, certificate_path, created_at FROM teachers WHERE status = ?',
+      ['pending']
+    );
+    
+    res.json({ success: true, data: teachers });
+  } catch (error) {
+    console.error('Get pending teachers error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch pending teachers' });
+  }
+};
+
+// Get all teachers (any status)
+const getAllTeachers = async (req, res) => {
+  try {
+    const teachers = await query(
+      'SELECT id, name, email, status, certificate_path, created_at, approved_at FROM teachers ORDER BY created_at DESC'
+    );
+    
+    res.json({ success: true, data: teachers });
+  } catch (error) {
+    console.error('Get all teachers error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch teachers' });
+  }
+};
+
+// Approve teacher
+const approveTeacher = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    
+    await query(
+      'UPDATE teachers SET status = ? WHERE id = ?',
+      ['approved', teacherId]
+    );
+    
+    // Get teacher info for notification
+    const teachers = await query('SELECT name, email FROM teachers WHERE id = ?', [teacherId]);
+    const teacher = teachers[0];
+    
+    // Create notification for teacher
+    await query(
+      `INSERT INTO notifications (user_id, user_type, notification_type, title, message) 
+       VALUES (?, 'teacher', 'approval', ?, ?)`,
+      [
+        teacherId,
+        'Account Approved',
+        'Your teacher account has been approved! You can now add questions and passages.'
+      ]
+    );
+    
+    res.json({ 
+      success: true, 
+      message: `Teacher ${teacher.name} approved successfully` 
+    });
+  } catch (error) {
+    console.error('Approve teacher error:', error);
+    res.status(500).json({ success: false, message: 'Failed to approve teacher' });
+  }
+};
+
+// Reject teacher
+const rejectTeacher = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const { reason } = req.body;
+    
+    await query(
+      'UPDATE teachers SET status = ?, rejection_reason = ? WHERE id = ?',
+      ['rejected', reason || 'No reason provided', teacherId]
+    );
+    
+    // Get teacher info
+    const [teachers] = await query('SELECT name FROM teachers WHERE id = ?', [teacherId]);
+    const teacher = teachers[0];
+    
+    // Create notification for teacher
+    await query(
+      `INSERT INTO notifications (user_id, user_type, notification_type, title, message) 
+       VALUES (?, 'teacher', 'content_rejected', ?, ?)`,
+      [
+        teacherId,
+        'Account Rejected',
+        `Your teacher account was not approved. Reason: ${reason || 'No reason provided'}`
+      ]
+    );
+    
+    res.json({ 
+      success: true, 
+      message: `Teacher ${teacher.name} rejected` 
+    });
+  } catch (error) {
+    console.error('Reject teacher error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reject teacher' });
+  }
+};
+
+// ==================== CONTENT APPROVAL MANAGEMENT ====================
+
+// Get pending content (questions/passages from teachers)
+const getPendingContent = async (req, res) => {
+  try {
+    const content = await query(`
+      SELECT 
+        tc.*,
+        t.name as teacher_name,
+        t.email as teacher_email,
+        CASE 
+          WHEN tc.content_type = 'question' THEN q.question_text
+          WHEN tc.content_type = 'passage' THEN rp.passage
+        END as content_preview,
+        CASE 
+          WHEN tc.content_type = 'question' THEN q.asl_signs
+          WHEN tc.content_type = 'passage' THEN NULL
+        END as asl_required
+      FROM teacher_content tc
+      JOIN teachers t ON tc.teacher_id = t.id
+      LEFT JOIN question q ON tc.content_type = 'question' AND tc.content_id = q.question_id
+      LEFT JOIN reading_passage rp ON tc.content_type = 'passage' AND tc.content_id = rp.passage_id
+      WHERE tc.approval_status IN ('pending', 'pending_asl')
+      ORDER BY tc.submitted_at DESC
+    `);
+    
+    res.json({ success: true, data: content });
+  } catch (error) {
+    console.error('Get pending content error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch pending content' });
+  }
+};
+
+// Approve content
+const approveContent = async (req, res) => {
+  try {
+    const { contentId } = req.params;
+    const adminId = req.admin?.adminId || req.admin?.admin_id;
+    
+    await query(
+      'UPDATE teacher_content SET approval_status = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?',
+      ['approved', adminId, contentId]
+    );
+    
+    // Get content info for notification
+    const [content] = await query(
+      'SELECT teacher_id, content_type FROM teacher_content WHERE id = ?',
+      [contentId]
+    );
+    
+    // Create notification for teacher
+    await query(
+      `INSERT INTO notifications (user_id, user_type, notification_type, title, message, related_id) 
+       VALUES (?, 'teacher', 'content_approved', ?, ?, ?)`,
+      [
+        content[0].teacher_id,
+        'Content Approved',
+        `Your ${content[0].content_type} has been approved and is now live!`,
+        contentId
+      ]
+    );
+    
+    res.json({ success: true, message: 'Content approved successfully' });
+  } catch (error) {
+    console.error('Approve content error:', error);
+    res.status(500).json({ success: false, message: 'Failed to approve content' });
+  }
+};
+
+// Reject content
+const rejectContent = async (req, res) => {
+  try {
+    const { contentId } = req.params;
+    const { reason } = req.body;
+    const adminId = req.admin?.adminId || req.admin?.admin_id;
+    
+    await query(
+      'UPDATE teacher_content SET approval_status = ?, rejection_reason = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?',
+      ['rejected', reason || 'No reason provided', adminId, contentId]
+    );
+    
+    // Get content info
+    const [content] = await query(
+      'SELECT teacher_id, content_type FROM teacher_content WHERE id = ?',
+      [contentId]
+    );
+    
+    // Create notification for teacher
+    await query(
+      `INSERT INTO notifications (user_id, user_type, notification_type, title, message, related_id) 
+       VALUES (?, 'teacher', 'content_rejected', ?, ?, ?)`,
+      [
+        content[0].teacher_id,
+        'Content Rejected',
+        `Your ${content[0].content_type} was not approved. Reason: ${reason || 'No reason provided'}`,
+        contentId
+      ]
+    );
+    
+    res.json({ success: true, message: 'Content rejected' });
+  } catch (error) {
+    console.error('Reject content error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reject content' });
+  }
+};
+
+// Get notifications for admin
+const getAdminNotifications = async (req, res) => {
+  try {
+    const adminId = req.admin?.adminId || req.admin?.admin_id;
+    
+    const notifications = await query(
+      'SELECT * FROM notifications WHERE user_type = ? AND user_id = ? ORDER BY created_at DESC LIMIT 50',
+      ['admin', adminId]
+    );
+    
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+    
+    res.json({ 
+      success: true, 
+      data: notifications,
+      unreadCount 
+    });
+  } catch (error) {
+    console.error('Get admin notifications error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch notifications' });
+  }
+};
+
+// Mark notification as read
+const markNotificationRead = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    
+    await query(
+      'UPDATE notifications SET is_read = TRUE WHERE id = ?',
+      [notificationId]
+    );
+    
+    res.json({ success: true, message: 'Notification marked as read' });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ success: false, message: 'Failed to mark notification' });
   }
 };
 
@@ -824,5 +1091,17 @@ module.exports = {
   getHomepageSettings,
   updateHomepageSetting,
   bulkUpdateHomepageSettings,
-  resetHomepageSettings
+  resetHomepageSettings,
+  // Teacher Management
+  getPendingTeachers,
+  getAllTeachers,
+  approveTeacher,
+  rejectTeacher,
+  // Content Approval
+  getPendingContent,
+  approveContent,
+  rejectContent,
+  // Notifications
+  getAdminNotifications,
+  markNotificationRead
 };

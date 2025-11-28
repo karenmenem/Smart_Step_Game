@@ -2,6 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { auth, api } from "../api/auth";
 import ASLPlayer from "../components/ASLPlayer";
+import { loadASLResources } from "../utils/aslTranslator";
+
+// Shuffle array utility function
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 function MathQuiz() {
   const navigate = useNavigate();
@@ -61,6 +72,13 @@ function MathQuiz() {
       const userData = auth.getCurrentUser();
       const currentChild = auth.getCurrentChild();
       setUser({ ...userData, child: currentChild });
+      
+      // Load ASL resources from backend
+      loadASLResources().then(() => {
+        console.log('ASL resources loaded for MathQuiz');
+      }).catch(err => {
+        console.error('Failed to load ASL resources:', err);
+      });
       
       // Fetch questions from database
       loadQuizData();
@@ -129,10 +147,18 @@ function MathQuiz() {
       console.log('Questions Response:', questionsResponse);
       
       if (questionsResponse.success && questionsResponse.data.length > 0) {
-        setQuestions(questionsResponse.data);
+        const shuffledQuestions = shuffleArray(questionsResponse.data).map(q => ({
+          ...q,
+          options: q.options ? shuffleArray([...q.options]) : q.options
+        }));
+        setQuestions(shuffledQuestions);
       } else {
         console.error('Failed to load questions, using fallback');
-        setQuestions(getFallbackQuestions());
+        const shuffledFallback = shuffleArray(getFallbackQuestions()).map(q => ({
+          ...q,
+          options: shuffleArray([...q.options])
+        }));
+        setQuestions(shuffledFallback);
       }
       
       if (activityResponse.success) {
@@ -244,6 +270,36 @@ function MathQuiz() {
       handleNextQuestion();
     }
   }, [timeLeft, showResult, quizComplete, questions, timerPaused]);
+
+  // Keyboard support for Arduino buzzer buttons (A, B, C, D) and Enter for Continue
+  useEffect(() => {
+    if (!questions || questions.length === 0 || quizComplete) return;
+
+    const handleKeyPress = (e) => {
+      const key = e.key.toUpperCase();
+      const currentOptions = questions[currentQuestion]?.options || [];
+      
+      // Enter/Return key triggers Continue/Next button
+      if (e.key === 'Enter' && showResult && !quizComplete) {
+        e.preventDefault();
+        console.log('⏎ Enter pressed → Moving to next question');
+        handleNextQuestion();
+        return;
+      }
+      
+      // Map keys A, B, C, D to option indices 0, 1, 2, 3
+      const keyMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+      
+      if (keyMap.hasOwnProperty(key) && currentOptions[keyMap[key]] && !showResult) {
+        const selectedOption = currentOptions[keyMap[key]];
+        console.log(`🎮 Arduino Button ${key} pressed → Selecting: ${selectedOption}`);
+        handleAnswerSelect(selectedOption);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [questions, currentQuestion, showResult, quizComplete]);
 
   // Generate hints based on question
   const generateHints = (question) => {
@@ -798,7 +854,7 @@ function MathQuiz() {
               <p className="result-message">
                 {selectedAnswer === questions[currentQuestion].correct 
                   ? "Great job! You got it right!" 
-                  : `The correct answer is ${questions[currentQuestion].correct}`}
+                  : "Try again! Think carefully about your answer."}
               </p>
             </div>
           ) : null}

@@ -33,6 +33,11 @@ function Dashboard() {
     try {
       setLoading(true);
       
+      // Fetch fresh child data with updated points
+      const childResponse = await fetch(`http://localhost:5001/api/children/${childData.id}`);
+      const childRes = await childResponse.json();
+      const freshChildData = childRes.success ? childRes.data : childData;
+      
       // Fetch all dashboard data in parallel
       const [achievementsRes, progressRes] = await Promise.all([
         api.getAchievements(childData.id),
@@ -53,11 +58,12 @@ function Dashboard() {
       // Process progress
       if (progressRes.success && progressRes.data) {
         const progressData = progressRes.data;
+        const childStats = progressRes.stats || {};
         setProgress(progressData);
         
         // Calculate stats
         const completed = progressData.filter(p => p.completed).length;
-        const totalTime = progressData.reduce((sum, p) => sum + (p.time_spent || 0), 0);
+        const totalTime = childStats.minutes_played || 0;
         const bestScore = Math.max(...progressData.map(p => p.percentage || 0), 0);
         
         // Get recent activities (last 5)
@@ -68,10 +74,11 @@ function Dashboard() {
         setStats(prev => ({
           ...prev,
           activitiesCompleted: completed,
-          totalTimeSpent: Math.round(totalTime / 60), // Convert to minutes
+          totalTimeSpent: totalTime,
+          currentStreak: childStats.day_streak || 0,
           bestScore: Math.round(bestScore),
           recentActivities: recent,
-          totalPoints: childData.total_points || 0
+          totalPoints: freshChildData.total_points || 0
         }));
       }
       
@@ -161,7 +168,7 @@ function Dashboard() {
           <div className="welcome-card">
             <div className="welcome-avatar">
               {child.profile_picture ? (
-                <img src={`http://localhost:5000/${child.profile_picture}`} alt={child.name} />
+                <img src={`http://localhost:5001/${child.profile_picture}`} alt={child.name} />
               ) : (
                 <div className="avatar-placeholder">{child.name.charAt(0).toUpperCase()}</div>
               )}
@@ -299,43 +306,63 @@ function Dashboard() {
             <h3>📊 Learning Progress</h3>
           </div>
           <div className="progress-overview">
-            <div className="progress-subject">
-              <h4>➕ Addition</h4>
-              <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 7 && p.activity_id <= 14 && p.completed).length / 6) * 100}%` }}></div>
+            {/* Math Section */}
+            <div className="progress-category">
+              <h4 style={{marginBottom: '15px', color: '#667eea'}}>📐 Mathematics</h4>
+              
+              <div className="progress-subject">
+                <h5>➕ Addition</h5>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 7 && p.activity_id <= 14 && p.completed).length / 6) * 100}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {progress.filter(p => p.activity_id >= 7 && p.activity_id <= 14 && p.completed).length} / 6 levels completed
+                </div>
               </div>
-              <div className="progress-text">
-                {progress.filter(p => p.activity_id >= 7 && p.activity_id <= 14 && p.completed).length} / 6 levels completed
+
+              <div className="progress-subject">
+                <h5>➖ Subtraction</h5>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 16 && p.activity_id <= 23 && p.completed).length / 6) * 100}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {progress.filter(p => p.activity_id >= 16 && p.activity_id <= 23 && p.completed).length} / 6 levels completed
+                </div>
+              </div>
+
+              <div className="progress-subject">
+                <h5>✖️ Multiplication</h5>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length / 6) * 100}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length} / 6 levels completed
+                </div>
+              </div>
+
+              <div className="progress-subject">
+                <h5>➗ Division</h5>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 34 && p.activity_id <= 41 && p.completed).length / 6) * 100}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {progress.filter(p => p.activity_id >= 34 && p.activity_id <= 41 && p.completed).length} / 6 levels completed
+                </div>
               </div>
             </div>
 
-            <div className="progress-subject">
-              <h4>➖ Subtraction</h4>
-              <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 16 && p.activity_id <= 23 && p.completed).length / 6) * 100}%` }}></div>
-              </div>
-              <div className="progress-text">
-                {progress.filter(p => p.activity_id >= 16 && p.activity_id <= 23 && p.completed).length} / 6 levels completed
-              </div>
-            </div>
-
-            <div className="progress-subject">
-              <h4>✖️ Multiplication</h4>
-              <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length / 6) * 100}%` }}></div>
-              </div>
-              <div className="progress-text">
-                {progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length} / 6 levels completed
-              </div>
-            </div>
-
-            <div className="progress-subject">
-              <h4>➗ Division</h4>
-              <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 34 && p.activity_id <= 41 && p.completed).length / 6) * 100}%` }}></div>
-              </div>
-              <div className="progress-text">
-                {progress.filter(p => p.activity_id >= 34 && p.activity_id <= 41 && p.completed).length} / 6 levels completed
+            {/* English Section */}
+            <div className="progress-category" style={{marginTop: '20px'}}>
+              <h4 style={{marginBottom: '15px', color: '#f093fb'}}>📚 English</h4>
+              
+              <div className="progress-subject">
+                <h5>📖 Comprehension</h5>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 43 && p.activity_id <= 50 && p.completed).length / 6) * 100}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {progress.filter(p => p.activity_id >= 43 && p.activity_id <= 50 && p.completed).length} / 6 levels completed
+                </div>
               </div>
             </div>
           </div>

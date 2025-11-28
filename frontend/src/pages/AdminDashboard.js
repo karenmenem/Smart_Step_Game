@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import '../styles/AdminStyles.css';
 import { 
   getReadingPassages, createReadingPassage, updateReadingPassage, deleteReadingPassage,
   getDashboardStats
 } from '../api/admin';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [admin, setAdmin] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState(null);
@@ -29,6 +31,24 @@ function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSubject, setFilterSubject] = useState('all');
   const [filterActivity, setFilterActivity] = useState('all');
+
+  // Handle URL query parameters to restore state when returning from edit
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const tab = queryParams.get('tab');
+    const activityId = queryParams.get('activity');
+    
+    // Check if there's a tab in the navigation state
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    } else if (tab) {
+      setActiveTab(tab);
+    }
+    
+    if (activityId) {
+      setFilterActivity(activityId);
+    }
+  }, [location.search, location.state]);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -389,6 +409,12 @@ function AdminDashboard() {
           >
             🎨 Homepage Customizer
           </button>
+          <button
+            className="admin-nav-btn"
+            onClick={() => navigate('/admin/approvals')}
+          >
+            ✅ Teacher Approvals
+          </button>
         </nav>
 
         <main className="admin-main">
@@ -545,7 +571,7 @@ function AdminDashboard() {
                           <td>
                             <button
                               className="admin-edit-btn"
-                              onClick={() => navigate(`/admin/questions/edit/${q.question_id}`)}
+                              onClick={() => navigate(`/admin/questions/edit/${q.question_id}?activity_id=${q.activity_id}`)}
                             >
                               Edit
                             </button>

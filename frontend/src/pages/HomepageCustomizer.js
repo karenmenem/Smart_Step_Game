@@ -25,7 +25,7 @@ function HomepageCustomizer() {
         return;
       }
       
-      const response = await fetch('http://localhost:5000/api/admin/homepage-settings', {
+      const response = await fetch('http://localhost:5001/api/admin/homepage-settings', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -59,13 +59,24 @@ function HomepageCustomizer() {
         setting.id === id ? { ...setting, setting_value: value } : setting
       )
     );
+    
+    // Also update grouped settings to reflect changes immediately
+    setGroupedSettings(prevGrouped => {
+      const newGrouped = { ...prevGrouped };
+      Object.keys(newGrouped).forEach(category => {
+        newGrouped[category] = newGrouped[category].map(setting =>
+          setting.id === id ? { ...setting, setting_value: value } : setting
+        );
+      });
+      return newGrouped;
+    });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/homepage-settings/bulk-update', {
+      const response = await fetch('http://localhost:5001/api/admin/homepage-settings/bulk-update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +110,7 @@ function HomepageCustomizer() {
     setSaving(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/homepage-settings/reset', {
+      const response = await fetch('http://localhost:5001/api/admin/homepage-settings/reset', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

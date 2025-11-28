@@ -19,8 +19,9 @@ const getQuestions = async (req, res) => {
         difficulty_level as difficulty,
         points_value as points
       FROM question 
-      WHERE activity_id = ? 
-      ORDER BY order_index ASC`,
+      WHERE activity_id = ? AND is_active = 1
+      ORDER BY order_index ASC
+      LIMIT 10`,
       [activityId]
     );
  

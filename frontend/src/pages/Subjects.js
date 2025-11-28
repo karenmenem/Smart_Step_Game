@@ -41,7 +41,7 @@ function Subjects() {
                 <div className="subjects-user-info">
                   {user.child?.profile_picture ? (
                     <img 
-                      src={`http://localhost:5000/${user.child.profile_picture}`} 
+                      src={`http://localhost:5001/${user.child.profile_picture}`} 
                       alt="Profile" 
                       className="subjects-profile-avatar"
                       onError={(e) => {

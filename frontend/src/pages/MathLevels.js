@@ -150,7 +150,7 @@ function MathLevels() {
                 <div className="math-levels-user-info">
                   {user.child?.profile_picture ? (
                     <img 
-                      src={`http://localhost:5000/${user.child.profile_picture}`} 
+                      src={`http://localhost:5001/${user.child.profile_picture}`} 
                       alt="Profile" 
                       className="math-levels-profile-avatar"
                       onError={(e) => {
@@ -225,7 +225,7 @@ function MathLevels() {
                   style={{ backgroundColor: '#43e97b' }}
                   disabled={loading}
                 >
-                  📊 Sublevel 1: Simple {operationInfo.title} (1-10)
+                  📊 Sublevel 1: {operationInfo.title} (1-10)
                 </button>
                 <button 
                   className={`level-btn ${levelAccess.beginner.level2.allowed ? 'start-btn' : 'locked-btn'}`}
@@ -239,7 +239,7 @@ function MathLevels() {
                   style={{ backgroundColor: levelAccess.beginner.level2.allowed ? '#4facfe' : '#ccc' }}
                   disabled={loading || !levelAccess.beginner.level2.allowed}
                 >
-                  {levelAccess.beginner.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Intermediate {operationInfo.title} (10-50)
+                  {levelAccess.beginner.level2.allowed ? '🎬' : '🔒'} Sublevel 2:{operationInfo.title} (10-50)
                   {!levelAccess.beginner.level2.allowed && levelAccess.beginner.level2.progress && (
                     <div style={{ fontSize: '12px', marginTop: '5px' }}>
                       Current: {levelAccess.beginner.level2.progress.percentage}% (Need 80%)
@@ -305,7 +305,7 @@ function MathLevels() {
                   style={{ backgroundColor: levelAccess.intermediate.level2.allowed ? '#fa709a' : '#ccc' }}
                   disabled={loading || !levelAccess.intermediate.level2.allowed}
                 >
-                  {levelAccess.intermediate.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Advanced Problems
+                  {levelAccess.intermediate.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Intermediate Word Problems
                 </button>
               </div>
             </div>

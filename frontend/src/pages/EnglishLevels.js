@@ -43,6 +43,16 @@ function EnglishLevels() {
 					beginner: [43, 44],
 					intermediate: [46, 47],
 					advanced: [49, 50]
+				},
+				grammar: {
+					beginner: [61, 62],
+					intermediate: [64, 65],
+					advanced: [67, 68]
+				},
+				vocabulary: {
+					beginner: [25, 26],
+					intermediate: [28, 29],
+					advanced: [31, 32]
 				}
 			};
 
@@ -160,12 +170,12 @@ function EnglishLevels() {
 						</button>
 						{user && (
 							<>
-								<div className="math-levels-user-info">
-									{user.child?.profile_picture ? (
-										<img
-											src={`http://localhost:5000/${user.child.profile_picture}`}
-											alt="Profile"
-											className="math-levels-profile-avatar"
+							<div className="math-levels-user-info">
+								{user.child?.profile_picture ? (
+									<img
+										src={`http://localhost:5001/${user.child.profile_picture}`}
+										alt="Profile"
+										className="math-levels-profile-avatar"
 											onError={(e) => {
 												e.target.style.display = 'none';
 											}}

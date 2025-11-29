@@ -925,7 +925,7 @@ const getPendingContent = async (req, res) => {
         t.email as teacher_email,
         CASE 
           WHEN tc.content_type = 'question' THEN q.question_text
-          WHEN tc.content_type = 'passage' THEN rp.passage
+          WHEN tc.content_type = 'passage' THEN rp.content
         END as content_preview,
         CASE 
           WHEN tc.content_type = 'question' THEN q.asl_signs
@@ -936,7 +936,7 @@ const getPendingContent = async (req, res) => {
       LEFT JOIN question q ON tc.content_type = 'question' AND tc.content_id = q.question_id
       LEFT JOIN reading_passage rp ON tc.content_type = 'passage' AND tc.content_id = rp.passage_id
       WHERE tc.approval_status IN ('pending', 'pending_asl')
-      ORDER BY tc.submitted_at DESC
+      ORDER BY tc.created_at DESC
     `);
     
     res.json({ success: true, data: content });

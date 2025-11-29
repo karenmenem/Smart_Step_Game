@@ -157,13 +157,13 @@ const getTeacherContent = async (req, res) => {
             `SELECT tc.*, 
                     CASE 
                         WHEN tc.content_type = 'question' THEN q.question_text
-                        WHEN tc.content_type = 'passage' THEN rp.passage
+                        WHEN tc.content_type = 'passage' THEN rp.content
                     END as content_preview
              FROM teacher_content tc
-             LEFT JOIN question q ON tc.content_type = 'question' AND tc.content_id = q.id
-             LEFT JOIN reading_passage rp ON tc.content_type = 'passage' AND tc.content_id = rp.id
+             LEFT JOIN question q ON tc.content_type = 'question' AND tc.content_id = q.question_id
+             LEFT JOIN reading_passage rp ON tc.content_type = 'passage' AND tc.content_id = rp.passage_id
              WHERE tc.teacher_id = ?
-             ORDER BY tc.submitted_at DESC`,
+             ORDER BY tc.created_at DESC`,
             [req.teacherId]
         );
 
@@ -216,32 +216,48 @@ const createQuestion = async (req, res) => {
             try { aslSignsData = JSON.parse(aslS); } catch (e) { aslSignsData = aslS; }
         }
         
-        // Check if ASL videos are required but missing
+        // Check if ASL resources are required and exist
         const needsASL = aslSignsData && Array.isArray(aslSignsData) && aslSignsData.length > 0;
-        const hasASLVideos = aslVid || (aslSignsData && aslSignsData.every(sign => {
-            // Check if ASL videos exist for each sign
-            return false; // For now, assume teacher needs admin to add ASL
-        }));
+        let hasASLVideos = !!aslVid; // If teacher provided direct URL
+        let missingASL = [];
+        
+        if (needsASL && !hasASLVideos) {
+            // Check if ASL resources exist in database for each sign
+            for (const sign of aslSignsData) {
+                if (!sign || !sign.value) continue;
+                
+                // Determine type: number if it's a digit, otherwise word
+                const signType = /^\d+$/.test(sign.value.toString()) ? 'number' : 'word';
+                
+                const existing = await query(
+                    'SELECT id FROM asl_resources WHERE type = ? AND value = ?',
+                    [signType, sign.value.toString()]
+                );
+                
+                if (existing.length === 0) {
+                    missingASL.push({ type: signType, value: sign.value });
+                }
+            }
+            hasASLVideos = missingASL.length === 0;
+        }
         
         const passageId = req.body.passage_id || req.body.passageId || null;
         const diffLevel = difficulty_level || difficultyLevel || 1;
         const ptsValue = points_value || pointsValue || 10;
         const ordIdx = order_index || orderIndex || 1;
-        const aslImg = req.body.asl_image_url || req.body.aslImageUrl;
         
-        // Insert question (set is_active to 0 for teacher-created questions pending approval)
+        // Insert question into question table (only fields that exist in schema)
         const result = await query(
             `INSERT INTO question 
             (activity_id, passage_id, question_text, question_type, correct_answer, options, asl_signs, 
-             asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index, 
-             is_active, created_by_type, created_by_id, has_required_asl) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'teacher', ?, ?)`,
+             asl_video_url, asl_type, explanation, difficulty_level, points_value, order_index) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 actId, passageId, qText, qType, correctAns,
                 typeof optionsData === 'string' ? optionsData : JSON.stringify(optionsData || []),
                 typeof aslSignsData === 'string' ? aslSignsData : JSON.stringify(aslSignsData || []),
-                aslVid || null, aslImg || null, aslT, explanation || null,
-                diffLevel, ptsValue, ordIdx, teacherId, hasASLVideos
+                aslVid || null, aslT, explanation || null,
+                diffLevel, ptsValue, ordIdx
             ]
         );
         
@@ -256,30 +272,51 @@ const createQuestion = async (req, res) => {
             [teacherId, 'question', questionId, approvalStatus]
         );
         
+        // Handle optional message to admin
+        const teacherMessage = req.body.message || req.body.admin_message;
+        if (teacherMessage && teacherMessage.trim()) {
+            const admins = await query('SELECT admin_id as id FROM admin');
+            for (const admin of admins) {
+                await query(
+                    `INSERT INTO messages (sender_id, sender_type, recipient_id, recipient_type, message, related_content_type, related_content_id) 
+                     VALUES (?, 'teacher', ?, 'admin', ?, 'question', ?)`,
+                    [teacherId, admin.id, teacherMessage.trim(), questionId]
+                );
+            }
+        }
+        
         // Notify all admins
         const admins = await query('SELECT admin_id as id FROM admin');
         for (const admin of admins) {
+            const notificationMessage = needsASL && !hasASLVideos 
+                ? `A teacher submitted a question that needs ASL resources: ${missingASL.map(m => `${m.value} (${m.type})`).join(', ')}`
+                : 'A teacher submitted a new question for approval';
+                
             await query(
                 `INSERT INTO notifications (user_id, user_type, notification_type, title, message, related_id) 
                  VALUES (?, 'admin', ?, ?, ?, ?)`,
                 [
                     admin.id,
                     needsASL && !hasASLVideos ? 'asl_pending' : 'content_pending',
-                    needsASL && !hasASLVideos ? 'Question Needs ASL Videos' : 'New Question Pending Approval',
-                    needsASL && !hasASLVideos 
-                        ? 'A teacher submitted a question that needs ASL videos to be added'
-                        : 'A teacher submitted a new question for approval',
+                    needsASL && !hasASLVideos ? 'Question Needs ASL Resources' : 'New Question Pending Approval',
+                    notificationMessage,
                     questionId
                 ]
             );
         }
         
+        const responseMessage = needsASL && !hasASLVideos 
+            ? `Question submitted! Waiting for admin to add these ASL resources: ${missingASL.map(m => `${m.value} (${m.type})`).join(', ')}`
+            : 'Question submitted for approval!';
+        
         res.status(201).json({
             success: true,
-            message: needsASL && !hasASLVideos 
-                ? 'Question submitted! Waiting for admin to add ASL videos.'
-                : 'Question submitted for approval!',
-            data: { questionId, status: approvalStatus }
+            message: responseMessage,
+            data: { 
+                questionId, 
+                status: approvalStatus,
+                ...(missingASL.length > 0 && { missingASL })
+            }
         });
         
     } catch (error) {

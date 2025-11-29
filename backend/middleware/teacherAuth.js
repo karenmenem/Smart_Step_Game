@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const db = require('../config/database');
+const { query } = require('../config/database');
 
 const teacherAuth = async (req, res, next) => {
     try {
@@ -18,7 +18,7 @@ const teacherAuth = async (req, res, next) => {
         }
 
         // Get teacher from database
-        const [teachers] = await db.query(
+        const teachers = await query(
             'SELECT id, name, email, status FROM teachers WHERE id = ?',
             [decoded.id]
         );

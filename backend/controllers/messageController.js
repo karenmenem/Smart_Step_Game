@@ -11,10 +11,11 @@ const sendMessage = async (req, res) => {
             return res.status(400).json({ error: 'Recipient and message are required' });
         }
         
+        // Simple insert without optional related fields
         const result = await query(
-            `INSERT INTO messages (sender_id, sender_type, recipient_id, recipient_type, message, related_content_type, related_content_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [senderId, senderType, recipientId, recipientType, message, relatedContentType || 'general', relatedContentId || null]
+            `INSERT INTO messages (sender_id, sender_type, recipient_id, recipient_type, message) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [senderId, senderType, recipientId, recipientType, message]
         );
         
         // Create notification for recipient
@@ -48,40 +49,54 @@ const getConversations = async (req, res) => {
         const userType = req.userType;
         const userId = userType === 'admin' ? req.admin.adminId || req.admin.admin_id : req.teacherId;
         
-        // Get all unique conversation partners with last message
-        const conversations = await query(
-            `SELECT DISTINCT
-                CASE 
-                    WHEN sender_type = ? AND sender_id = ? THEN recipient_id
-                    ELSE sender_id
-                END as partner_id,
-                CASE 
-                    WHEN sender_type = ? AND sender_id = ? THEN recipient_type
-                    ELSE sender_type
-                END as partner_type,
-                (SELECT message FROM messages m2 
-                 WHERE (m2.sender_type = ? AND m2.sender_id = ? AND m2.recipient_type = partner_type AND m2.recipient_id = partner_id)
-                    OR (m2.recipient_type = ? AND m2.recipient_id = ? AND m2.sender_type = partner_type AND m2.sender_id = partner_id)
-                 ORDER BY m2.created_at DESC LIMIT 1) as last_message,
-                (SELECT created_at FROM messages m2 
-                 WHERE (m2.sender_type = ? AND m2.sender_id = ? AND m2.recipient_type = partner_type AND m2.recipient_id = partner_id)
-                    OR (m2.recipient_type = ? AND m2.recipient_id = ? AND m2.sender_type = partner_type AND m2.sender_id = partner_id)
-                 ORDER BY m2.created_at DESC LIMIT 1) as last_message_time,
-                (SELECT COUNT(*) FROM messages m2 
-                 WHERE m2.recipient_type = ? AND m2.recipient_id = ? 
-                   AND m2.sender_type = partner_type AND m2.sender_id = partner_id 
-                   AND m2.is_read = FALSE) as unread_count
-            FROM messages
-            WHERE (sender_type = ? AND sender_id = ?) OR (recipient_type = ? AND recipient_id = ?)
-            ORDER BY last_message_time DESC`,
-            [
-                userType, userId, userType, userId,
-                userType, userId, userType, userId,
-                userType, userId, userType, userId,
-                userType, userId,
-                userType, userId, userType, userId
-            ]
+        console.log('Getting conversations for:', { userType, userId });
+        
+        // Get all messages involving this user
+        const allMessages = await query(
+            `SELECT * FROM messages 
+             WHERE (sender_type = ? AND sender_id = ?) OR (recipient_type = ? AND recipient_id = ?)
+             ORDER BY created_at DESC`,
+            [userType, userId, userType, userId]
         );
+        
+        console.log('Found messages:', allMessages.length);
+        
+        // Group by conversation partner
+        const conversationsMap = {};
+        
+        allMessages.forEach(msg => {
+            // Determine who the partner is
+            let partnerId, partnerType;
+            if (msg.sender_type === userType && msg.sender_id == userId) {
+                // We sent this message
+                partnerId = msg.recipient_id;
+                partnerType = msg.recipient_type;
+            } else {
+                // We received this message
+                partnerId = msg.sender_id;
+                partnerType = msg.sender_type;
+            }
+            
+            const key = `${partnerType}-${partnerId}`;
+            
+            if (!conversationsMap[key]) {
+                conversationsMap[key] = {
+                    partner_id: partnerId,
+                    partner_type: partnerType,
+                    last_message: msg.message,
+                    last_message_time: msg.created_at,
+                    unread_count: 0
+                };
+            }
+            
+            // Count unread messages from this partner
+            if (msg.recipient_type === userType && msg.recipient_id == userId && !msg.is_read) {
+                conversationsMap[key].unread_count++;
+            }
+        });
+        
+        const conversations = Object.values(conversationsMap);
+        console.log('Conversations:', conversations);
         
         // Get names for each partner
         for (const conv of conversations) {
@@ -175,10 +190,34 @@ const markNotificationRead = async (req, res) => {
     }
 };
 
+// Get unread message count
+const getUnreadCount = async (req, res) => {
+    try {
+        const userType = req.userType;
+        const userId = userType === 'admin' ? req.admin.adminId || req.admin.admin_id : req.teacherId;
+        
+        const result = await query(
+            `SELECT COUNT(*) as count FROM messages 
+             WHERE recipient_type = ? AND recipient_id = ? AND is_read = FALSE`,
+            [userType, userId]
+        );
+        
+        res.json({ 
+            success: true, 
+            count: result[0].count 
+        });
+        
+    } catch (error) {
+        console.error('Get unread count error:', error);
+        res.status(500).json({ error: 'Failed to get unread count' });
+    }
+};
+
 module.exports = {
     sendMessage,
     getConversations,
     getMessages,
     getNotifications,
-    markNotificationRead
+    markNotificationRead,
+    getUnreadCount
 };

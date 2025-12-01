@@ -89,6 +89,10 @@ router.post('/upload', upload.single('video'), async (req, res) => {
       [type, value, filename, aliasesJson, filename, aliasesJson]
     );
 
+    // Check if any questions can now be marked as ASL complete
+    const { checkAndUpdateASLComplete } = require('../utils/aslChecker');
+    await checkAndUpdateASLComplete();
+
     res.json({ 
       message: 'ASL video uploaded successfully',
       resource: { type, value, filename, aliases: aliasesJson }

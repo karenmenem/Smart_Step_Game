@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminQuestionForm from './AdminQuestionForm';
+import MessageCenter from '../components/MessageCenter';
 import '../styles/TeacherDashboard.css';
 
 function TeacherDashboard() {
@@ -11,6 +12,8 @@ function TeacherDashboard() {
     const [loading, setLoading] = useState(true);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+    const [showMessages, setShowMessages] = useState(false);
 
     useEffect(() => {
         // Check if teacher is logged in
@@ -25,7 +28,32 @@ function TeacherDashboard() {
         setTeacher(JSON.parse(teacherInfo));
         fetchMyContent();
         fetchNotifications();
+        loadUnreadMessageCount();
+        
+        // Poll for new messages every 30 seconds
+        const interval = setInterval(loadUnreadMessageCount, 30000);
+        return () => clearInterval(interval);
     }, [navigate]);
+
+    const loadUnreadMessageCount = async () => {
+        try {
+            const token = localStorage.getItem('teacherToken');
+            const response = await fetch('http://localhost:5001/api/messages/unread-count', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    setUnreadMessageCount(data.count);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading unread message count:', error);
+        }
+    };
 
     const fetchMyContent = async () => {
         try {
@@ -94,6 +122,28 @@ function TeacherDashboard() {
                     <h1>SmartStep Teacher Portal</h1>
                 </div>
                 <div className="navbar-right">
+                    <div className="notification-icon" onClick={() => setShowMessages(true)} style={{ cursor: 'pointer', position: 'relative' }} title="Messages">
+                        💬
+                        {unreadMessageCount > 0 && (
+                            <span style={{
+                                position: 'absolute',
+                                top: '-5px',
+                                right: '-5px',
+                                background: '#ff4444',
+                                color: 'white',
+                                borderRadius: '50%',
+                                width: '18px',
+                                height: '18px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '10px',
+                                fontWeight: 'bold'
+                            }}>
+                                {unreadMessageCount > 9 ? '9+' : unreadMessageCount}
+                            </span>
+                        )}
+                    </div>
                     <div className="notification-icon">
                         🔔
                         {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
@@ -202,11 +252,20 @@ function TeacherDashboard() {
                     {activeTab === 'messages' && (
                         <div className="messages-section">
                             <h2>Messages</h2>
-                            <p className="coming-soon">Messaging feature - Check back soon!</p>
+                            <p className="coming-soon">Click the 💬 icon in the top right to send messages to admin!</p>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Message Center Modal */}
+            {showMessages && (
+                <MessageCenter 
+                    userType="teacher" 
+                    onClose={() => setShowMessages(false)} 
+                    onMessageRead={loadUnreadMessageCount}
+                />
+            )}
         </div>
     );
 }

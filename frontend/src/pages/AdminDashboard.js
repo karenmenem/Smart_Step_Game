@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import MessageCenter from '../components/MessageCenter';
 import '../styles/AdminStyles.css';
 import { 
   getReadingPassages, createReadingPassage, updateReadingPassage, deleteReadingPassage,
@@ -26,6 +27,8 @@ function AdminDashboard() {
   const [showPassageModal, setShowPassageModal] = useState(false);
   const [editingPassage, setEditingPassage] = useState(null);
   const [selectedPassage, setSelectedPassage] = useState(null);
+  const [showMessages, setShowMessages] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // Question filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,12 +64,31 @@ function AdminDashboard() {
 
     setAdmin(JSON.parse(adminData));
     loadDashboardData();
+    loadUnreadCount();
+    
+    // Poll for new messages every 30 seconds
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
   }, [navigate]);
 
   const getHeaders = () => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
   });
+
+  const loadUnreadCount = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/messages/unread-count`, {
+        headers: getHeaders()
+      });
+      const data = await response.json();
+      if (data.success) {
+        setUnreadCount(data.count);
+      }
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -318,6 +340,37 @@ function AdminDashboard() {
     }
   };
 
+  const toggleQuestionActive = async (questionId, isActive) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/admin/questions/${questionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_active: isActive })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setQuestions(questions.map(q => 
+          q.question_id === questionId ? { ...q, is_active: isActive ? 1 : 0 } : q
+        ));
+      } else {
+        alert(data.message || 'Failed to update question status');
+        // Revert checkbox on error
+        loadQuestions();
+      }
+    } catch (error) {
+      console.error('Error toggling question active:', error);
+      alert('Failed to update question status');
+      loadQuestions();
+    }
+  };
+
   const saveReadingPassage = async (passageData) => {
     try {
       let response;
@@ -342,8 +395,11 @@ function AdminDashboard() {
   };
 
   if (loading || !admin) {
+    console.log('AdminDashboard loading or no admin:', { loading, admin });
     return <div className="admin-loading">Loading Admin Panel...</div>;
   }
+
+  console.log('AdminDashboard rendering, activeTab:', activeTab);
 
   return (
     <div className="admin-dashboard">
@@ -351,6 +407,40 @@ function AdminDashboard() {
         <div className="admin-header-content">
           <h1>🎓 SmartStep Admin Panel</h1>
           <div className="admin-user-info">
+            <button 
+              onClick={() => setShowMessages(true)} 
+              className="admin-message-btn"
+              title="Messages"
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                marginRight: '15px',
+                position: 'relative'
+              }}
+            >
+              💬
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  background: '#ff4444',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: 'bold'
+                }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
             <span>Welcome, {admin.fullName || admin.username}</span>
             <button onClick={handleLogout} className="admin-logout-btn">
               Logout
@@ -451,7 +541,7 @@ function AdminDashboard() {
           )}
 
           {activeTab === 'questions' && (
-            <div className="admin-content">
+            <div className="admin-content" data-tab="questions">
               <div className="admin-content-header">
                 <h2>Manage Questions ({filteredQuestions.length} of {questions.length})</h2>
                 <button className="admin-add-btn" onClick={() => navigate('/admin/questions/add')}>
@@ -521,6 +611,7 @@ function AdminDashboard() {
                   <thead>
                     <tr>
                       <th>ID</th>
+                      <th>Active</th>
                       <th>Question</th>
                       <th>Subject</th>
                       <th>Level</th>
@@ -534,7 +625,7 @@ function AdminDashboard() {
                   <tbody>
                     {filteredQuestions.length === 0 ? (
                       <tr>
-                        <td colSpan="9" style={{textAlign: 'center', padding: '2rem', color: '#6c757d'}}>
+                        <td colSpan="10" style={{textAlign: 'center', padding: '2rem', color: '#6c757d'}}>
                           No questions found matching your filters
                         </td>
                       </tr>
@@ -542,6 +633,20 @@ function AdminDashboard() {
                       filteredQuestions.map((q) => (
                         <tr key={q.question_id}>
                           <td>{q.question_id}</td>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={q.is_active === 1}
+                              onChange={(e) => toggleQuestionActive(q.question_id, e.target.checked)}
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                cursor: 'pointer',
+                                accentColor: '#667eea'
+                              }}
+                              title={q.is_active === 1 ? 'Active - Click to deactivate' : 'Inactive - Click to activate'}
+                            />
+                          </td>
                           <td>{q.question_text}</td>
                           <td>{q.subject_name}</td>
                           <td>{q.level}</td>
@@ -876,7 +981,7 @@ function AdminDashboard() {
         />
       )}
 
-      <style jsx>{`
+      <style>{`
         .admin-dashboard {
           min-height: 100vh;
           background: #f5f7fa;
@@ -1343,6 +1448,15 @@ function AdminDashboard() {
           }
         }
       `}</style>
+
+      {/* Message Center Modal */}
+      {showMessages && (
+        <MessageCenter 
+          userType="admin" 
+          onClose={() => setShowMessages(false)} 
+          onMessageRead={loadUnreadCount}
+        />
+      )}
     </div>
   );
 }

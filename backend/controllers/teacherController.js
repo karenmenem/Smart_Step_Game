@@ -224,18 +224,28 @@ const createQuestion = async (req, res) => {
         if (needsASL && !hasASLVideos) {
             // Check if ASL resources exist in database for each sign
             for (const sign of aslSignsData) {
-                if (!sign || !sign.value) continue;
+                // Handle both formats: string values or {value: "..."} objects
+                let signValue;
+                if (typeof sign === 'string') {
+                    signValue = sign;
+                } else if (sign && sign.value) {
+                    signValue = sign.value;
+                } else {
+                    continue; // Skip invalid entries
+                }
+                
+                if (!signValue) continue;
                 
                 // Determine type: number if it's a digit, otherwise word
-                const signType = /^\d+$/.test(sign.value.toString()) ? 'number' : 'word';
+                const signType = /^\d+$/.test(signValue.toString()) ? 'number' : 'word';
                 
                 const existing = await query(
                     'SELECT id FROM asl_resources WHERE type = ? AND value = ?',
-                    [signType, sign.value.toString()]
+                    [signType, signValue.toString()]
                 );
                 
                 if (existing.length === 0) {
-                    missingASL.push({ type: signType, value: sign.value });
+                    missingASL.push({ type: signType, value: signValue });
                 }
             }
             hasASLVideos = missingASL.length === 0;
@@ -246,18 +256,25 @@ const createQuestion = async (req, res) => {
         const ptsValue = points_value || pointsValue || 10;
         const ordIdx = order_index || orderIndex || 1;
         
+        // Determine if ASL is complete
+        const aslComplete = needsASL ? hasASLVideos : true;
+        
+        // Teacher submissions are always created as inactive (is_active = 0)
+        // Admin must approve and activate them
+        const isActive = 0;
+        
         // Insert question into question table (only fields that exist in schema)
         const result = await query(
             `INSERT INTO question 
             (activity_id, passage_id, question_text, question_type, correct_answer, options, asl_signs, 
-             asl_video_url, asl_type, explanation, difficulty_level, points_value, order_index) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             asl_video_url, asl_type, explanation, difficulty_level, points_value, order_index, asl_complete, is_active) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 actId, passageId, qText, qType, correctAns,
                 typeof optionsData === 'string' ? optionsData : JSON.stringify(optionsData || []),
                 typeof aslSignsData === 'string' ? aslSignsData : JSON.stringify(aslSignsData || []),
                 aslVid || null, aslT, explanation || null,
-                diffLevel, ptsValue, ordIdx
+                diffLevel, ptsValue, ordIdx, aslComplete, isActive
             ]
         );
         

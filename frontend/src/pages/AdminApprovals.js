@@ -163,9 +163,30 @@ function AdminApprovals() {
         <div className="admin-approvals">
             <div className="approvals-header">
                 <h1>Pending Approvals</h1>
-                <button onClick={() => navigate('/admin/dashboard')} className="back-btn">
-                    ← Back to Dashboard
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                        onClick={() => {
+                            setLoading(true);
+                            fetchPendingTeachers();
+                            fetchPendingContent();
+                        }} 
+                        className="refresh-btn"
+                        style={{
+                            padding: '10px 20px',
+                            background: '#667eea',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            fontWeight: '600'
+                        }}
+                    >
+                        🔄 Refresh
+                    </button>
+                    <button onClick={() => navigate('/admin/dashboard')} className="back-btn">
+                        ← Back to Dashboard
+                    </button>
+                </div>
             </div>
 
             <div className="tabs">

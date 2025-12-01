@@ -930,7 +930,11 @@ const getPendingContent = async (req, res) => {
         CASE 
           WHEN tc.content_type = 'question' THEN q.asl_signs
           WHEN tc.content_type = 'passage' THEN NULL
-        END as asl_required
+        END as asl_required,
+        CASE 
+          WHEN tc.content_type = 'question' THEN q.asl_type
+          WHEN tc.content_type = 'passage' THEN NULL
+        END as asl_type
       FROM teacher_content tc
       JOIN teachers t ON tc.teacher_id = t.id
       LEFT JOIN question q ON tc.content_type = 'question' AND tc.content_id = q.question_id
@@ -938,6 +942,39 @@ const getPendingContent = async (req, res) => {
       WHERE tc.approval_status IN ('pending', 'pending_asl')
       ORDER BY tc.created_at DESC
     `);
+    
+    // For each pending_asl item, check which ASL resources are missing
+    for (const item of content) {
+      if (item.approval_status === 'pending_asl' && item.asl_required) {
+        const aslSigns = JSON.parse(item.asl_required || '[]');
+        const missing = [];
+        
+        for (const sign of aslSigns) {
+          let signValue;
+          if (typeof sign === 'string') {
+            signValue = sign;
+          } else if (sign && sign.value) {
+            signValue = sign.value;
+          } else {
+            continue;
+          }
+          
+          if (!signValue) continue;
+          
+          const signType = /^\d+$/.test(signValue.toString()) ? 'number' : 'word';
+          const existing = await query(
+            'SELECT id FROM asl_resources WHERE type = ? AND value = ?',
+            [signType, signValue.toString()]
+          );
+          
+          if (existing.length === 0) {
+            missing.push({ type: signType, value: signValue });
+          }
+        }
+        
+        item.missing_asl = missing;
+      }
+    }
     
     res.json({ success: true, data: content });
   } catch (error) {
@@ -958,20 +995,21 @@ const approveContent = async (req, res) => {
     );
     
     // Get content info for notification
-    const [content] = await query(
-      'SELECT teacher_id, content_type FROM teacher_content WHERE id = ?',
+    const contentRows = await query(
+      'SELECT teacher_id, content_type, content_id FROM teacher_content WHERE id = ?',
       [contentId]
     );
-    
-    // Create notification for teacher
+    const content = contentRows[0];
+
+    // Create notification for teacher (related_id refers to the actual content record)
     await query(
       `INSERT INTO notifications (user_id, user_type, notification_type, title, message, related_id) 
        VALUES (?, 'teacher', 'content_approved', ?, ?, ?)`,
       [
-        content[0].teacher_id,
+        content.teacher_id,
         'Content Approved',
-        `Your ${content[0].content_type} has been approved and is now live!`,
-        contentId
+        `Your ${content.content_type} has been approved and is now live!`,
+        content.content_id || contentId
       ]
     );
     
@@ -995,20 +1033,21 @@ const rejectContent = async (req, res) => {
     );
     
     // Get content info
-    const [content] = await query(
-      'SELECT teacher_id, content_type FROM teacher_content WHERE id = ?',
+    const contentRows = await query(
+      'SELECT teacher_id, content_type, content_id FROM teacher_content WHERE id = ?',
       [contentId]
     );
-    
+    const content = contentRows[0];
+
     // Create notification for teacher
     await query(
       `INSERT INTO notifications (user_id, user_type, notification_type, title, message, related_id) 
        VALUES (?, 'teacher', 'content_rejected', ?, ?, ?)`,
       [
-        content[0].teacher_id,
+        content.teacher_id,
         'Content Rejected',
-        `Your ${content[0].content_type} was not approved. Reason: ${reason || 'No reason provided'}`,
-        contentId
+        `Your ${content.content_type} was not approved. Reason: ${reason || 'No reason provided'}`,
+        content.content_id || contentId
       ]
     );
     

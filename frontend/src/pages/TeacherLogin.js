@@ -103,13 +103,12 @@ function TeacherLogin() {
                     </div>
 
                     <button type="submit" className="submit-btn" disabled={loading}>
-                        {loading ? 'Logging in...' : 'Login'}
+                        {loading ? 'Logging in...' : 'Login to Dashboard'}
                     </button>
                 </form>
 
                 <div className="auth-footer">
                     <p>Don't have an account? <Link to="/teacher/register">Register here</Link></p>
-                    <p><Link to="/">Back to Home</Link></p>
                 </div>
             </div>
         </div>

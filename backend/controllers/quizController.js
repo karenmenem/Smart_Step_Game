@@ -19,7 +19,7 @@ const getQuestions = async (req, res) => {
         difficulty_level as difficulty,
         points_value as points
       FROM question 
-      WHERE activity_id = ? AND is_active = 1
+      WHERE activity_id = ? AND is_active = 1 AND (asl_complete = 1 OR asl_complete IS NULL)
       ORDER BY order_index ASC
       LIMIT 10`,
       [activityId]

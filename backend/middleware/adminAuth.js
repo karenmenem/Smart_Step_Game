@@ -22,6 +22,7 @@ const adminAuth = async (req, res, next) => {
     }
     
     req.admin = decoded;
+    req.userType = 'admin';
     next();
   } catch (error) {
     return res.status(401).json({

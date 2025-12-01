@@ -29,7 +29,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
     difficulty_level: 1,
     points_value: 10,
     order_index: 1,
-    is_active: true
+    is_active: !isTeacher  // Teachers can't set active, defaults to false for them
   });
 
   // Separate state for MCQ options for easier input
@@ -87,12 +87,16 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
 
   const loadActivities = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/activities`, {
+      const endpoint = isTeacher ? '/teacher/activities' : '/admin/activities';
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: getHeaders()
       });
       const data = await response.json();
+      // Handle both response formats
       if (data.success) {
         setActivities(data.data);
+      } else if (data.activities) {
+        setActivities(data.activities);
       }
     } catch (error) {
       console.error('Error loading activities:', error);
@@ -101,12 +105,16 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
 
   const loadPassages = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/reading-passages`, {
+      const endpoint = isTeacher ? '/teacher/reading-passages' : '/admin/reading-passages';
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: getHeaders()
       });
       const data = await response.json();
+      // Handle both response formats
       if (data.success) {
         setPassages(data.data);
+      } else if (data.passages) {
+        setPassages(data.passages);
       }
     } catch (error) {
       console.error('Error loading passages:', error);
@@ -692,23 +700,25 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
             </small>
           </div>
 
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                name="is_active"
-                checked={formData.is_active !== false}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                ✓ Active (Show in quiz)
-              </span>
-            </label>
-            <small style={{ color: '#666', marginLeft: '30px', display: 'block', marginTop: '5px' }}>
-              Uncheck to disable this question without deleting it. Only 10 active questions will show in quiz.
-            </small>
-          </div>
+          {!isTeacher && (
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  checked={formData.is_active !== false}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                  ✓ Active (Show in quiz)
+                </span>
+              </label>
+              <small style={{ color: '#666', marginLeft: '30px', display: 'block', marginTop: '5px' }}>
+                Uncheck to disable this question without deleting it. Only 10 active questions will show in quiz.
+              </small>
+            </div>
+          )}
 
           <div className="form-actions">
             <button 
@@ -736,7 +746,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
         </form>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .admin-form-page {
           min-height: 100vh;
           background: #f5f7fa;

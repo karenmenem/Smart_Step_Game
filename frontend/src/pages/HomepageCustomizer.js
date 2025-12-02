@@ -18,6 +18,7 @@ function HomepageCustomizer() {
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      console.log('📌 Homepage Customizer - Token exists:', !!token);
       
       if (!token) {
         showMessage('error', 'Please login to admin panel first');
@@ -25,13 +26,16 @@ function HomepageCustomizer() {
         return;
       }
       
+      console.log('📌 Fetching homepage settings from API...');
       const response = await fetch('http://localhost:5001/api/admin/homepage-settings', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('📌 Response status:', response.status);
       const data = await response.json();
+      console.log('📌 Response data:', data);
       
       if (response.status === 401) {
         showMessage('error', 'Session expired. Please login again');
@@ -40,13 +44,15 @@ function HomepageCustomizer() {
       }
       
       if (data.success) {
+        console.log('📌 Settings loaded successfully. Count:', data.data.settings?.length);
         setSettings(data.data.settings);
         setGroupedSettings(data.data.grouped);
       } else {
+        console.error('📌 Failed to load settings:', data.message);
         showMessage('error', data.message || 'Failed to load settings');
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.error('📌 Error fetching settings:', error);
       showMessage('error', 'Error loading settings: ' + error.message);
     } finally {
       setLoading(false);
@@ -89,7 +95,7 @@ function HomepageCustomizer() {
 
       const data = await response.json();
       if (data.success) {
-        showMessage('success', 'Settings saved successfully!');
+        showMessage('success', '✅ Settings saved! Refresh the homepage (F5) to see changes.');
         fetchSettings();
       } else {
         showMessage('error', 'Failed to save settings');

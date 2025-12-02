@@ -199,7 +199,10 @@ function Home() {
       <header className="ma-header">
         <div className="ma-header-content">
           <div className="ma-logo">
-            <h1>Smart<span className="logo-accent">Step</span></h1>
+            <h1>
+              {settings.logo_text || 'Smart'}
+              <span className="logo-accent">{settings.logo_accent_text || 'Step'}</span>
+            </h1>
           </div>
           
           <nav className="ma-nav ma-nav-desktop">

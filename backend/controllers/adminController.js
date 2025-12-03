@@ -138,16 +138,11 @@ const createQuestion = async (req, res) => {
     
     const passageId = req.body.passage_id || req.body.passageId || null;
     
-    // Determine creator type - check if request is from admin or teacher
-    const createdByType = req.userType || 'admin';
-    const createdById = createdByType === 'teacher' ? req.teacherId : (req.admin?.adminId || req.admin?.admin_id);
-    
     const result = await query(
       `INSERT INTO question 
       (activity_id, passage_id, question_text, question_type, correct_answer, options, asl_signs, 
-       asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index, is_active,
-       created_by_type, created_by_id, has_required_asl) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       asl_video_url, asl_image_url, asl_type, explanation, difficulty_level, points_value, order_index) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         actId,
         passageId,
@@ -162,11 +157,7 @@ const createQuestion = async (req, res) => {
         explanation || null,
         diffLevel,
         ptsValue,
-        ordIdx,
-        req.body.is_active !== false ? 1 : 0,
-        createdByType,
-        createdById,
-        true // Admin-created questions are assumed to have ASL if needed
+        ordIdx
       ]
     );
     
@@ -550,23 +541,55 @@ const createActivity = async (req, res) => {
 const updateActivity = async (req, res) => {
   try {
     const { activityId } = req.params;
-    const { name, description, activityType, pointsValue, orderIndex } = req.body;
+    const { sectionId, name, description, activityType, pointsValue, orderIndex } = req.body;
     
-    await query(
-      `UPDATE activity SET 
-        name = COALESCE(?, name),
-        description = COALESCE(?, description),
-        activity_type = COALESCE(?, activity_type),
-        points_value = COALESCE(?, points_value),
-        order_index = COALESCE(?, order_index)
-      WHERE activity_id = ?`,
-      [name, description, activityType, pointsValue, orderIndex, activityId]
+    console.log('Update activity - ID:', activityId, 'Body:', req.body);
+    
+    // Build update query dynamically based on provided fields
+    const updates = [];
+    const values = [];
+    
+    if (sectionId !== undefined) {
+      updates.push('section_id = ?');
+      values.push(sectionId);
+    }
+    if (name !== undefined) {
+      updates.push('name = ?');
+      values.push(name);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      values.push(description);
+    }
+    if (activityType !== undefined) {
+      updates.push('activity_type = ?');
+      values.push(activityType);
+    }
+    if (pointsValue !== undefined) {
+      updates.push('points_value = ?');
+      values.push(pointsValue);
+    }
+    if (orderIndex !== undefined) {
+      updates.push('order_index = ?');
+      values.push(orderIndex);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+    
+    values.push(activityId);
+    
+    const result = await query(
+      `UPDATE activity SET ${updates.join(', ')} WHERE activity_id = ?`,
+      values
     );
     
+    console.log('Update result:', result);
     res.json({ success: true, message: 'Activity updated successfully' });
   } catch (error) {
     console.error('Update activity error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update activity' });
+    res.status(500).json({ success: false, message: 'Failed to update activity', error: error.message });
   }
 };
 

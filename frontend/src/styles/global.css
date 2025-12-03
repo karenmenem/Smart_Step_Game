@@ -2617,6 +2617,10 @@ select.form-input {
   background: linear-gradient(135deg, #4facfe 0%, #667eea 50%, #00f2fe 100%);
 }
 
+.history-header {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #fda085 100%);
+}
+
 .subject-title {
   font-size: 2.2rem;
   font-weight: bold;
@@ -2664,6 +2668,11 @@ select.form-input {
 .math-btn:hover {
   border-color: #4facfe;
   background: linear-gradient(135deg, #4facfe20, #667eea20);
+}
+
+.history-btn:hover {
+  border-color: #f093fb;
+  background: linear-gradient(135deg, #f093fb20, #f5576c20);
 }
 
 .btn-icon {

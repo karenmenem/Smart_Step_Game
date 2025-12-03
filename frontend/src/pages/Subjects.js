@@ -2,18 +2,75 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { auth } from "../api/auth";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+
 function Subjects() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [subjects, setSubjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (auth.isAuthenticated()) {
       const userData = auth.getCurrentUser();
       setUser(userData);
+      loadSubjects();
     } else {
       navigate("/login");
     }
   }, [navigate]);
+
+  const loadSubjects = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/quiz/subjects`);
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setSubjects(data.data);
+      }
+    } catch (error) {
+      console.error('Error loading subjects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get icon for subject
+  const getSubjectIcon = (subjectName) => {
+    const icons = {
+      'Math': '🔢',
+      'English': '🎨',
+      'History': '📜',
+      'Science': '🔬',
+      'Geography': '🌍',
+      'Art': '🎭',
+      'Music': '🎵'
+    };
+    return icons[subjectName] || '📚';
+  };
+
+  // Get topics/activities for each subject
+  const getSubjectTopics = (subjectName, subjectId) => {
+    const topicMap = {
+      'English': [
+        { icon: '✏️', title: 'Grammar', desc: 'Master sentence structure', path: '/english/grammar' },
+        { icon: '📖', title: 'Comprehension', desc: 'Understand reading passages', path: '/english/comprehension' },
+        { icon: '🌟', title: 'Vocabulary', desc: 'Expand your word power', path: '/english/vocabulary' },
+        { icon: '🎯', title: 'Picture Match', desc: 'Match images with words', path: '/english/picture_match' }
+      ],
+      'Math': [
+        { icon: '➕', title: 'Addition', desc: 'Add numbers together', path: '/math/addition' },
+        { icon: '➖', title: 'Subtraction', desc: 'Take numbers away', path: '/math/subtraction' },
+        { icon: '✖️', title: 'Multiplication', desc: 'Multiply numbers', path: '/math/multiplication' },
+        { icon: '➗', title: 'Division', desc: 'Divide numbers', path: '/math/division' }
+      ]
+    };
+
+    // Return predefined topics for Math/English, or generic button for other subjects
+    return topicMap[subjectName] || [
+      { icon: '📚', title: 'Explore Levels', desc: 'View all activities', path: `/subject/${subjectId}` }
+    ];
+  };
 
   const handleLogout = () => {
     auth.logout();
@@ -71,91 +128,43 @@ function Subjects() {
           <p className="subjects-subtitle">Pick a subject and start your fun learning journey!</p>
         </div>
 
-        <div className="subjects-container">
-          {/* English Section */}
-          <div className="subject-section">
-            <div className="subject-header english-header">
-              <h2 className="subject-title">🎨 English</h2>
-              <p className="subject-description">Learn words, grammar, and have fun with language!</p>
-            </div>
-            
-            <div className="subject-buttons">
-              <button className="subject-btn english-btn grammar-btn" onClick={() => navigate("/english/grammar")}>
-                <div className="btn-icon">✏️</div>
-                <div className="btn-content">
-                  <h3>Grammar</h3>
-                  <p>Master sentence structure</p>
+        {loading ? (
+          <div className="subjects-loading">Loading subjects...</div>
+        ) : (
+          <div className="subjects-container">
+            {subjects.map((subject) => {
+              const topics = getSubjectTopics(subject.name, subject.subject_id);
+              return (
+                <div key={subject.subject_id} className="subject-section">
+                  <div className={`subject-header ${subject.name.toLowerCase()}-header`}>
+                    <h2 className="subject-title">
+                      {getSubjectIcon(subject.name)} {subject.name}
+                    </h2>
+                    <p className="subject-description">
+                      {subject.description || `Learn and explore ${subject.name}!`}
+                    </p>
+                  </div>
+                  
+                  <div className="subject-buttons">
+                    {topics.map((topic, index) => (
+                      <button 
+                        key={index}
+                        className={`subject-btn ${subject.name.toLowerCase()}-btn`} 
+                        onClick={() => navigate(topic.path)}
+                      >
+                        <div className="btn-icon">{topic.icon}</div>
+                        <div className="btn-content">
+                          <h3>{topic.title}</h3>
+                          <p>{topic.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </button>
-              
-              <button className="subject-btn english-btn comprehension-btn" onClick={() => navigate("/english/comprehension")}>
-                <div className="btn-icon">📖</div>
-                <div className="btn-content">
-                  <h3>Comprehension</h3>
-                  <p>Understand reading passages</p>
-                </div>
-              </button>
-              
-              <button className="subject-btn english-btn vocabulary-btn" onClick={() => navigate("/english/vocabulary")}>
-                <div className="btn-icon">🌟</div>
-                <div className="btn-content">
-                  <h3>Vocabulary</h3>
-                  <p>Expand your word power</p>
-                </div>
-              </button>
-              
-              <button className="subject-btn english-btn picture-match-btn" onClick={() => navigate("/english/picture_match")}>
-                <div className="btn-icon">🎯</div>
-                <div className="btn-content">
-                  <h3>Picture Match</h3>
-                  <p>Match images with words</p>
-                </div>
-              </button>
-            </div>
+              );
+            })}
           </div>
-
-          {/* Math Section */}
-          <div className="subject-section">
-            <div className="subject-header math-header">
-              <h2 className="subject-title">🔢 Math</h2>
-              <p className="subject-description">Explore numbers and solve fun problems!</p>
-            </div>
-            
-            <div className="subject-buttons">
-              <button className="subject-btn math-btn addition-btn" onClick={() => navigate("/math/addition")}>
-                <div className="btn-icon">➕</div>
-                <div className="btn-content">
-                  <h3>Addition</h3>
-                  <p>Add numbers together</p>
-                </div>
-              </button>
-              
-              <button className="subject-btn math-btn subtraction-btn" onClick={() => navigate("/math/subtraction")}>
-                <div className="btn-icon">➖</div>
-                <div className="btn-content">
-                  <h3>Subtraction</h3>
-                  <p>Take numbers away</p>
-                </div>
-              </button>
-              
-              <button className="subject-btn math-btn multiplication-btn" onClick={() => navigate("/math/multiplication")}>
-                <div className="btn-icon">✖️</div>
-                <div className="btn-content">
-                  <h3>Multiplication</h3>
-                  <p>Multiply numbers</p>
-                </div>
-              </button>
-              
-              <button className="subject-btn math-btn division-btn" onClick={() => navigate("/math/division")}>
-                <div className="btn-icon">➗</div>
-                <div className="btn-content">
-                  <h3>Division</h3>
-                  <p>Divide numbers</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

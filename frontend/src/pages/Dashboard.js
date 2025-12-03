@@ -206,27 +206,11 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="stat-card time-card">
-            <div className="stat-icon">⏱️</div>
-            <div className="stat-content">
-              <div className="stat-number">{stats.totalTimeSpent}</div>
-              <div className="stat-label">Minutes Played</div>
-            </div>
-          </div>
-
           <div className="stat-card score-card">
             <div className="stat-icon">🎯</div>
             <div className="stat-content">
               <div className="stat-number">{stats.bestScore}%</div>
               <div className="stat-label">Best Score</div>
-            </div>
-          </div>
-
-          <div className="stat-card streak-card">
-            <div className="stat-icon">🔥</div>
-            <div className="stat-content">
-              <div className="stat-number">{stats.currentStreak}</div>
-              <div className="stat-label">Day Streak</div>
             </div>
           </div>
         </div>

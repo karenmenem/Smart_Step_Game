@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { auth, api } from "../api/auth";
 import ASLPlayer from "../components/ASLPlayer";
+import { loadASLResources } from "../utils/aslTranslator";
 
 function EnglishQuiz() {
 	const navigate = useNavigate();
@@ -127,6 +128,12 @@ function EnglishQuiz() {
 			const userData = auth.getCurrentUser();
 			const currentChild = auth.getCurrentChild();
 			setUser({ ...userData, child: currentChild });
+			
+			// Load ASL resources
+			loadASLResources().then(() => {
+				console.log('ASL resources loaded for English quiz');
+			});
+			
 			loadQuizContent();
 		}
 	}, [navigate, topic, level, sublevel]);

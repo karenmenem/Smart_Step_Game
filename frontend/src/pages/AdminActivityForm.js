@@ -13,6 +13,7 @@ function AdminActivityForm() {
     section_id: '',
     name: '',
     description: '',
+    activity_type: 'quiz',
     order_index: 1
   });
 
@@ -66,6 +67,7 @@ function AdminActivityForm() {
             section_id: activity.section_id || '',
             name: activity.name || '',
             description: activity.description || '',
+            activity_type: activity.activity_type || 'quiz',
             order_index: activity.order_index || 1
           });
         }
@@ -98,10 +100,19 @@ function AdminActivityForm() {
       
       const method = isEditMode ? 'PUT' : 'POST';
 
+      // Convert to camelCase for backend
+      const payload = {
+        sectionId: formData.section_id,
+        name: formData.name,
+        description: formData.description,
+        activityType: formData.activity_type,
+        orderIndex: formData.order_index
+      };
+
       const response = await fetch(url, {
         method,
         headers: getHeaders(),
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
@@ -183,6 +194,22 @@ function AdminActivityForm() {
               placeholder="Brief description of this activity"
             />
             <small>Optional description to explain what this activity covers</small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="activity_type">Activity Type *</label>
+            <select
+              id="activity_type"
+              name="activity_type"
+              value={formData.activity_type}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="quiz">Quiz</option>
+              <option value="exercise">Exercise</option>
+              <option value="game">Game</option>
+            </select>
+            <small>Choose the type of activity (Quiz, Exercise, or Game)</small>
           </div>
 
           <div className="form-group">

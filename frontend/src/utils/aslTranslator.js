@@ -293,9 +293,11 @@ export const getASLFromQuestion = (question) => {
       if (aslType === 'sentence' && Array.isArray(signs) && signs.length === 0) {
         // Empty array - skip to auto-generation below
       } else if (aslType === 'sentence' && Array.isArray(signs) && signs.length > 0) {
+        console.log('Processing sentence ASL signs:', signs);
         const wordSequence = signs.map(word => {
           const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
-          const resource = ASL_RESOURCES.words[cleanWord] || null;
+          const resource = resourceMap.words[cleanWord] || ASL_RESOURCES.words[cleanWord] || null;
+          console.log(`Looking up word "${word}" -> cleanWord: "${cleanWord}" -> resource:`, resource);
           return {
             type: 'word',
             value: word,
@@ -304,6 +306,7 @@ export const getASLFromQuestion = (question) => {
             needsTranslation: !resource
           };
         });
+        console.log('Word sequence result:', wordSequence);
         return wordSequence;
       } else if (signs.words && Array.isArray(signs.words)) {
         return signs.words.map(wordObj => ({

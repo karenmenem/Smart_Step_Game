@@ -78,6 +78,17 @@ const ASLPlayer = ({ question }) => {
                 setCurrentIndex(0);
               }
             }}
+            onError={(e) => {
+              console.error('Video load error for:', currentSign.resource, e);
+              console.log('Failed to load video, moving to next...');
+              // Move to next video on error
+              if (currentIndex < sequence.length - 1) {
+                setCurrentIndex(currentIndex + 1);
+              }
+            }}
+            onLoadedMetadata={() => {
+              console.log('Video loaded successfully:', currentSign.resource);
+            }}
           >
             <source src={currentSign.resource} type="video/mp4" />
             Your browser does not support video playback.

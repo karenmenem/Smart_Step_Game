@@ -8,6 +8,7 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Achievements from "../pages/Achievements";
 import Subjects from "../pages/Subjects";
+import SubjectDetail from "../pages/SubjectDetail";
 import MathLevels from "../pages/MathLevels";
 import MathQuiz from "../pages/MathQuiz";
 import EnglishLevels from "../pages/EnglishLevels";
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/subjects" element={<Subjects />} />
+        <Route path="/subject/:subjectId" element={<SubjectDetail />} />
         <Route path="/math/:operation" element={<MathLevels />} />
         <Route path="/math/:operation/quiz/:level/:sublevel" element={<MathQuiz />} />
         <Route path="/english/:topic" element={<EnglishLevels />} />

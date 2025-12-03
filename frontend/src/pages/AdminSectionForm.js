@@ -98,10 +98,18 @@ function AdminSectionForm() {
       
       const method = isEditMode ? 'PUT' : 'POST';
 
+      // Convert to camelCase for backend
+      const payload = {
+        subjectId: formData.subject_id,
+        level: formData.level,
+        name: formData.name,
+        description: formData.description
+      };
+
       const response = await fetch(url, {
         method,
         headers: getHeaders(),
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();

@@ -313,7 +313,41 @@ export const getASLFromQuestion = (question) => {
           display: wordObj.word
         }));
       } else if (Array.isArray(signs) && signs.length > 0) {
+        // Handle new structured format: [{type: 'word', value: 'what'}, {type: 'number', value: '10'}]
+        if (typeof signs[0] === 'object' && signs[0].type && signs[0].value) {
+          return signs.map(item => {
+            if (item.type === 'number') {
+              return {
+                type: 'number',
+                value: item.value,
+                resource: ASL_RESOURCES.numbers[item.value],
+                display: item.value.toString()
+              };
+            } else if (item.type === 'operation') {
+              return {
+                type: 'operation',
+                value: item.value,
+                resource: ASL_RESOURCES.operations[item.value.toLowerCase()],
+                display: item.value
+              };
+            } else if (item.type === 'word') {
+              return {
+                type: 'word',
+                value: item.value,
+                resource: ASL_RESOURCES.words[item.value.toLowerCase()],
+                display: item.value,
+                needsTranslation: !ASL_RESOURCES.words[item.value.toLowerCase()]
+              };
+            }
+            return null;
+          }).filter(item => item !== null);
+        }
+        
+        // Handle old format: ["what", "is", "6", "plus", "2"] - auto-detect types
         return signs.map(sign => {
+          const signStr = sign.toString().toLowerCase();
+          
+          // Check if it's a number
           if (typeof sign === 'number' || /^\d+$/.test(sign)) {
             return {
               type: 'number',
@@ -321,12 +355,24 @@ export const getASLFromQuestion = (question) => {
               resource: ASL_RESOURCES.numbers[sign],
               display: sign.toString()
             };
-          } else {
+          }
+          // Check if it's an operation (plus, minus, etc.)
+          else if (ASL_RESOURCES.operations[signStr]) {
             return {
               type: 'operation',
               value: sign,
-              resource: ASL_RESOURCES.operations[sign.toLowerCase()],
+              resource: ASL_RESOURCES.operations[signStr],
               display: sign
+            };
+          }
+          // Otherwise treat as a word (what, is, how, many, etc.)
+          else {
+            return {
+              type: 'word',
+              value: sign,
+              resource: ASL_RESOURCES.words[signStr],
+              display: sign,
+              needsTranslation: !ASL_RESOURCES.words[signStr]
             };
           }
         });

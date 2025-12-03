@@ -650,9 +650,65 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                   let extracted = [];
 
                   if (aslType === 'numbers') {
-                    // Extract all numbers from the question
-                    const numbers = questionText.match(/\d+/g);
-                    extracted = numbers || [];
+                    // Extract numbers AND operation words from math questions IN ORDER
+                    const lowerText = questionText.toLowerCase();
+                    
+                    // Map of operation symbols/words to ASL-friendly words
+                    const operations = {
+                      '+': 'plus',
+                      'plus': 'plus',
+                      'add': 'plus',
+                      '-': 'minus',
+                      'minus': 'minus',
+                      'subtract': 'minus',
+                      '×': 'multiply',
+                      '*': 'multiply',
+                      'multiply': 'multiply',
+                      'times': 'multiply',
+                      '÷': 'divide',
+                      '/': 'divide',
+                      'divide': 'divide',
+                      '=': 'equals',
+                      'equals': 'equals'
+                    };
+                    
+                    // Common math question words
+                    const mathWords = ['what', 'is', 'how', 'many', 'sum', 'difference', 'product', 'quotient'];
+                    
+                    // Parse question word by word in order
+                    const words = questionText.split(/\s+/);
+                    const structured = [];
+                    
+                    words.forEach(word => {
+                      const cleanWord = word.toLowerCase().replace(/[^\w\d+\-×÷*/=]/g, '');
+                      
+                      // Check if it's a number
+                      if (/^\d+$/.test(cleanWord)) {
+                        structured.push({type: 'number', value: cleanWord});
+                      }
+                      // Check if it's an operation
+                      else if (operations[cleanWord]) {
+                        structured.push({type: 'operation', value: operations[cleanWord]});
+                      }
+                      // Check if it's a math question word
+                      else if (mathWords.includes(cleanWord)) {
+                        structured.push({type: 'word', value: cleanWord});
+                      }
+                      // Check for operation symbols in the word (e.g., "10+1")
+                      else if (cleanWord.includes('+') || cleanWord.includes('-') || cleanWord.includes('×') || cleanWord.includes('*') || cleanWord.includes('÷') || cleanWord.includes('/')) {
+                        // Split by operation symbols
+                        const parts = cleanWord.split(/([+\-×÷*/])/);
+                        parts.forEach(part => {
+                          if (part && /^\d+$/.test(part)) {
+                            structured.push({type: 'number', value: part});
+                          } else if (part && operations[part]) {
+                            structured.push({type: 'operation', value: operations[part]});
+                          }
+                        });
+                      }
+                    });
+                    
+                    extracted = structured;
                   } else if (aslType === 'words' || aslType === 'sentence') {
                     // Extract meaningful words (remove common stop words)
                     const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can', 'she', 'he', 'it', 'they', 'them', 'their', 'what', 'when', 'where', 'who', 'which', 'how', 'many', 'much'];
@@ -668,7 +724,10 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
 
                   if (extracted.length > 0) {
                     setFormData({...formData, asl_signs: JSON.stringify(extracted)});
-                    alert(`✓ Extracted ${extracted.length} ${aslType === 'numbers' ? 'numbers' : 'words'}:\n${extracted.join(', ')}`);
+                    const displayText = extracted.map(item => 
+                      typeof item === 'object' ? `${item.value}(${item.type})` : item
+                    ).join(', ');
+                    alert(`✓ Extracted ${extracted.length} items:\n${displayText}`);
                   } else {
                     alert('⚠️ No content found to extract. Make sure question text is filled and ASL type is selected.');
                   }

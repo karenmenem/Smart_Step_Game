@@ -144,10 +144,6 @@ function TeacherDashboard() {
                             </span>
                         )}
                     </div>
-                    <div className="notification-icon">
-                        🔔
-                        {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
-                    </div>
                     <div className="teacher-info">
                         <span>Welcome, {teacher.name}</span>
                         <button onClick={handleLogout} className="logout-btn">Logout</button>
@@ -174,12 +170,6 @@ function TeacherDashboard() {
                         onClick={() => setActiveTab('my-content')}
                     >
                         My Submissions ({myContent.length})
-                    </button>
-                    <button 
-                        className={activeTab === 'messages' ? 'tab active' : 'tab'}
-                        onClick={() => setActiveTab('messages')}
-                    >
-                        Messages {unreadCount > 0 && `(${unreadCount})`}
                     </button>
                 </div>
 
@@ -246,13 +236,6 @@ function TeacherDashboard() {
                                     ))}
                                 </div>
                             )}
-                        </div>
-                    )}
-
-                    {activeTab === 'messages' && (
-                        <div className="messages-section">
-                            <h2>Messages</h2>
-                            <p className="coming-soon">Click the 💬 icon in the top right to send messages to admin!</p>
                         </div>
                     )}
                 </div>

@@ -20,7 +20,6 @@ const combinedAuth = async (req, res, next) => {
     }
     
     // Try admin auth first
-    let adminError = null;
     try {
         const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'smartstep-secret-key-2024');
@@ -32,23 +31,17 @@ const combinedAuth = async (req, res, next) => {
             return next();
         }
     } catch (err) {
-        adminError = err;
+        // Not an admin token, try teacher auth
     }
     
     // Try teacher auth
     try {
-        const result = await new Promise((resolve, reject) => {
-            teacherAuth(req, res, (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
+        await teacherAuth(req, res, () => {
+            // Teacher auth sets req.teacher, req.teacherId, and req.userType
+            next();
         });
-        
-        // Teacher auth succeeded
-        return next();
     } catch (err) {
-        // Both failed
-        console.error('Combined auth failed:', { adminError, teacherError: err });
+        console.error('Combined auth failed:', err);
         return res.status(401).json({ error: 'Authentication required' });
     }
 };

@@ -294,6 +294,10 @@ function MathQuiz() {
         const selectedOption = currentOptions[keyMap[key]];
         console.log(`🎮 Arduino Button ${key} pressed → Selecting: ${selectedOption}`);
         handleAnswerSelect(selectedOption);
+        // Auto-submit after Arduino button press (like English Quiz)
+        setTimeout(() => {
+          handleNextQuestion();
+        }, 100);
       }
     };
 

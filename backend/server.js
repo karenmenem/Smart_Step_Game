@@ -112,6 +112,15 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
+      
+      // Start Arduino bridge
+      try {
+        require('./arduino-bridge');
+        console.log('🎮 Arduino bridge started');
+      } catch (error) {
+        console.warn('⚠️  Arduino bridge not available:', error.message);
+        console.warn('   Quiz buttons will work with keyboard only');
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error);

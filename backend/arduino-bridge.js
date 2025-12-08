@@ -9,7 +9,7 @@ const robot = require('robotjs');
 
 // Find your Arduino port - check Arduino IDE Tools > Port
 // Mac: usually /dev/cu.usbmodem... or /dev/tty.usbmodem...
-const ARDUINO_PORT = '/dev/cu.usbmodem11401'; // Update this to match your port
+const ARDUINO_PORT = '/dev/cu.usbmodem11301'; // Update this to match your port
 const BAUD_RATE = 9600;
 
 console.log('🎮 Starting Arduino Bridge...');

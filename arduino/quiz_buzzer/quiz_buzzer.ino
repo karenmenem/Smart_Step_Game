@@ -2,10 +2,10 @@
  * SmartStep Arduino Quiz Buzzer System
  * 
  * Hardware Setup:
- * - Button A (Red)    → Pin 2 → Answer A
- * - Button B (Blue)   → Pin 3 → Answer B  
- * - Button C (Green)  → Pin 4 → Answer C
- * - Button D (Yellow) → Pin 5 → Answer D
+ * - Button A (Red)    → Pin 2 → Answer A  → LED Pin 9 (Red LED)
+ * - Button B (Blue)   → Pin 3 → Answer B  → LED Pin 10 (Blue LED)
+ * - Button C (Green)  → Pin 4 → Answer C  → LED Pin 11 (Green LED)
+ * - Button D (Yellow) → Pin 5 → Answer D  → LED Pin 6 (Yellow LED)
  * - Buzzer            → Pin 8
  * - LED Green         → Pin 12 (Correct answer feedback)
  * - LED Red           → Pin 13 (Wrong answer feedback)
@@ -13,6 +13,10 @@
  * Each button should connect to:
  * - One side → Arduino digital pin
  * - Other side → GND (ground)
+ * 
+ * Each button LED indicator (shows which button is A/B/C/D):
+ * - LED + (long leg) → Arduino pin through 220Ω resistor
+ * - LED - (short leg) → GND
  * 
  * Use INPUT_PULLUP mode so buttons work without external resistors
  */
@@ -23,10 +27,16 @@ const int buttonB = 3;
 const int buttonC = 4;
 const int buttonD = 5;
 
-// Buzzer and LED pins
+// Button indicator LEDs (to identify which button is which)
+const int ledA = 9;   // Red LED for Button A
+const int ledB = 10;  // Blue LED for Button B
+const int ledC = 11;  // Green LED for Button C
+const int ledD = 6;   // Yellow LED for Button D
+
+// Buzzer and feedback LED pins
 const int buzzerPin = 8;
-const int ledGreen = 12;
-const int ledRed = 13;
+const int ledGreen = 12;  // Correct answer feedback
+const int ledRed = 13;     // Wrong answer feedback
 
 // Debounce timing
 unsigned long lastDebounceTime = 0;
@@ -42,20 +52,47 @@ void setup() {
   pinMode(buttonC, INPUT_PULLUP);
   pinMode(buttonD, INPUT_PULLUP);
   
-  // Set buzzer and LED pins as outputs
+  // Set button indicator LEDs as outputs
+  pinMode(ledA, OUTPUT);
+  pinMode(ledB, OUTPUT);
+  pinMode(ledC, OUTPUT);
+  pinMode(ledD, OUTPUT);
+  
+  // Set buzzer and feedback LED pins as outputs
   pinMode(buzzerPin, OUTPUT);
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
   
-  // Turn off LEDs initially
+  // Turn off feedback LEDs initially
   digitalWrite(ledGreen, LOW);
   digitalWrite(ledRed, LOW);
   
-  // Startup beep
+  // Turn ON button indicator LEDs (so users know which button is which)
+  digitalWrite(ledA, HIGH);  // Button A indicator always ON
+  digitalWrite(ledB, HIGH);  // Button B indicator always ON
+  digitalWrite(ledC, HIGH);  // Button C indicator always ON
+  digitalWrite(ledD, HIGH);  // Button D indicator always ON
+  
+  // Startup beep and LED sequence
   tone(buzzerPin, 1000, 200);
-  delay(250);
+  
+  // Flash each button LED in sequence to show they work
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(ledA, LOW); delay(100);
+    digitalWrite(ledA, HIGH); delay(100);
+    digitalWrite(ledB, LOW); delay(100);
+    digitalWrite(ledB, HIGH); delay(100);
+    digitalWrite(ledC, LOW); delay(100);
+    digitalWrite(ledC, HIGH); delay(100);
+    digitalWrite(ledD, LOW); delay(100);
+    digitalWrite(ledD, HIGH); delay(100);
+  }
   
   Serial.println("SmartStep Quiz Buzzer Ready!");
+  Serial.println("Button A = Red LED (Pin 9)");
+  Serial.println("Button B = Blue LED (Pin 10)");
+  Serial.println("Button C = Green LED (Pin 11)");
+  Serial.println("Button D = Yellow LED (Pin 6)");
 }
 
 void loop() {
@@ -111,12 +148,24 @@ void sendAnswer(char button) {
   Serial.print("KEY:");
   Serial.println(button);
   
-  // Brief LED flash on any button press
-  digitalWrite(ledGreen, HIGH);
-  digitalWrite(ledRed, HIGH);
-  delay(50);
-  digitalWrite(ledGreen, LOW);
-  digitalWrite(ledRed, LOW);
+  // Blink the specific button's LED to show it was pressed
+  int buttonLED = -1;
+  switch(button) {
+    case 'A': buttonLED = ledA; break;
+    case 'B': buttonLED = ledB; break;
+    case 'C': buttonLED = ledC; break;
+    case 'D': buttonLED = ledD; break;
+  }
+  
+  // Quick triple blink of the pressed button's LED
+  if (buttonLED != -1) {
+    for (int i = 0; i < 3; i++) {
+      digitalWrite(buttonLED, LOW);
+      delay(80);
+      digitalWrite(buttonLED, HIGH);
+      delay(80);
+    }
+  }
   
   Serial.print("Button ");
   Serial.print(button);

@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const { testConnection } = require('./config/database');
+const arduinoManager = require('./utils/arduino');
 
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -109,19 +110,31 @@ const startServer = async () => {
   try {
     await testConnection();
     
-    app.listen(PORT, () => {
+    // Initialize Arduino (optional - won't crash if not available)
+    await arduinoManager.initialize();
+    
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
-      
-      // Start Arduino bridge
-      try {
-        require('./arduino-bridge');
-        console.log('🎮 Arduino bridge started');
-      } catch (error) {
-        console.warn('⚠️  Arduino bridge not available:', error.message);
-        console.warn('   Quiz buttons will work with keyboard only');
-      }
     });
+
+    // Graceful shutdown - properly disconnect Arduino
+    const shutdown = async (signal) => {
+      console.log(`\n⏸️  Received ${signal}, shutting down gracefully...`);
+      
+      // Close Arduino connection
+      await arduinoManager.close();
+      
+      // Close server
+      server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

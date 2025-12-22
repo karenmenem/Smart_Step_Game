@@ -81,6 +81,23 @@ cp ~/Downloads/"asl numbers"/*.mp4 "frontend/public/asl/numbers/"
 ### Operations & Activities
 Each operation (Addition, Subtraction, Multiplication, Division) has 6 levels:
 
+## Project Objectives
+
+1. Develop an accessible ASL-integrated web platform
+2. Support educational content learning for deaf children
+3. Provide synchronized ASL video demonstrations
+4. Reduce barriers in digital educational games
+5. Offer adaptive difficulty based on student performance
+6. Design an Arduino-based assistive learning tool
+7. Enable multi-role educational ecosystem (Teachers, Parents, Students, Admins)
+8. Implement gamified learning with progressive unlocking system
+9. Provide comprehensive progress tracking and analytics
+10. Support multi-subject curriculum (Math, English, Reading)
+11. Integrate hardware-software interaction for classroom engagement
+12. Facilitate parent-child educational engagement
+
+---
+
 **Addition (Activities 7-14):**
 - Beginner L1 (7): Simple addition 1-10
 - Beginner L2 (8): Word problems 10-50

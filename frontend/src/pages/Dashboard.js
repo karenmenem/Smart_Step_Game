@@ -154,6 +154,9 @@ function Dashboard() {
             <button className="dashboard-nav-btn" onClick={() => navigate("/")}>
               🏠 Home
             </button>
+            <button className="dashboard-nav-btn" onClick={() => navigate("/parent/dashboard")}>
+              👪 Parent View
+            </button>
             <button className="dashboard-nav-btn" onClick={() => navigate("/achievements")}>
               🏆 Achievements
             </button>

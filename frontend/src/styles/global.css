@@ -2223,10 +2223,6 @@ select.form-input {
   margin: 0.5rem 0;
   line-height: 1.3;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .math-levels-subtitle {
@@ -2382,6 +2378,8 @@ select.form-input {
   min-width: 28px;
   text-align: center;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  background: transparent !important;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 }
 
 .stat-text {
@@ -3233,6 +3231,27 @@ select.form-input {
   font-weight: 500;
 }
 
+.teacher-link-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.8rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.teacher-link-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
 .select-child-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -3305,6 +3324,54 @@ select.form-input {
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s ease;
+}
+
+.teacher-linking-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 0;
+  width: 95%;
+  max-width: 950px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+.teacher-linking-modal .modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.teacher-linking-modal .modal-header h3 {
+  color: white;
+}
+
+.teacher-linking-modal .modal-header .close-modal-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.teacher-linking-modal .modal-header .close-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.teacher-linking-modal .modal-content {
+  padding: 2rem;
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
+}
+
+.teacher-linking-modal .teacher-linking-container {
+  padding: 0;
+  max-width: 100%;
+}
+
+.teacher-linking-modal .teacher-linking-header {
+  display: none;
 }
 
 @keyframes slideUp {

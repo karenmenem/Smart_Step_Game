@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, api } from "../api/auth";
+import TeacherLinking from "../components/Parent/TeacherLinking";
 import '../styles/ParentDashboard.css';
 
 function ParentDashboard() {
@@ -21,6 +22,7 @@ function ParentDashboard() {
   const [progress, setProgress] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' or 'teachers'
 
   useEffect(() => {
     // Check if user is authenticated
@@ -181,6 +183,24 @@ function ParentDashboard() {
 
       {/* Main Content */}
       <main className="parent-main">
+        {/* Tab Navigation */}
+        <div className="parent-tabs">
+          <button 
+            className={`parent-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            📊 Overview
+          </button>
+          <button 
+            className={`parent-tab-btn ${activeTab === 'teachers' ? 'active' : ''}`}
+            onClick={() => setActiveTab('teachers')}
+          >
+            👨‍🏫 Teachers
+          </button>
+        </div>
+
+        {activeTab === 'overview' ? (
+          <>
         {/* Welcome Section */}
         <div className="parent-welcome">
           <div className="welcome-text">
@@ -433,6 +453,10 @@ function ParentDashboard() {
             </div>
           </div>
         </div>
+        </>
+        ) : (
+          <TeacherLinking child={child} />
+        )}
       </main>
     </div>
   );

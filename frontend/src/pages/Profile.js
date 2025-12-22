@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, api } from "../api/auth";
+import TeacherLinking from "../components/Parent/TeacherLinking";
 
 function Profile() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ function Profile() {
   });
   const [childrenProgress, setChildrenProgress] = useState({});
   const [childrenData, setChildrenData] = useState({});
+  const [selectedChildForTeacher, setSelectedChildForTeacher] = useState(null);
+  const [showTeacherLinking, setShowTeacherLinking] = useState(false);
 
   useEffect(() => {
     if (auth.isAuthenticated()) {
@@ -224,6 +227,16 @@ function Profile() {
                         <span>🌟 Points: {childrenData[child.id]?.total_points || child.totalPoints || 0}</span>
                       </div>
                     </div>
+                    <button 
+                      className="teacher-link-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedChildForTeacher(child);
+                        setShowTeacherLinking(true);
+                      }}
+                    >
+                      👨‍🏫 Teacher Access
+                    </button>
                     <div className="select-child-btn">
                       {isActive ? 'Currently Active' : `Click to Play as ${child.name}`}
                     </div>
@@ -318,6 +331,26 @@ function Profile() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Teacher Linking Modal */}
+      {showTeacherLinking && selectedChildForTeacher && (
+        <div className="modal-overlay" onClick={() => setShowTeacherLinking(false)}>
+          <div className="teacher-linking-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>👨‍🏫 Teacher Access for {selectedChildForTeacher.name}</h3>
+              <button 
+                className="close-modal-btn"
+                onClick={() => setShowTeacherLinking(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-content">
+              <TeacherLinking child={{...selectedChildForTeacher, child_id: selectedChildForTeacher.id}} />
+            </div>
           </div>
         </div>
       )}

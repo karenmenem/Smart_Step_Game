@@ -41,6 +41,8 @@ app.use('/api/asl', require('./routes/asl'));
 app.use('/api/homepage', require('./routes/homepage'));
 app.use('/api/teacher', require('./routes/teacherRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
+app.use('/api/teacher-students', require('./routes/teacherStudentRoutes'));
+app.use('/api/parent-teacher', require('./routes/parentTeacherRoutes'));
 
 // Get individual child data with updated points
 app.get('/api/children/:childId', async (req, res) => {

@@ -369,9 +369,6 @@ function MathLevels() {
                   {levelAccess.advanced.level2.allowed ? '🎬' : '🔒'} Sublevel 2: Master Problems
                 </button>
               </div>
-              <button className="level-btn locked-btn" disabled>
-                Complete Intermediate First
-              </button>
             </div>
           </div>
         </div>

@@ -1,0 +1,329 @@
+.teacher-linking-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.teacher-linking-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.teacher-linking-header h2 {
+  font-size: 2.5rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.teacher-linking-header p {
+  font-size: 1.2rem;
+  color: #718096;
+}
+
+.link-teacher-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 3rem;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.link-teacher-section h3 {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.class-code-input {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  font-size: 1.3rem;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  letter-spacing: 0.3em;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.class-code-input:focus {
+  outline: none;
+  border-color: white;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.class-code-input::placeholder {
+  letter-spacing: normal;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.link-btn {
+  padding: 1rem 2rem;
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.link-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.link-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message {
+  padding: 1rem;
+  border-radius: 10px;
+  margin-top: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.message.success {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.message.error {
+  background: rgba(255, 0, 0, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 0, 0, 0.4);
+}
+
+.connected-teachers-section h3 {
+  font-size: 1.8rem;
+  color: #2d3748;
+  margin-bottom: 2rem;
+}
+
+.no-teachers {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #f6f8fb 0%, #e9ecef 100%);
+  border-radius: 20px;
+  border: 2px dashed #cbd5e0;
+}
+
+.no-teachers p {
+  font-size: 1.3rem;
+  color: #718096;
+  margin: 1rem 0;
+}
+
+.no-teachers .hint {
+  font-size: 1.1rem;
+  color: #a0aec0;
+  font-style: italic;
+}
+
+.teachers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.teacher-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.teacher-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+}
+
+.teacher-card.pending {
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+}
+
+.teacher-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.teacher-icon {
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.teacher-details {
+  flex: 1;
+}
+
+.teacher-details h4 {
+  font-size: 1.6rem;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.teacher-email {
+  font-size: 1rem;
+  color: #718096;
+  margin: 0.3rem 0;
+}
+
+.class-info {
+  font-size: 1.1rem;
+  color: #4a5568;
+  font-weight: 600;
+  margin: 0.3rem 0;
+}
+
+.linked-date {
+  font-size: 0.95rem;
+  color: #a0aec0;
+  margin: 0.3rem 0;
+}
+
+.approval-section {
+  background: #fffbeb;
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.approval-notice {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f59e0b;
+  margin-bottom: 1rem;
+}
+
+.approve-btn {
+  padding: 0.8rem 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.approve-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.permissions-section {
+  background: #f8fafb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.permissions-section h5 {
+  font-size: 1.2rem;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+}
+
+.permission-item {
+  margin: 0.8rem 0;
+}
+
+.permission-item label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  font-size: 1.05rem;
+  color: #4a5568;
+  font-weight: 500;
+  padding: 0.7rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.permission-item label:hover {
+  background: white;
+}
+
+.permission-item input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.remove-btn {
+  width: 100%;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.remove-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+}
+
+@media (max-width: 768px) {
+  .teacher-linking-container {
+    padding: 1rem;
+  }
+
+  .input-group {
+    flex-direction: column;
+  }
+
+  .class-code-input {
+    font-size: 1.1rem;
+  }
+
+  .teacher-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .teacher-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 3rem;
+  }
+}

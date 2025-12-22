@@ -25,6 +25,7 @@ import TeacherLogin from "../pages/TeacherLogin";
 import TeacherRegister from "../pages/TeacherRegister";
 import TeacherDashboard from "../pages/TeacherDashboard";
 import AdminApprovals from "../pages/AdminApprovals";
+import ParentDashboard from "../pages/ParentDashboard";
 
 function AppRoutes() {
   return (
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="/english" element={<English />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/parent/dashboard" element={<ParentDashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/achievements" element={<Achievements />} />

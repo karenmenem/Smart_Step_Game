@@ -397,8 +397,8 @@
 
 /* Fixed layout only for questions table */
 [data-tab="questions"] .admin-table {
-  table-layout: fixed;
-  min-width: 1000px;
+  table-layout: auto;
+  width: 100%;
 }
 
 .admin-table thead {
@@ -424,27 +424,32 @@
   font-size: 0.9rem;
 }
 
-/* Only nowrap for questions table */
-[data-tab="questions"] .admin-table td {
-  white-space: nowrap;
+/* Compact styling for questions table only */
+[data-tab="questions"] .admin-table th {
+  padding: 0.5rem 0.3rem;
+  font-size: 0.7rem;
 }
 
-/* Specific column widths for questions table */
+[data-tab="questions"] .admin-table td {
+  padding: 0.5rem 0.3rem;
+  font-size: 0.8rem;
+}
+
+/* Specific column widths for questions table - very compact */
 [data-tab="questions"] .admin-table th:nth-child(1), /* ID */
 [data-tab="questions"] .admin-table td:nth-child(1) {
-  width: 40px;
+  width: 35px;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(2), /* Active checkbox */
 [data-tab="questions"] .admin-table td:nth-child(2) {
-  width: 60px;
+  width: 45px;
   text-align: center;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(3), /* Question */
 [data-tab="questions"] .admin-table td:nth-child(3) {
-  width: 180px;
-  max-width: 180px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -452,52 +457,50 @@
 
 [data-tab="questions"] .admin-table th:nth-child(4), /* Subject */
 [data-tab="questions"] .admin-table td:nth-child(4) {
-  width: 70px;
+  width: 55px;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(5), /* Level */
 [data-tab="questions"] .admin-table td:nth-child(5) {
-  width: 50px;
   text-align: center;
+  width: 35px;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(6), /* Activity */
 [data-tab="questions"] .admin-table td:nth-child(6) {
-  width: 140px;
-  max-width: 140px;
+  max-width: 85px;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(7), /* ASL Type */
 [data-tab="questions"] .admin-table td:nth-child(7) {
-  width: 70px;
   text-align: center;
+  width: 55px;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(8), /* ASL Content */
 [data-tab="questions"] .admin-table td:nth-child(8) {
-  width: 100px;
-  max-width: 150px;
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(9), /* Points */
 [data-tab="questions"] .admin-table td:nth-child(9) {
-  width: 50px;
   text-align: center;
+  width: 40px;
 }
 
 [data-tab="questions"] .admin-table th:nth-child(10), /* Actions */
 [data-tab="questions"] .admin-table td:nth-child(10) {
-  width: 160px;
-  text-align: left;
-  white-space: normal;
+  text-align: right;
+  white-space: nowrap;
+  width: 120px;
 }
 
 .admin-table tbody tr:hover {

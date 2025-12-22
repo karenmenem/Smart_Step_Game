@@ -228,6 +228,116 @@ export const api = {
       console.error('Get achievements failed:', error);
       return { success: false, message: 'Failed to fetch achievements' };
     }
+  },
+
+  // Teacher-Student Tracking APIs
+  linkChildToTeacher: async (childId, classCode) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/parent-teacher/link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ childId, classCode })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error linking to teacher:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  getChildTeacherLinks: async (childId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/parent-teacher/child/${childId}`);
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting teacher links:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  updateTeacherPermissions: async (linkId, permissions) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/parent-teacher/permissions/${linkId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(permissions)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating permissions:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  removeTeacherLink: async (linkId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/parent-teacher/link/${linkId}`, {
+        method: 'DELETE'
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error removing teacher link:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  // Teacher APIs
+  getTeacherClasses: async (teacherId, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/teacher-students/classes/${teacherId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting classes:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  createTeacherClass: async (teacherId, className, description, token) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/teacher-students/classes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ teacherId, className, description })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating class:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  getTeacherStudents: async (teacherId, classId, token) => {
+    try {
+      const url = classId 
+        ? `${API_BASE_URL}/teacher-students/students/${teacherId}?classId=${classId}`
+        : `${API_BASE_URL}/teacher-students/students/${teacherId}`;
+      
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting students:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
+  getStudentProgress: async (teacherId, childId, token) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/teacher-students/student-progress/${teacherId}/${childId}`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting student progress:', error);
+      return { success: false, message: error.message };
+    }
   }
 };
 

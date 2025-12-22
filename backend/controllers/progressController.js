@@ -91,18 +91,22 @@ const checkLevelAccess = async (req, res) => {
     };
     
     requiredActivityId = activityMap[parseInt(activityId)];
-    const requiresBothSublevels = [46, 49, 64, 67];
+    const requiresBothSublevels = [46, 49, 64, 67, 28, 31];
     
     if (requiresBothSublevels.includes(parseInt(activityId))) {
       let requiredActivities = [];
       if (parseInt(activityId) === 46) {
-        requiredActivities = [43, 44]; // Comprehension
+        requiredActivities = [43, 44]; // Comprehension Beginner
       } else if (parseInt(activityId) === 49) {
-        requiredActivities = [46, 47]; // Comprehension
+        requiredActivities = [46, 47]; // Comprehension Intermediate
       } else if (parseInt(activityId) === 64) {
-        requiredActivities = [61, 62]; // Grammar
+        requiredActivities = [61, 62]; // Grammar Beginner
       } else if (parseInt(activityId) === 67) {
-        requiredActivities = [64, 65]; // Grammar
+        requiredActivities = [64, 65]; // Grammar Intermediate
+      } else if (parseInt(activityId) === 28) {
+        requiredActivities = [25, 26]; // Vocabulary Beginner
+      } else if (parseInt(activityId) === 31) {
+        requiredActivities = [28, 29]; // Vocabulary Intermediate
       }
       
       for (const reqActivityId of requiredActivities) {
@@ -198,7 +202,7 @@ const checkLevelAccess = async (req, res) => {
 
 const saveQuizProgress = async (req, res) => {
   try {
-    const { childId, activityId, score, maxScore } = req.body;
+    const { childId, activityId, score, maxScore, timeSpent, questionsAttempted, questionsCorrect } = req.body;
     
     if (!childId || !activityId || score === undefined || !maxScore) {
       return res.status(400).json({
@@ -214,6 +218,27 @@ const saveQuizProgress = async (req, res) => {
       'SELECT * FROM child_progress WHERE child_id = ? AND activity_id = ?',
       [childId, activityId]
     );
+    
+    const currentAttempts = existing && existing.length > 0 ? existing[0].attempts : 0;
+    const attemptNumber = currentAttempts + 1;
+    
+    // Save to detailed history for teacher tracking
+    await query(`
+      INSERT INTO child_progress_history 
+      (child_id, activity_id, attempt_number, score, max_score, percentage, 
+       time_spent_seconds, questions_attempted, questions_correct)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      childId, 
+      activityId, 
+      attemptNumber, 
+      score, 
+      maxScore, 
+      percentage,
+      timeSpent || 0,
+      questionsAttempted || maxScore,
+      questionsCorrect || score
+    ]);
     
     if (existing && existing.length > 0) {
       await query(`

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../api/auth';
 import AdminQuestionForm from './AdminQuestionForm';
 import MessageCenter from '../components/MessageCenter';
 import '../styles/TeacherDashboard.css';
@@ -14,6 +15,9 @@ function TeacherDashboard() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const [showMessages, setShowMessages] = useState(false);
+    const [classes, setClasses] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [copiedCode, setCopiedCode] = useState(null);
 
     useEffect(() => {
         // Check if teacher is logged in
@@ -29,6 +33,7 @@ function TeacherDashboard() {
         fetchMyContent();
         fetchNotifications();
         loadUnreadMessageCount();
+        loadClasses();
         
         // Poll for new messages every 30 seconds
         const interval = setInterval(loadUnreadMessageCount, 30000);
@@ -73,6 +78,39 @@ function TeacherDashboard() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const loadClasses = async () => {
+        try {
+            const token = localStorage.getItem('teacherToken');
+            const teacherInfo = JSON.parse(localStorage.getItem('teacherInfo'));
+            const result = await api.getTeacherClasses(teacherInfo.id, token);
+            if (result.success) {
+                setClasses(result.classes);
+                if (result.classes.length > 0) {
+                    loadStudents(teacherInfo.id, token);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading classes:', error);
+        }
+    };
+
+    const loadStudents = async (teacherId, token) => {
+        try {
+            const result = await api.getTeacherStudents(teacherId, null, token);
+            if (result.success) {
+                setStudents(result.students);
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+        }
+    };
+
+    const copyClassCode = (code) => {
+        navigator.clipboard.writeText(code);
+        setCopiedCode(code);
+        setTimeout(() => setCopiedCode(null), 2000);
     };
 
     const fetchNotifications = async () => {
@@ -171,6 +209,12 @@ function TeacherDashboard() {
                     >
                         My Submissions ({myContent.length})
                     </button>
+                    <button 
+                        className={activeTab === 'students' ? 'tab active' : 'tab'}
+                        onClick={() => setActiveTab('students')}
+                    >
+                        👨‍🎓 My Students ({students.length})
+                    </button>
                 </div>
 
                 <div className="tab-content">
@@ -236,6 +280,79 @@ function TeacherDashboard() {
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {activeTab === 'students' && (
+                        <div className="students-section">
+                            <h2>📚 My Class</h2>
+                            
+                            {/* Class Code Section */}
+                            <div className="class-code-section">
+                                <h3>🔑 Share Your Class Code</h3>
+                                <p>Ask parents to enter this code in their Family Profile to link their child to you.</p>
+                                {classes.length > 0 ? (
+                                    classes.map(cls => (
+                                        <div key={cls.id} className="class-code-card">
+                                            <div className="class-info">
+                                                <h4>{cls.class_name}</h4>
+                                                <p className="student-count">👥 {cls.student_count} student{cls.student_count !== 1 ? 's' : ''}</p>
+                                            </div>
+                                            <div className="code-display">
+                                                <div className="code-value">{cls.class_code}</div>
+                                                <button 
+                                                    className="copy-btn"
+                                                    onClick={() => copyClassCode(cls.class_code)}
+                                                >
+                                                    {copiedCode === cls.class_code ? '✅ Copied!' : '📋 Copy'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>Loading your class code...</p>
+                                )}
+                            </div>
+
+                            {/* Students List */}
+                            <div className="students-list-section">
+                                <h3>👨‍🎓 My Students</h3>
+                                {students.length === 0 ? (
+                                    <div className="no-students">
+                                        <p>📭 No students yet</p>
+                                        <p className="hint">Share your class code with parents to get started!</p>
+                                    </div>
+                                ) : (
+                                    <div className="students-grid">
+                                        {students.map(student => (
+                                            <div key={student.link_id} className="student-card">
+                                                <div className="student-avatar">
+                                                    {student.profile_picture ? (
+                                                        <img src={`http://localhost:5001/${student.profile_picture}`} alt={student.child_name} />
+                                                    ) : (
+                                                        <div className="avatar-placeholder">
+                                                            {student.child_name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="student-info">
+                                                    <h4>{student.child_name}</h4>
+                                                    <p>Age: {student.age}</p>
+                                                    <div className="student-stats">
+                                                        <span>📚 {student.activities_completed} completed</span>
+                                                        <span>⭐ {student.average_score}% avg</span>
+                                                    </div>
+                                                    {student.last_active && (
+                                                        <p className="last-active">
+                                                            Last active: {new Date(student.last_active).toLocaleDateString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

@@ -140,9 +140,6 @@ function Subjects() {
                     <h2 className="subject-title">
                       {getSubjectIcon(subject.name)} {subject.name}
                     </h2>
-                    <p className="subject-description">
-                      {subject.description || `Learn and explore ${subject.name}!`}
-                    </p>
                   </div>
                   
                   <div className="subject-buttons">

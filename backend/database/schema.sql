@@ -159,8 +159,8 @@ INSERT IGNORE INTO admin (username, password, email) VALUES
 ('admin', '$2b$10$rN7kYVZL.5lB9xJ0h3K5XOqPqPxJLKqWJ3xGz5mZ3kYVZL5lB9xJ0h', 'admin@smartstep.com');
 
 INSERT IGNORE INTO subject (name, description) VALUES 
-('Math', 'Mathematics learning activities'),
-('English', 'English language learning activities');
+('Math', ''),
+('English', '');
 
 INSERT IGNORE INTO achievement (name, description, icon, points_required, level_required) VALUES
 ('First Steps', 'Complete your first activity', '🌟', 10, 1),

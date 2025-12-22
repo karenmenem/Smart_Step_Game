@@ -44,7 +44,7 @@ function MathLevels() {
       const operationBase = {
         'addition': 7,      // 7, 8, 10, 11, 13, 14
         'subtraction': 16,  // 16, 17, 19, 20, 22, 23
-        'multiplication': 25, // 25, 26, 28, 29, 31, 32
+        'multiplication': 70, // 70, 71, 73, 74, 76, 77
         'division': 34      // 34, 35, 37, 38, 40, 41
       };
       

@@ -239,11 +239,13 @@ const updateQuestion = async (req, res) => {
     if (typeof aslS === 'string' && aslS.trim()) {
       try {
         aslSignsData = JSON.parse(aslS);
+        console.log('Parsed ASL signs successfully:', aslSignsData);
       } catch (e) {
-        console.error('Failed to parse ASL signs:', e.message);
+        console.error('Failed to parse ASL signs:', e.message, 'Raw value:', aslS);
         aslSignsData = aslS;
       }
     }
+    console.log('ASL signs data type:', typeof aslSignsData, 'Value:', aslSignsData);
     
     const aslImg = req.body.asl_image_url || req.body.aslImageUrl || req.body['asl_image_url'] || req.body['aslImageUrl'];
     const passageId = req.body.passage_id || req.body.passageId || null;
@@ -279,29 +281,36 @@ const updateQuestion = async (req, res) => {
     const isActiveValue = req.body.is_active ? 1 : 0;
     console.log('is_active to save:', isActiveValue);
     
-    const result = await query(
-      `UPDATE question SET 
-        activity_id = COALESCE(?, activity_id),
-        passage_id = COALESCE(?, passage_id),
-        question_text = COALESCE(?, question_text),
-        question_type = COALESCE(?, question_type),
-        correct_answer = COALESCE(?, correct_answer),
-        options = COALESCE(?, options),
-        asl_signs = COALESCE(?, asl_signs),
-        asl_video_url = COALESCE(?, asl_video_url),
-        asl_image_url = COALESCE(?, asl_image_url),
-        asl_type = COALESCE(?, asl_type),
-        explanation = COALESCE(?, explanation),
-        difficulty_level = COALESCE(?, difficulty_level),
-        points_value = COALESCE(?, points_value),
-        order_index = COALESCE(?, order_index),
-        is_active = ?
-      WHERE question_id = ?`,
-      [...params, isActiveValue, questionId]
-    );
-    
-    console.log('Update result:', result);
-    console.log('Affected rows:', result.affectedRows);
+    try {
+      const result = await query(
+        `UPDATE question SET 
+          activity_id = COALESCE(?, activity_id),
+          passage_id = COALESCE(?, passage_id),
+          question_text = COALESCE(?, question_text),
+          question_type = COALESCE(?, question_type),
+          correct_answer = COALESCE(?, correct_answer),
+          options = COALESCE(?, options),
+          asl_signs = COALESCE(?, asl_signs),
+          asl_video_url = COALESCE(?, asl_video_url),
+          asl_image_url = COALESCE(?, asl_image_url),
+          asl_type = COALESCE(?, asl_type),
+          explanation = COALESCE(?, explanation),
+          difficulty_level = COALESCE(?, difficulty_level),
+          points_value = COALESCE(?, points_value),
+          order_index = COALESCE(?, order_index),
+          is_active = ?
+        WHERE question_id = ?`,
+        [...params, isActiveValue, questionId]
+      );
+      
+      console.log('Update result:', result);
+      console.log('Affected rows:', result.affectedRows);
+    } catch (updateError) {
+      console.error('SQL UPDATE ERROR:', updateError.message);
+      console.error('SQL State:', updateError.sqlState);
+      console.error('SQL Message:', updateError.sqlMessage);
+      throw updateError;
+    }
     console.log('=== UPDATE COMPLETE ===\n');
     
     res.json({

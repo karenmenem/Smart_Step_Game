@@ -109,15 +109,18 @@ function Dashboard() {
       16: "Subtraction Beginner L1", 17: "Subtraction Beginner L2",
       19: "Subtraction Intermediate L1", 20: "Subtraction Intermediate L2",
       22: "Subtraction Advanced L1", 23: "Subtraction Advanced L2",
-      25: "Multiplication Beginner L1", 26: "Multiplication Beginner L2",
-      28: "Multiplication Intermediate L1", 29: "Multiplication Intermediate L2",
-      31: "Multiplication Advanced L1", 32: "Multiplication Advanced L2",
+      25: "Vocabulary Beginner L1", 26: "Vocabulary Beginner L2",
+      28: "Vocabulary Intermediate L1", 29: "Vocabulary Intermediate L2",
+      31: "Vocabulary Advanced L1", 32: "Vocabulary Advanced L2",
       34: "Division Beginner L1", 35: "Division Beginner L2",
       37: "Division Intermediate L1", 38: "Division Intermediate L2",
       40: "Division Advanced L1", 41: "Division Advanced L2",
       43: "Comprehension Beginner L1", 44: "Comprehension Beginner L2",
       46: "Comprehension Intermediate L1", 47: "Comprehension Intermediate L2",
-      49: "Comprehension Advanced L1", 50: "Comprehension Advanced L2"
+      49: "Comprehension Advanced L1", 50: "Comprehension Advanced L2",
+      61: "Grammar Beginner L1", 62: "Grammar Beginner L2",
+      64: "Grammar Intermediate L1", 65: "Grammar Intermediate L2",
+      67: "Grammar Advanced L1", 68: "Grammar Advanced L2"
     };
     return activityNames[activityId] || `Activity ${activityId}`;
   };
@@ -317,10 +320,10 @@ function Dashboard() {
               <div className="progress-subject">
                 <h5>✖️ Multiplication</h5>
                 <div className="progress-bar-container">
-                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length / 6) * 100}%` }}></div>
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 70 && p.activity_id <= 77 && p.completed).length / 6) * 100}%` }}></div>
                 </div>
                 <div className="progress-text">
-                  {progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length} / 6 levels completed
+                  {progress.filter(p => p.activity_id >= 70 && p.activity_id <= 77 && p.completed).length} / 6 levels completed
                 </div>
               </div>
 
@@ -340,12 +343,32 @@ function Dashboard() {
               <h4 style={{marginBottom: '15px', color: '#f093fb'}}>📚 English</h4>
               
               <div className="progress-subject">
+                <h5>� Vocabulary</h5>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length / 6) * 100}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {progress.filter(p => p.activity_id >= 25 && p.activity_id <= 32 && p.completed).length} / 6 levels completed
+                </div>
+              </div>
+
+              <div className="progress-subject">
                 <h5>📖 Comprehension</h5>
                 <div className="progress-bar-container">
                   <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 43 && p.activity_id <= 50 && p.completed).length / 6) * 100}%` }}></div>
                 </div>
                 <div className="progress-text">
                   {progress.filter(p => p.activity_id >= 43 && p.activity_id <= 50 && p.completed).length} / 6 levels completed
+                </div>
+              </div>
+
+              <div className="progress-subject">
+                <h5>📝 Grammar</h5>
+                <div className="progress-bar-container">
+                  <div className="progress-bar-fill" style={{ width: `${(progress.filter(p => p.activity_id >= 61 && p.activity_id <= 68 && p.completed).length / 6) * 100}%` }}></div>
+                </div>
+                <div className="progress-text">
+                  {progress.filter(p => p.activity_id >= 61 && p.activity_id <= 68 && p.completed).length} / 6 levels completed
                 </div>
               </div>
             </div>

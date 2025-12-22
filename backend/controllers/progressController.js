@@ -34,7 +34,7 @@ const checkLevelAccess = async (req, res) => {
     const currentActivity = activity[0];
     
     // Level 1 activities are always accessible (Beginner - Level 1)
-    const isLevel1 = [7, 16, 25, 34, 43, 61].includes(parseInt(activityId));
+    const isLevel1 = [7, 16, 25, 34, 43, 61, 70].includes(parseInt(activityId));
     
     if (isLevel1) {
       return res.json({
@@ -60,6 +60,13 @@ const checkLevelAccess = async (req, res) => {
       20: 19,
       22: 20,
       23: 22,
+
+      // Multiplication
+      71: 70,
+      73: 71,
+      74: 73,
+      76: 74,
+      77: 76,
 
       // Vocabulary
       26: 25,

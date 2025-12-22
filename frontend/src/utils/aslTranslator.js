@@ -94,9 +94,19 @@ const getOperationVideoPath = (operation) => {
     '+': 'plus.mp4',
     'minus': 'minus.mp4',
     'subtract': 'subtract.mp4',
-    '-': 'minus.mp4'
+    '-': 'minus.mp4',
+    'multiply': 'multiply.mp4',
+    'times': 'multiply.mp4',
+    '×': 'multiply.mp4',
+    '*': 'multiply.mp4',
+    'divide': 'divide.mp4',
+    'divided': 'divide.mp4',
+    '÷': 'divide.mp4',
+    '/': 'divide.mp4',
+    'equals': 'equals.mp4',
+    '=': 'equals.mp4'
   };
-  const filename = operationMap[operation] || `${operation}.mp4`;
+  const filename = operationMap[lowerOp] || `${lowerOp}.mp4`;
   return `/asl/operations/${filename}`;
 };
 

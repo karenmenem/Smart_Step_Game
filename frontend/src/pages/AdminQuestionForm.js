@@ -370,14 +370,18 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
         }
       } else {
         const errorMsg = data.message || 'Failed to save question';
+        const errorDetails = data.error || '';
         const debugInfo = data.debug ? JSON.stringify(data.debug, null, 2) : '';
-        console.error('Error details:', errorMsg, debugInfo);
-        alert('ERROR: ' + errorMsg + (debugInfo ? '\n\nDebug:\n' + debugInfo : ''));
-        setError(errorMsg);
+        console.error('Error details:', errorMsg, 'Error:', errorDetails, debugInfo);
+        alert('ERROR: ' + errorMsg + (errorDetails ? '\n\nDetails: ' + errorDetails : '') + (debugInfo ? '\n\nDebug:\n' + debugInfo : ''));
+        setError(errorMsg + (errorDetails ? ' - ' + errorDetails : ''));
       }
     } catch (error) {
       console.error('Error saving question:', error);
-      setError('Failed to save question');
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      setError('Failed to save question: ' + error.message);
+      alert('ERROR: Failed to save question\n\n' + error.message);
     } finally {
       setLoading(false);
     }
@@ -650,6 +654,20 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                   let extracted = [];
 
                   if (aslType === 'numbers') {
+                    // Determine operation based on selected activity
+                    const activityName = selectedActivity?.name?.toLowerCase() || '';
+                    let defaultOperation = null;
+                    
+                    if (activityName.includes('addition') || activityName.includes('add')) {
+                      defaultOperation = 'plus';
+                    } else if (activityName.includes('subtraction') || activityName.includes('subtract')) {
+                      defaultOperation = 'minus';
+                    } else if (activityName.includes('multiplication') || activityName.includes('multiply')) {
+                      defaultOperation = 'multiply';
+                    } else if (activityName.includes('division') || activityName.includes('divide')) {
+                      defaultOperation = 'divide';
+                    }
+                    
                     // Extract numbers AND operation words from math questions IN ORDER
                     const lowerText = questionText.toLowerCase();
                     
@@ -678,6 +696,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                     // Parse question word by word in order
                     const words = questionText.split(/\s+/);
                     const structured = [];
+                    let operationFound = false;
                     
                     words.forEach(word => {
                       const cleanWord = word.toLowerCase().replace(/[^\w\d+\-×÷*/=]/g, '');
@@ -689,6 +708,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                       // Check if it's an operation
                       else if (operations[cleanWord]) {
                         structured.push({type: 'operation', value: operations[cleanWord]});
+                        operationFound = true;
                       }
                       // Check if it's a math question word
                       else if (mathWords.includes(cleanWord)) {
@@ -703,10 +723,30 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                             structured.push({type: 'number', value: part});
                           } else if (part && operations[part]) {
                             structured.push({type: 'operation', value: operations[part]});
+                            operationFound = true;
                           }
                         });
                       }
                     });
+                    
+                    // If no operation was found in the text but we have a default operation based on activity,
+                    // insert it between the first two numbers
+                    if (!operationFound && defaultOperation) {
+                      const numberIndices = [];
+                      structured.forEach((item, index) => {
+                        if (item.type === 'number') {
+                          numberIndices.push(index);
+                        }
+                      });
+                      
+                      // Insert operation between first and second number
+                      if (numberIndices.length >= 2) {
+                        structured.splice(numberIndices[1], 0, {type: 'operation', value: defaultOperation});
+                      } else if (numberIndices.length === 1) {
+                        // Just add at the end if only one number
+                        structured.push({type: 'operation', value: defaultOperation});
+                      }
+                    }
                     
                     extracted = structured;
                   } else if (aslType === 'words' || aslType === 'sentence') {

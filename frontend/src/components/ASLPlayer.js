@@ -7,24 +7,24 @@ const ASLPlayer = ({ question }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [resourcesLoaded, setResourcesLoaded] = useState(false);
 
-  // Load ASL resources when component mounts
+  // load asl
   useEffect(() => {
     loadASLResources().then(() => {
       console.log('ASL resources loaded in ASLPlayer');
       setResourcesLoaded(true);
     }).catch(err => {
       console.error('Failed to load ASL resources in ASLPlayer:', err);
-      setResourcesLoaded(true); // Still set to true to avoid blocking
+      setResourcesLoaded(true); // to avoid blokcing
     });
   }, []);
 
   useEffect(() => {
     if (question && resourcesLoaded) {
-      const aslSequence = getASLFromQuestion(question);
-      console.log('ASL Sequence generated:', aslSequence);
+      const aslSequence = getASLFromQuestion(question); // generate signs
+      console.log('ASL Sequence generated:', aslSequence); 
       console.log('First item:', aslSequence[0]);
-      setSequence(aslSequence);
-      setCurrentIndex(0);
+      setSequence(aslSequence); // stores sequence in state so we can use anytime
+      setCurrentIndex(0); // from start
     }
   }, [question, resourcesLoaded]);
 

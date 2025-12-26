@@ -4,7 +4,7 @@ import { auth, api } from "../api/auth";
 import ASLPlayer from "../components/ASLPlayer";
 import { loadASLResources } from "../utils/aslTranslator";
 
-// Shuffle array utility function
+// shuffle questions
 const shuffleArray = (array) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -18,7 +18,7 @@ function MathQuiz() {
   const navigate = useNavigate();
   const { operation, level, sublevel } = useParams();
   
-  // Get timer duration based on difficulty level
+  // duration based aya level
   const getTimerDuration = () => {
     if (level === 'beginner') return 30;      // 30 seconds
     if (level === 'intermediate') return 60;  // 1 minute
@@ -26,7 +26,7 @@ function MathQuiz() {
     return 30; // default
   };
   
-  // Get operation display text
+  // operations
   const getOperationDisplay = () => {
     const operationMap = {
       'addition': '➕ Addition',
@@ -37,7 +37,7 @@ function MathQuiz() {
     return operationMap[operation] || '➕ Addition';
   };
   
-  // Get level display text
+  // levels
   const getLevelDisplay = () => {
     const levelMap = {
       'beginner': 'Beginner',
@@ -73,14 +73,14 @@ function MathQuiz() {
       const currentChild = auth.getCurrentChild();
       setUser({ ...userData, child: currentChild });
       
-      // Load ASL resources from backend
+      // asl men l backend
       loadASLResources().then(() => {
         console.log('ASL resources loaded for MathQuiz');
       }).catch(err => {
         console.error('Failed to load ASL resources:', err);
       });
       
-      // Fetch questions from database
+      // get ques from db
       loadQuizData();
     } else {
       navigate("/login");
@@ -92,43 +92,43 @@ function MathQuiz() {
       setLoading(true);
       
       // Map operation, level, and sublevel to activity IDs
-      let activityId = 7; // Default to Addition Beginner Level 1
+      let activityId = 7; // beginner 1
       
       if (operation === 'addition') {
         if (level === 'beginner') {
-          activityId = sublevel === '2' ? 8 : 7; // 7 or 8
+          activityId = sublevel === '2' ? 8 : 7; 
         } else if (level === 'intermediate') {
-          activityId = sublevel === '2' ? 11 : 10; // 10 or 11
+          activityId = sublevel === '2' ? 11 : 10; 
         } else if (level === 'advanced') {
-          activityId = sublevel === '2' ? 14 : 13; // 13 or 14
+          activityId = sublevel === '2' ? 14 : 13; 
         }
       } else if (operation === 'subtraction') {
         if (level === 'beginner') {
-          activityId = sublevel === '2' ? 17 : 16; // 16 or 17
+          activityId = sublevel === '2' ? 17 : 16; 
         } else if (level === 'intermediate') {
-          activityId = sublevel === '2' ? 20 : 19; // 19 or 20
+          activityId = sublevel === '2' ? 20 : 19; 
         } else if (level === 'advanced') {
-          activityId = sublevel === '2' ? 23 : 22; // 22 or 23
+          activityId = sublevel === '2' ? 23 : 22; 
         }
       } else if (operation === 'multiplication') {
         if (level === 'beginner') {
-          activityId = sublevel === '2' ? 26 : 25; // 25 or 26
+          activityId = sublevel === '2' ? 26 : 25; 
         } else if (level === 'intermediate') {
-          activityId = sublevel === '2' ? 29 : 28; // 28 or 29
+          activityId = sublevel === '2' ? 29 : 28; 
         } else if (level === 'advanced') {
-          activityId = sublevel === '2' ? 32 : 31; // 31 or 32
+          activityId = sublevel === '2' ? 32 : 31; 
         }
       } else if (operation === 'division') {
         if (level === 'beginner') {
-          activityId = sublevel === '2' ? 35 : 34; // 34 or 35
+          activityId = sublevel === '2' ? 35 : 34; 
         } else if (level === 'intermediate') {
-          activityId = sublevel === '2' ? 38 : 37; // 37 or 38
+          activityId = sublevel === '2' ? 38 : 37; 
         } else if (level === 'advanced') {
-          activityId = sublevel === '2' ? 41 : 40; // 40 or 41
+          activityId = sublevel === '2' ? 41 : 40; 
         }
       }
       
-      // Check if child has access to this level
+      // check if aando access to this level
       if (user?.child?.id) {
         const accessCheck = await api.checkLevelAccess(user.child.id, activityId);
         if (accessCheck.success && !accessCheck.allowed) {
@@ -392,7 +392,7 @@ function MathQuiz() {
         setCurrentQuestion(currentQuestion + 1);
         setTimeLeft(getTimerDuration());
       } else {
-        // Quiz complete - save results to database
+        // quiz complete
         saveQuizResults(newScore, [...answers, answerRecord]);
         setQuizComplete(true);
       }
@@ -444,7 +444,7 @@ function MathQuiz() {
       
       const maxScore = questions.length;
 
-      // Save quiz attempt
+      // save quiz attemot
       const result = await api.saveQuizAttempt({
         childId: user.child.id,
         activityId: activityId,
@@ -453,7 +453,7 @@ function MathQuiz() {
         answers: allAnswers
       });
 
-      // Save progress for level locking and award achievements
+      // Save progress for level
       const progressResult = await api.saveProgress({
         childId: user.child.id,
         activityId: activityId,
@@ -526,7 +526,7 @@ function MathQuiz() {
       utterance.pitch = 1.2; // Higher pitch for friendly voice
       utterance.volume = 1.0;
       
-      // Use a child-friendly voice if available
+      
       const voices = window.speechSynthesis.getVoices();
       const preferredVoice = voices.find(voice => 
         voice.name.toLowerCase().includes('female') || 
@@ -562,19 +562,6 @@ function MathQuiz() {
     }
   };
 
-  // Auto-play question when component mounts or question changes - DISABLED
-  // Students can click the speaker button to hear the question
-  // useEffect(() => {
-  //   if (!questions || questions.length === 0) return;
-  //   
-  //   const timer = setTimeout(() => {
-  //     if (!showResult && !quizComplete && audioEnabled && questions[currentQuestion]) {
-  //       speakQuestion();
-  //     }
-  //   }, 500);
-  //
-  //   return () => clearTimeout(timer);
-  // }, [currentQuestion, showResult, quizComplete, audioEnabled, questions]);
 
   if (!user || loading) {
     return (
@@ -694,7 +681,7 @@ function MathQuiz() {
               </div>
             )}
 
-            {/* New Achievements Display */}
+            
             {newAchievements && newAchievements.length > 0 && (
               <div style={{
                 backgroundColor: '#FFD700',

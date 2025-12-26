@@ -3,7 +3,7 @@
 let cachedResources = null;
 let resourceMap = { words: {}, numbers: {}, operations: {} };
 
-// Fetch ASL resources from backend
+// fetch asl
 export const loadASLResources = async () => {
   if (cachedResources) {
     console.log('ASL resources already cached:', Object.keys(resourceMap.words).length, 'words');
@@ -16,11 +16,11 @@ export const loadASLResources = async () => {
       const resources = await response.json();
       cachedResources = resources;
 
-      // Build lookup maps for fast access
+      
       resources.forEach(resource => {
         const path = `/asl/${resource.type}s/${resource.filename}`;
         
-        // Add main value (case-insensitive for words)
+        // Add main value 
         if (resource.type === 'word') {
           resourceMap.words[resource.value.toLowerCase()] = path;
         } else if (resource.type === 'number') {
@@ -290,7 +290,8 @@ export const getASLFromQuestion = (question) => {
     }
   }
   
-  const aslSigns = question.asl_signs || question.aslSigns;
+  const aslSigns = question.asl_signs || question.aslSigns; // Gets: '[{"type":"number","value":"2"},{"type":"operation","value":"plus"},{"type":"number","value":"3"}]'
+
   const aslType = question.asl_type || question.aslType;
   
   if (aslSigns) {

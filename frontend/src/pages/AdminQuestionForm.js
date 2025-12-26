@@ -29,10 +29,10 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
     difficulty_level: 1,
     points_value: 10,
     order_index: 1,
-    is_active: !isTeacher  // Teachers can't set active, defaults to false for them
+    is_active: !isTeacher  // teachers cannot set active status (only admin)
   });
 
-  // Separate state for MCQ options for easier input
+  
   const [mcqOptions, setMcqOptions] = useState({
     option1: '',
     option2: '',
@@ -654,7 +654,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                   let extracted = [];
 
                   if (aslType === 'numbers') {
-                    // Determine operation based on selected activity
+                    // operation hasab l activity 
                     const activityName = selectedActivity?.name?.toLowerCase() || '';
                     let defaultOperation = null;
                     
@@ -668,10 +668,10 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                       defaultOperation = 'divide';
                     }
                     
-                    // Extract numbers AND operation words from math questions IN ORDER
+                    // we extract by order
                     const lowerText = questionText.toLowerCase();
                     
-                    // Map of operation symbols/words to ASL-friendly words
+                    // operations
                     const operations = {
                       '+': 'plus',
                       'plus': 'plus',
@@ -690,7 +690,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                       'equals': 'equals'
                     };
                     
-                    // Common math question words
+                    // common math words
                     const mathWords = ['what', 'is', 'how', 'many', 'sum', 'difference', 'product', 'quotient'];
                     
                     // Parse question word by word in order
@@ -701,16 +701,16 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                     words.forEach(word => {
                       const cleanWord = word.toLowerCase().replace(/[^\w\d+\-×÷*/=]/g, '');
                       
-                      // Check if it's a number
+                      // check if its a number
                       if (/^\d+$/.test(cleanWord)) {
                         structured.push({type: 'number', value: cleanWord});
                       }
-                      // Check if it's an operation
+                      // if operation
                       else if (operations[cleanWord]) {
                         structured.push({type: 'operation', value: operations[cleanWord]});
                         operationFound = true;
                       }
-                      // Check if it's a math question word
+                      // if word math ques
                       else if (mathWords.includes(cleanWord)) {
                         structured.push({type: 'word', value: cleanWord});
                       }

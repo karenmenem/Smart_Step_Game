@@ -260,7 +260,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
     e.preventDefault();
     setError('');
     
-    // Build options array from separate inputs
+    // empty array for mcqs
     const optionsArray = [
       mcqOptions.option1.trim(),
       mcqOptions.option2.trim(),
@@ -268,7 +268,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
       mcqOptions.option4.trim()
     ].filter(opt => opt !== ''); // Remove empty options
     
-    // Validate required fields
+    // validate
     if (!formData.activity_id) {
       setError('Please select an activity');
       return;

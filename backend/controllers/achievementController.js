@@ -1,14 +1,12 @@
 const { query } = require('../config/database');
 
-/**
- * Check and award achievements after quiz completion
- */
+
 const checkAndAwardAchievements = async (childId, activityId, score, maxScore) => {
   try {
     const percentage = (score / maxScore) * 100;
     const newAchievements = [];
     
-    // Get child's current stats
+    
     const childProgress = await query(`
       SELECT COUNT(*) as completed_count,
              SUM(score) as total_points
@@ -20,13 +18,13 @@ const checkAndAwardAchievements = async (childId, activityId, score, maxScore) =
     const completedCount = stats.completed_count || 0;
     const totalPoints = stats.total_points || 0;
     
-    // Achievement 1: First Steps - Complete first activity
+    
     if (completedCount === 1) {
       await awardAchievement(childId, 1, 'Completed first activity!');
       newAchievements.push({ id: 1, name: 'First Steps' });
     }
     
-    // Achievement 2: Quick Learner - 5 activities in one day
+    
     const today = new Date().toISOString().split('T')[0];
     const todayCount = await query(`
       SELECT COUNT(*) as count 
@@ -47,7 +45,7 @@ const checkAndAwardAchievements = async (childId, activityId, score, maxScore) =
       }
     }
     
-    // Achievement 3: Math Wizard - Complete all Level 1 math (Activities 7, 16, 25, 34)
+    
     const mathLevel1 = await query(`
       SELECT COUNT(*) as count 
       FROM child_progress 
@@ -67,7 +65,7 @@ const checkAndAwardAchievements = async (childId, activityId, score, maxScore) =
       }
     }
     
-    // Achievement 5: Persistent - Complete activity after 3+ attempts
+    
     const attempts = await query(`
       SELECT attempts 
       FROM child_progress 
@@ -85,9 +83,9 @@ const checkAndAwardAchievements = async (childId, activityId, score, maxScore) =
       }
     }
     
-    // Perfect Score Achievement - 100%
+    
     if (percentage === 100) {
-      // Check if we have a "Perfect Score" achievement, if not create it
+     
       const perfectAchievement = await query(
         'SELECT * FROM achievement WHERE name = ?',
         ['Perfect Score']
@@ -113,12 +111,10 @@ const checkAndAwardAchievements = async (childId, activityId, score, maxScore) =
   }
 };
 
-/**
- * Award an achievement to a child
- */
+
 const awardAchievement = async (childId, achievementId, earnedFor) => {
   try {
-    // Check if already awarded
+    
     const existing = await query(
       'SELECT * FROM child_achievement WHERE child_id = ? AND achievement_id = ?',
       [childId, achievementId]
@@ -143,14 +139,12 @@ const awardAchievement = async (childId, achievementId, earnedFor) => {
   }
 };
 
-/**
- * Get all achievements for a child
- */
+
 const getChildAchievements = async (req, res) => {
   try {
     const { childId } = req.params;
     
-    // Get earned achievements
+    
     const earned = await query(`
       SELECT a.*, ca.earned_at
       FROM child_achievement ca
@@ -159,10 +153,10 @@ const getChildAchievements = async (req, res) => {
       ORDER BY ca.earned_at DESC
     `, [childId]);
     
-    // Get all available achievements
+    
     const all = await query('SELECT * FROM achievement ORDER BY achievement_id');
     
-    // Mark which are earned
+   
     const achievements = all.map(a => {
       const earnedData = earned.find(e => e.achievement_id === a.achievement_id);
       return {
@@ -190,9 +184,7 @@ const getChildAchievements = async (req, res) => {
   }
 };
 
-/**
- * Update child's total points
- */
+
 const updateChildPoints = async (childId, pointsToAdd) => {
   try {
     await query(
@@ -200,7 +192,7 @@ const updateChildPoints = async (childId, pointsToAdd) => {
       [pointsToAdd, childId]
     );
     
-    // Get updated total
+   
     const result = await query(
       'SELECT total_points FROM child WHERE child_id = ?',
       [childId]

@@ -549,7 +549,7 @@ function AdminDashboard() {
                 </button>
               </div>
               
-              {/* Filters Section */}
+              
               <div className="filters-section">
                 <div className="filter-group">
                   <label>🔍 Search</label>

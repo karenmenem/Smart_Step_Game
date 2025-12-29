@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 
-// Configure multer for file upload
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, '../uploads/profile-pictures/');
@@ -39,7 +39,7 @@ const upload = multer({
 
 const { query } = require('../config/database');
 
-// REGISTRATION ROUTE - Fixed and improved
+// registration route
 router.post('/register', upload.single('profilePicture'), async (req, res) => {
   console.log('Registration attempt:', {
     body: req.body,
@@ -49,7 +49,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
   try {
     const { email, password, childName, childAge } = req.body;
     
-    // Validate required fields
+    // validate email/pass/name...
     if (!email || !password || !childName || !childAge) {
       console.log('Missing required fields:', { email: !!email, password: !!password, childName: !!childName, childAge: !!childAge });
       return res.status(400).json({ 
@@ -58,7 +58,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
 
-    // Validate email format
+    // validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ 
@@ -67,7 +67,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
 
-    // Validate password length
+    // pass length
     if (password.length < 6) {
       return res.status(400).json({ 
         success: false, 
@@ -75,7 +75,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
 
-    // Validate child age
+    // age lal child
     const age = parseInt(childAge);
     if (isNaN(age) || age < 3 || age > 18) {
       return res.status(400).json({ 
@@ -84,7 +84,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
     
-    // Check if parent email already exists
+    // check eza parents email exists
     const existingParent = await query('SELECT * FROM parent WHERE email = ?', [email]);
     if (existingParent.length > 0) {
       console.log('Email already exists:', email);
@@ -94,12 +94,12 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       });
     }
     
-    // Hash password
+    // hash pass
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log('Password hashed successfully');
     
-    // Insert parent record
+    // insert parent recrd
     const parentResult = await query(
       'INSERT INTO parent (email, password) VALUES (?, ?)',
       [email, hashedPassword]
@@ -108,14 +108,14 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
     const parentId = parentResult.insertId;
     console.log('Parent created with ID:', parentId);
     
-    // Handle profile picture
+    // pp
     let profilePicturePath = null;
     if (req.file) {
       profilePicturePath = req.file.path.replace(/\\/g, '/'); // Normalize path separators
       console.log('Profile picture uploaded:', profilePicturePath);
     }
     
-    // Insert child record
+    // insert child record
     const childResult = await query(
       'INSERT INTO child (parent_id, name, age, current_math_level, current_english_level, profile_picture) VALUES (?, ?, ?, 1, 1, ?)',
       [parentId, childName, age, profilePicturePath]
@@ -135,7 +135,7 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
       { expiresIn: '7d' }
     );
     
-    // Prepare child data
+    // prepare child data
     const childData = {
       id: childId,
       name: childName,
@@ -181,12 +181,12 @@ router.post('/register', upload.single('profilePicture'), async (req, res) => {
   }
 });
 
-// LOGIN ROUTE - Updated to support multiple children
+// login - multople children
 router.post('/login', async (req, res) => {
-  console.log('Login attempt for:', req.body.email);
+  console.log('Login attempt for:', req.body.email); 
   
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body; // email + pass from react
     
     if (!email || !password) {
       return res.status(400).json({
@@ -195,7 +195,7 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // Find parent by email
+    // find parents email
     const parents = await query('SELECT * FROM parent WHERE email = ?', [email]);
     if (parents.length === 0) {
       console.log('Parent not found:', email);
@@ -207,7 +207,7 @@ router.post('/login', async (req, res) => {
     
     const parent = parents[0];
     
-    // Verify password
+    // to verify pass
     const isValidPassword = await bcrypt.compare(password, parent.password);
     if (!isValidPassword) {
       console.log('Invalid password for:', email);
@@ -217,7 +217,7 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // Get all children for this parent
+    // get all children from db
     const children = await query('SELECT * FROM child WHERE parent_id = ? ORDER BY created_at ASC', [parent.parent_id]);
     console.log(`Found ${children.length} children for parent:`, email);
     
@@ -232,7 +232,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
     
-    // Prepare children data
+    // prepare child data
     const childrenData = children.map(child => ({
       id: child.child_id,
       name: child.name,

@@ -843,9 +843,9 @@ const resetHomepageSettings = async (req, res) => {
   }
 };
 
-// ==================== TEACHER APPROVAL MANAGEMENT ====================
 
-// Get all pending teachers
+
+// pending for approval
 const getPendingTeachers = async (req, res) => {
   try {
     const teachers = await query(

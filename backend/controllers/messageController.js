@@ -1,6 +1,6 @@
 const { query } = require('../config/database');
 
-// Send message
+
 const sendMessage = async (req, res) => {
     try {
         const { recipientId, recipientType, message, relatedContentType, relatedContentId } = req.body;
@@ -18,7 +18,7 @@ const sendMessage = async (req, res) => {
             [senderId, senderType, recipientId, recipientType, message]
         );
         
-        // Create notification for recipient
+        
         await query(
             `INSERT INTO notifications (user_id, user_type, notification_type, title, message, related_id) 
              VALUES (?, ?, 'new_message', ?, ?, ?)`,
@@ -43,7 +43,7 @@ const sendMessage = async (req, res) => {
     }
 };
 
-// Get conversations for current user
+
 const getConversations = async (req, res) => {
     try {
         const userType = req.userType;
@@ -51,7 +51,7 @@ const getConversations = async (req, res) => {
         
         console.log('Getting conversations for:', { userType, userId });
         
-        // Get all messages involving this user
+        
         const allMessages = await query(
             `SELECT * FROM messages 
              WHERE (sender_type = ? AND sender_id = ?) OR (recipient_type = ? AND recipient_id = ?)
@@ -61,7 +61,7 @@ const getConversations = async (req, res) => {
         
         console.log('Found messages:', allMessages.length);
         
-        // Group by conversation partner
+        
         const conversationsMap = {};
         
         allMessages.forEach(msg => {
@@ -117,7 +117,7 @@ const getConversations = async (req, res) => {
     }
 };
 
-// Get messages in a conversation
+
 const getMessages = async (req, res) => {
     try {
         const { partnerId, partnerType } = req.params;

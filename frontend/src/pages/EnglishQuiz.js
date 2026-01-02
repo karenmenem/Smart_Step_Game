@@ -481,19 +481,19 @@ function EnglishQuiz() {
 							<div className="total-points-text">Total Points: {totalPoints + pointsEarned}</div>
 						</div>
 
-						<div className="results-actions">
-							<button className="retry-btn" onClick={() => window.location.reload()}>
+						<div className="results-buttons">
+							<button className="quiz-btn secondary-btn" onClick={() => window.location.reload()}>
 								🔄 Try Again
 							</button>
 							{passed && nextLevel && (
 								<button 
-									className="next-level-btn"
+									className="quiz-btn primary-btn"
 									onClick={() => navigate(`/english/${topic}/quiz/${nextLevel.level}/${nextLevel.sublevel}`)}
 								>
 									🚀 Next Level
 								</button>
 							)}
-							<button className="back-btn" onClick={goToLevels}>
+							<button className="quiz-btn tertiary-btn" onClick={goToLevels}>
 								📚 Back to Levels
 							</button>
 						</div>

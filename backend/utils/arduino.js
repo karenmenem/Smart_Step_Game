@@ -1,15 +1,8 @@
-/*
- * Optional Arduino Integration for SmartStep
- * CRASH-PROOF VERSION - Will NOT crash the backend
- * 
- * This module integrates Arduino quiz buzzer with the backend server.
- * It's completely optional - the server works fine without it.
- */
 
 const { SerialPort } = require('serialport');
 const { ReadlineParser } = require('@serialport/parser-readline');
 
-// Safe robot import - won't crash if it fails
+
 let robot = null;
 try {
   robot = require('robotjs');
@@ -24,7 +17,7 @@ class ArduinoManager {
     this.isConnected = false;
     this.isEnabled = process.env.ARDUINO_ENABLED === 'true';
     this.arduinoPort = process.env.ARDUINO_PORT || '/dev/cu.usbmodem11301';
-    this.baudRate = 9600;
+    this.baudRate = 9600; // speed
     this.robotAvailable = robot !== null;
   }
 

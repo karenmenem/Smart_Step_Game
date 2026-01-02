@@ -874,7 +874,7 @@ const getAllTeachers = async (req, res) => {
   }
 };
 
-// Approve teacher
+
 const approveTeacher = async (req, res) => {
   try {
     const { teacherId } = req.params;
@@ -887,6 +887,30 @@ const approveTeacher = async (req, res) => {
     // Get teacher info for notification
     const teachers = await query('SELECT name, email FROM teachers WHERE id = ?', [teacherId]);
     const teacher = teachers[0];
+    
+    // Create a default class for the teacher
+    const generateClassCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
+    
+    let classCode = generateClassCode();
+    let exists = await query('SELECT id FROM teacher_classes WHERE class_code = ?', [classCode]);
+    
+    while (exists && exists.length > 0) {
+      classCode = generateClassCode();
+      exists = await query('SELECT id FROM teacher_classes WHERE class_code = ?', [classCode]);
+    }
+    
+    await query(
+      `INSERT INTO teacher_classes (teacher_id, class_name, class_code, description, is_active)
+       VALUES (?, ?, ?, ?, TRUE)`,
+      [teacherId, `${teacher.name}'s Class`, classCode, 'My main class']
+    );
     
     // Create notification for teacher
     await query(
@@ -945,9 +969,7 @@ const rejectTeacher = async (req, res) => {
   }
 };
 
-// ==================== CONTENT APPROVAL MANAGEMENT ====================
 
-// Get pending content (questions/passages from teachers)
 const getPendingContent = async (req, res) => {
   try {
     const content = await query(`

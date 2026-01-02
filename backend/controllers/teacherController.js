@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
 const path = require('path');
 
-// Register new teacher
+
 const registerTeacher = async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -16,7 +16,7 @@ const registerTeacher = async (req, res) => {
             return res.status(400).json({ error: 'Certificate upload is required' });
         }
 
-        // Check if email already exists
+        
         const existing = await query(
             'SELECT id FROM teachers WHERE email = ?',
             [email]
@@ -26,13 +26,13 @@ const registerTeacher = async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
-        // Hash password
+     
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Save certificate path
+        
         const certificatePath = `/uploads/certificates/${req.file.filename}`;
 
-        // Insert teacher
+        
         const result = await query(
             'INSERT INTO teachers (name, email, password, certificate_path, status) VALUES (?, ?, ?, ?, ?)',
             [name, email, hashedPassword, certificatePath, 'pending']
@@ -65,7 +65,7 @@ const registerTeacher = async (req, res) => {
     }
 };
 
-// Teacher login
+
 const loginTeacher = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -74,7 +74,7 @@ const loginTeacher = async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        // Get teacher
+      
         const teachers = await query(
             'SELECT * FROM teachers WHERE email = ?',
             [email]
@@ -86,7 +86,7 @@ const loginTeacher = async (req, res) => {
 
         const teacher = teachers[0];
 
-        // Check password
+      
         const validPassword = await bcrypt.compare(password, teacher.password);
         if (!validPassword) {
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -107,7 +107,7 @@ const loginTeacher = async (req, res) => {
             });
         }
 
-        // Generate token
+       
         const token = jwt.sign(
             { id: teacher.id, email: teacher.email, type: 'teacher' },
             process.env.JWT_SECRET || 'your-secret-key-change-this',
@@ -130,7 +130,7 @@ const loginTeacher = async (req, res) => {
     }
 };
 
-// Get teacher profile
+
 const getTeacherProfile = async (req, res) => {
     try {
         const teachers = await query(

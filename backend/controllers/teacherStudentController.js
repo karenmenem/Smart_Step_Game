@@ -1,6 +1,6 @@
 const { query } = require('../config/database');
 
-// Generate unique class code
+
 function generateClassCode() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';

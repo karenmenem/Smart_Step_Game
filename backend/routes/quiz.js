@@ -134,7 +134,7 @@ router.get('/reading-passage/:subject/:topic/:level/:sublevel', async (req, res)
         author,
         content
       FROM reading_passage
-      WHERE subject = ? AND topic = ? AND level = ? AND sublevel = ?
+      WHERE subject = ? AND topic = ? AND level = ? AND sublevel = ? AND is_active = 1
     `;
     
     const passages = await query(sqlQuery, [subject, topic, parseInt(level), parseInt(sublevel)]);

@@ -243,14 +243,6 @@ function ParentDashboard() {
             </div>
           </div>
 
-          <div className="stat-card time">
-            <div className="stat-icon">⏱️</div>
-            <div className="stat-info">
-              <h3>{formatTime(stats.totalTimeSpent)}</h3>
-              <p>Time Spent</p>
-            </div>
-          </div>
-
           <div className="stat-card average">
             <div className="stat-icon">📊</div>
             <div className="stat-info">
@@ -264,14 +256,6 @@ function ParentDashboard() {
             <div className="stat-info">
               <h3>{stats.bestScore}%</h3>
               <p>Best Score</p>
-            </div>
-          </div>
-
-          <div className="stat-card streak">
-            <div className="stat-icon">🔥</div>
-            <div className="stat-info">
-              <h3>{stats.currentStreak}</h3>
-              <p>Day Streak</p>
             </div>
           </div>
 

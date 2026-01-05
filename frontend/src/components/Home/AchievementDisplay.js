@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auth, api } from '../../api/auth';
 
 function AchievementDisplay() {
+  const navigate = useNavigate();
   const [achievements, setAchievements] = useState([]);
   const [stats, setStats] = useState({ totalEarned: 0, totalAvailable: 0, totalPoints: 0 });
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ function AchievementDisplay() {
         setStats({
           totalEarned: response.data.totalEarned || 0,
           totalAvailable: response.data.totalAvailable || 0,
-          totalPoints: child.total_points || 0
+          totalPoints: response.data.totalPoints || 0
         });
       }
     } catch (error) {
@@ -73,6 +75,34 @@ function AchievementDisplay() {
   return (
     <div className="achievement-display">
       <div className="achievement-header">
+        <button 
+          onClick={() => navigate('/')} 
+          className="back-to-home-btn"
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            padding: '10px 20px',
+            fontSize: '16px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontWeight: 'bold',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            zIndex: 10
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
+        >
+          <span style={{ fontSize: '20px' }}>🏠</span> Back to Home
+        </button>
+        
         <div className="header-icons">
           <span className="header-icon">🌟</span>
           <span className="header-icon">🏆</span>
@@ -88,10 +118,6 @@ function AchievementDisplay() {
           <div className="stat-item">
             <span className="stat-number">{stats.totalAvailable}</span>
             <span className="stat-label">Total</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{stats.totalPoints}</span>
-            <span className="stat-label">Points</span>
           </div>
         </div>
       </div>

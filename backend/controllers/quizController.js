@@ -1,6 +1,6 @@
 const { query } = require('../config/database');
 
-// get ques mn activity maayane
+
 const getQuestions = async (req, res) => {
   try {
     const { activityId } = req.params;

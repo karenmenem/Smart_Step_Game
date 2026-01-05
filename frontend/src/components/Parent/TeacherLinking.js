@@ -9,15 +9,19 @@ function TeacherLinking({ child }) {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (child?.child_id) {
+    console.log('TeacherLinking - child prop:', child);
+    if (child?.child_id || child?.id) {
       loadTeacherLinks();
     }
   }, [child]);
 
   const loadTeacherLinks = async () => {
-    const result = await api.getChildTeacherLinks(child.child_id);
+    const childId = child?.child_id || child?.id;
+    console.log('Loading teacher links for child ID:', childId);
+    const result = await api.getChildTeacherLinks(childId);
+    console.log('Teacher links result:', result);
     if (result.success) {
-      setTeacherLinks(result.links);
+      setTeacherLinks(result.links || []);
     }
   };
 
@@ -31,7 +35,8 @@ function TeacherLinking({ child }) {
     setLoading(true);
     setMessage('');
 
-    const result = await api.linkChildToTeacher(child.child_id, classCode.trim().toUpperCase());
+    const childId = child?.child_id || child?.id;
+    const result = await api.linkChildToTeacher(childId, classCode.trim().toUpperCase());
     
     if (result.success) {
       setMessage(`✅ Successfully linked to ${result.teacher.name}'s class!`);

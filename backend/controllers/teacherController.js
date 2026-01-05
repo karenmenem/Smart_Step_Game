@@ -359,10 +359,10 @@ const createPassage = async (req, res) => {
         // Insert passage (not active until approved)
         const result = await query(
             `INSERT INTO reading_passage 
-            (subject, topic, level, sublevel, title, author, content, passage, difficulty,
-             created_by_type, created_by_id, has_required_asl) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'teacher', ?, TRUE)`,
-            [subject, topic, level, sublevel, title, author || null, passageContent, passageContent, 
+            (subject, topic, level, sublevel, title, author, content, difficulty,
+             created_by_id, has_required_asl) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+            [subject, topic, level, sublevel, title, author || null, passageContent, 
              difficulty || 'medium', teacherId]
         );
         

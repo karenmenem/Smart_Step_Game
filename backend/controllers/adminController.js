@@ -16,7 +16,7 @@ const getAllQuestions = async (req, res) => {
       JOIN activity a ON q.activity_id = a.activity_id
       JOIN section s ON a.section_id = s.section_id
       JOIN subject sub ON s.subject_id = sub.subject_id
-      WHERE 1=1
+      WHERE q.is_active = 1
     `;
     const params = [];
     
@@ -1043,17 +1043,31 @@ const approveContent = async (req, res) => {
     const { contentId } = req.params;
     const adminId = req.admin?.adminId || req.admin?.admin_id;
     
-    await query(
-      'UPDATE teacher_content SET approval_status = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?',
-      ['approved', adminId, contentId]
-    );
-    
-    // Get content info for notification
+    // Get content info first
     const contentRows = await query(
       'SELECT teacher_id, content_type, content_id FROM teacher_content WHERE id = ?',
       [contentId]
     );
     const content = contentRows[0];
+    
+    // Update teacher_content status
+    await query(
+      'UPDATE teacher_content SET approval_status = ?, reviewed_by = ?, reviewed_at = NOW() WHERE id = ?',
+      ['approved', adminId, contentId]
+    );
+    
+    // Activate the actual content (question or passage)
+    if (content.content_type === 'question') {
+      await query(
+        'UPDATE question SET is_active = 1 WHERE question_id = ?',
+        [content.content_id]
+      );
+    } else if (content.content_type === 'passage') {
+      await query(
+        'UPDATE reading_passage SET is_active = 1 WHERE passage_id = ?',
+        [content.content_id]
+      );
+    }
 
     // Create notification for teacher (related_id refers to the actual content record)
     await query(

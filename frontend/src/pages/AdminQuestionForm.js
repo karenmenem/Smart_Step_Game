@@ -431,12 +431,13 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                 value={formData.question_type}
                 onChange={handleChange}
                 required
+                disabled
               >
                 <option value="multiple_choice">Multiple Choice</option>
-                <option value="true_false">True/False</option>
-                <option value="fill_blank">Fill in the Blank</option>
-                <option value="drag_drop">Drag & Drop</option>
               </select>
+              <small style={{ color: '#666', fontSize: '12px' }}>
+                Currently only Multiple Choice questions are supported
+              </small>
             </div>
           </div>
 
@@ -750,14 +751,15 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                     
                     extracted = structured;
                   } else if (aslType === 'words' || aslType === 'sentence') {
-                    // Extract meaningful words (remove common stop words)
-                    const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can', 'she', 'he', 'it', 'they', 'them', 'their', 'what', 'when', 'where', 'who', 'which', 'how', 'many', 'much'];
+                    // Extract all words - only filter out very basic articles
+                    // Keep pronouns, question words, and verbs as they're important for ASL
+                    const stopWords = ['the', 'a', 'an'];
                     
                     // Remove emojis and special characters, split into words
                     const cleaned = questionText.replace(/[^\w\s]/g, '').toLowerCase();
                     const words = cleaned.split(/\s+/)
-                      .filter(w => w.length > 2 && !stopWords.includes(w))
-                      .slice(0, 15); // Limit to 15 words
+                      .filter(w => w.length > 1 && !stopWords.includes(w))
+                      .slice(0, 20); // Increased limit to 20 words
                     
                     extracted = words;
                   }

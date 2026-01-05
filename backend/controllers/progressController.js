@@ -260,7 +260,9 @@ const saveQuizProgress = async (req, res) => {
     }
     
     const pointsEarned = score * 10;
+    console.log(`💰 Child ${childId} earned ${pointsEarned} points (score: ${score})`);
     const newTotalPoints = await updateChildPoints(childId, pointsEarned);
+    console.log(`📊 Child ${childId} now has ${newTotalPoints} total points`);
     const newAchievements = await checkAndAwardAchievements(childId, activityId, score, maxScore);
     
     // Check and update child level if they completed a level

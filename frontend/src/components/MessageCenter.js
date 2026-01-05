@@ -11,7 +11,7 @@ function MessageCenter({ userType, onClose, onMessageRead }) {
 
     useEffect(() => {
         loadConversations();
-        // Poll for new messages every 10 seconds
+        
         const interval = setInterval(loadConversations, 10000);
         return () => clearInterval(interval);
     }, []);
@@ -69,7 +69,7 @@ function MessageCenter({ userType, onClose, onMessageRead }) {
             if (response.ok) {
                 const data = await response.json();
                 setMessages(data.data || []);
-                // Notify parent that messages were read
+                // notify
                 if (onMessageRead) {
                     onMessageRead();
                 }
@@ -123,11 +123,10 @@ function MessageCenter({ userType, onClose, onMessageRead }) {
     };
 
     const startNewConversation = () => {
-        // For teachers: start conversation with admin
-        // For admins: they can only reply to teacher messages
+        // start convo
         if (userType === 'teacher') {
             setActiveConversation({
-                partner_id: 1, // Admin ID (you might need to fetch this)
+                partner_id: 1, // Admin ID
                 partner_type: 'admin',
                 partner_name: 'Admin'
             });
@@ -144,7 +143,7 @@ function MessageCenter({ userType, onClose, onMessageRead }) {
                 </div>
 
                 <div className="message-center-body">
-                    {/* Conversations List */}
+                 
                     <div className="conversations-list">
                         <div className="conversations-header">
                             <h3>Conversations</h3>
@@ -199,7 +198,7 @@ function MessageCenter({ userType, onClose, onMessageRead }) {
                         )}
                     </div>
 
-                    {/* Messages Area */}
+                   
                     <div className="messages-area">
                         {activeConversation ? (
                             <>

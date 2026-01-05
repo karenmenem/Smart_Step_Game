@@ -97,7 +97,7 @@ const ASLManager = () => {
     ? resources 
     : resources.filter(r => r.type === filter);
 
-  // Apply search filter
+  
   const searchedResources = searchTerm 
     ? filteredResources.filter(r => 
         r.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,7 +124,7 @@ const ASLManager = () => {
         </div>
       )}
 
-      {/* Upload Form */}
+      
       <div className="asl-upload-section">
         <h2>Upload New ASL Video</h2>
         <form onSubmit={handleUpload} className="upload-form">
@@ -180,7 +180,7 @@ const ASLManager = () => {
         </form>
       </div>
 
-      {/* Resources Table */}
+      
       <div className="asl-resources-section">
         <div className="resources-header">
           <h2>ASL Resources ({searchedResources.length})</h2>

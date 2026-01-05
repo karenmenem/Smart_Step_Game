@@ -281,7 +281,24 @@ function AdminApprovals() {
                                             </div>
                                             {content.approval_status === 'pending_asl' && (
                                                 <div className="asl-warning">
-                                                    ⚠️ This question needs ASL videos to be added in ASL Manager
+                                                    <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
+                                                        ⚠️ This question needs ASL videos to be added in ASL Manager
+                                                    </div>
+                                                    {content.missing_asl && content.missing_asl.length > 0 && (
+                                                        <div style={{ marginTop: '8px', padding: '10px', background: '#fff3cd', borderRadius: '5px' }}>
+                                                            <strong>Missing ASL Resources:</strong>
+                                                            <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+                                                                {content.missing_asl.map((item, idx) => (
+                                                                    <li key={idx}>
+                                                                        <strong>{item.value}</strong> ({item.type})
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                            <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                                                                💡 Go to ASL Manager to upload these videos
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

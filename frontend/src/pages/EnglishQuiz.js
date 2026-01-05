@@ -159,7 +159,7 @@ function EnglishQuiz() {
 				return;
 			}
 			
-			// Map keys A, B, C, D to option indices 0, 1, 2, 3
+			// map keys for keyboard
 			const keyMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
 			
 			if (keyMap.hasOwnProperty(key) && currentOptions[keyMap[key]] && !showResult) {
@@ -167,9 +167,9 @@ function EnglishQuiz() {
 				const question = questions[currentQuestion];
 				console.log(`🎮 Arduino Button ${key} pressed → Selecting: ${selectedOption}`);
 				
-				// Update answer and trigger submission
+				// update answer 
 				handleAnswer(question.id, selectedOption);
-				// Trigger the "Continue" button action after a brief delay
+				
 				setTimeout(() => {
 					showFeedbackAndMoveNext();
 				}, 100);
@@ -183,16 +183,16 @@ function EnglishQuiz() {
 	const loadQuizContent = async () => {
 		setLoading(true);
 		
-		// Fetch pinned text for comprehension from database
+		// fetch from db
 		if (topic === "comprehension") {
 			try {
-				// Convert level name to number: beginner=1, intermediate=2, advanced=3
+				// level to number bas
 				const levelMap = { 'beginner': 1, 'intermediate': 2, 'advanced': 3 };
 				const levelNum = levelMap[level.toLowerCase()] || parseInt(level) || 1;
 				const sublevelNum = parseInt(sublevel) || 1;
 				
 				const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
-				const response = await fetch(`${API_URL}/quiz/reading-passage/English/comprehension/${levelNum}/${sublevelNum}`);
+				const response = await fetch(`${API_URL}/quiz/reading-passage/English/comprehension/${levelNum}/${sublevelNum}`); // check if ques has passage
 				const data = await response.json();
 				
 				if (data.success && data.data) {
@@ -212,9 +212,9 @@ function EnglishQuiz() {
 			}
 		}
 
-		// Load actual questions from database
+		// load ques
 		try {
-			// Map activity names to IDs (temporary solution)
+			// ids
 			const activityMap = {
 				'Comprehension Beginner - Level 1': 43,
 				'Comprehension Beginner - Level 2': 44,
@@ -259,7 +259,7 @@ function EnglishQuiz() {
 						aslType: q.aslType || 'none'
 					}));
 					
-					// Shuffle questions
+					
 					const shuffledQuestions = shuffleArray(loadedQuestions);
 					setQuestions(shuffledQuestions);
 				} else {

@@ -4,7 +4,7 @@ import { auth, api } from "../api/auth";
 import ASLPlayer from "../components/ASLPlayer";
 import { loadASLResources } from "../utils/aslTranslator";
 
-// shuffle questions
+
 const shuffleArray = (array) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -18,15 +18,15 @@ function MathQuiz() {
   const navigate = useNavigate();
   const { operation, level, sublevel } = useParams();
   
-  // duration based aya level
+ 
   const getTimerDuration = () => {
-    if (level === 'beginner') return 30;      // 30 seconds
-    if (level === 'intermediate') return 60;  // 1 minute
-    if (level === 'advanced') return 90;      // 1.5 minutes
-    return 30; // default
+    if (level === 'beginner') return 30;      
+    if (level === 'intermediate') return 60;  
+    if (level === 'advanced') return 90;      
+    return 30; 
   };
   
-  // operations
+  
   const getOperationDisplay = () => {
     const operationMap = {
       'addition': '➕ Addition',
@@ -37,7 +37,7 @@ function MathQuiz() {
     return operationMap[operation] || '➕ Addition';
   };
   
-  // levels
+ 
   const getLevelDisplay = () => {
     const levelMap = {
       'beginner': 'Beginner',
@@ -128,7 +128,7 @@ function MathQuiz() {
         }
       }
       
-      // check if aando access to this level
+      
       if (user?.child?.id) {
         const accessCheck = await api.checkLevelAccess(user.child.id, activityId);
         if (accessCheck.success && !accessCheck.allowed) {
@@ -153,12 +153,10 @@ function MathQuiz() {
         }));
         setQuestions(shuffledQuestions);
       } else {
-        console.error('Failed to load questions, using fallback');
-        const shuffledFallback = shuffleArray(getFallbackQuestions()).map(q => ({
-          ...q,
-          options: shuffleArray([...q.options])
-        }));
-        setQuestions(shuffledFallback);
+        console.error('Failed to load questions from database');
+        alert('Unable to load quiz questions. Please try again later.');
+        navigate(`/math/${operation}`);
+        return;
       }
       
       if (activityResponse.success) {
@@ -168,98 +166,13 @@ function MathQuiz() {
       setLoading(false);
     } catch (error) {
       console.error('Error loading quiz data:', error);
-      setQuestions(getFallbackQuestions());
+      alert('An error occurred while loading the quiz. Please try again.');
+      navigate(`/math/${operation}`);
       setLoading(false);
     }
   };
 
-  const getFallbackQuestions = () => {
-    // Fallback questions in case API fails
-    return [
-      {
-        id: 1,
-        question: "What is 2 + 3?",
-        aslSigns: [2, 3],
-        options: ["4", "5", "6", "7"],
-        correct: "5"
-      },
-      {
-        id: 2,
-        question: "What is 1 + 4?",
-        aslSigns: [1, 4],
-        options: ["3", "4", "5", "6"],
-        correct: "5"
-      },
-      {
-        id: 3,
-        question: "What is 3 + 2?",
-        aslSigns: [3, 2],
-        options: ["4", "5", "6", "7"],
-        correct: "5"
-      },
-      {
-        id: 4,
-        question: "What is 4 + 1?",
-        aslSigns: [4, 1],
-        options: ["3", "4", "5", "6"],
-        correct: "5"
-      },
-      {
-        id: 5,
-        question: "What is 2 + 2?",
-        aslSigns: [2, 2],
-        options: ["3", "4", "5", "6"],
-        correct: "4"
-      },
-      {
-        id: 6,
-        question: "What is 3 + 3?",
-        aslSigns: [3, 3],
-        options: ["5", "6", "7", "8"],
-        correct: "6"
-      },
-      {
-        id: 7,
-        question: "What is 1 + 6?",
-        aslSigns: [1, 6],
-        options: ["6", "7", "8", "9"],
-        correct: "7"
-      },
-      {
-        id: 8,
-        question: "What is 5 + 2?",
-        aslSigns: [5, 2],
-        options: ["6", "7", "8", "9"],
-        correct: "7"
-      },
-      {
-        id: 9,
-        question: "What is 4 + 3?",
-        aslSigns: [4, 3],
-        options: ["6", "7", "8", "9"],
-        correct: "7"
-      },
-      {
-        id: 10,
-        question: "What is 2 + 6?",
-        aslSigns: [2, 6],
-        options: ["7", "8", "9", "10"],
-        correct: "8"
-      }
-    ];
-  };
-
-  // ASL number signs with animated descriptions
-  const aslNumbers = {
-    1: { name: "ONE", description: "Index finger extended" },
-    2: { name: "TWO", description: "Peace sign" },
-    3: { name: "THREE", description: "Thumb, index, middle" },
-    4: { name: "FOUR", description: "Four fingers up" },
-    5: { name: "FIVE", description: "Open hand" },
-    6: { name: "SIX", description: "Pinky and thumb" }
-  };
-
-  // Timer countdown
+  // timer countdown
   useEffect(() => {
     if (!questions || questions.length === 0) return;
     
@@ -271,15 +184,15 @@ function MathQuiz() {
     }
   }, [timeLeft, showResult, quizComplete, questions, timerPaused]);
 
-  // Keyboard support for Arduino buzzer buttons (A, B, C, D) and Enter for Continue
-  useEffect(() => {
+  // keyboard support for arduino
+  useEffect(() => { // runs when dependancies change
     if (!questions || questions.length === 0 || quizComplete) return;
 
     const handleKeyPress = (e) => {
       const key = e.key.toUpperCase();
       const currentOptions = questions[currentQuestion]?.options || [];
       
-      // Enter/Return key triggers Continue/Next button
+      // enter key triggers continue...
       if (e.key === 'Enter' && showResult && !quizComplete) {
         e.preventDefault();
         console.log('⏎ Enter pressed → Moving to next question');
@@ -287,14 +200,14 @@ function MathQuiz() {
         return;
       }
       
-      // Map keys A, B, C, D to option indices 0, 1, 2, 3
+      
       const keyMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
       
       if (keyMap.hasOwnProperty(key) && currentOptions[keyMap[key]] && !showResult) {
         const selectedOption = currentOptions[keyMap[key]];
         console.log(`🎮 Arduino Button ${key} pressed → Selecting: ${selectedOption}`);
         handleAnswerSelect(selectedOption);
-        // Auto-submit after Arduino button press (like English Quiz)
+        // auto submit after pressing 
         setTimeout(() => {
           handleNextQuestion();
         }, 100);
@@ -305,20 +218,20 @@ function MathQuiz() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [questions, currentQuestion, showResult, quizComplete]);
 
-  // Generate hints based on question
+  
   const generateHints = (question) => {
     const text = question.question || question.text || "";
     const isWordProblem = text.length > 50;
     
     if (isWordProblem) {
-      // Word problem hints
+      
       return [
         "💡 Read the problem carefully and identify the numbers.",
         "💡 What operation do you need? Look for keywords like 'total', 'altogether', 'in all'.",
         "💡 Write down the numbers and add them step by step. Start with the first two numbers."
       ];
     } else {
-      // Number problem hints
+     
       const numbers = text.match(/\d+/g);
       if (numbers && numbers.length >= 2) {
         const num1 = parseInt(numbers[0]);
@@ -372,7 +285,7 @@ function MathQuiz() {
       setScore(newScore);
     }
 
-    // Track answer for this question
+    // track answers
     const answerRecord = {
       questionId: questions[currentQuestion].id,
       selectedAnswer: selectedAnswer,
@@ -444,7 +357,7 @@ function MathQuiz() {
       
       const maxScore = questions.length;
 
-      // save quiz attemot
+      
       const result = await api.saveQuizAttempt({
         childId: user.child.id,
         activityId: activityId,
@@ -453,7 +366,7 @@ function MathQuiz() {
         answers: allAnswers
       });
 
-      // Save progress for level
+      
       const progressResult = await api.saveProgress({
         childId: user.child.id,
         activityId: activityId,
@@ -461,7 +374,7 @@ function MathQuiz() {
         maxScore: maxScore
       });
 
-      // Store achievement/points info for display
+      // store achie
       if (progressResult.success) {
         setPointsEarned(progressResult.pointsEarned || 0);
         setNewAchievements(progressResult.newAchievements || []);
@@ -471,7 +384,7 @@ function MathQuiz() {
       if (result.success) {
         console.log('Quiz results saved successfully:', result.data);
         
-        // Update user's total points in session storage
+        // update
         if (result.data.passed) {
           const updatedUser = { ...user };
           if (updatedUser.child) {

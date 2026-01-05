@@ -197,8 +197,10 @@ router.get('/reading-passages', adminAuth, async (req, res) => {
         author,
         content,
         difficulty,
-        created_at
+        updated_at as created_at,
+        is_active
       FROM reading_passage
+      WHERE is_active = 1
       ORDER BY subject, topic, level, sublevel
     `);
     

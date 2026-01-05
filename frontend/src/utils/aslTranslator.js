@@ -29,7 +29,7 @@ export const loadASLResources = async () => {
           resourceMap.operations[resource.value.toLowerCase()] = path;
         }
 
-        // Add aliases
+        //  same resoirce using multiple names, add plus, sum...
         if (resource.aliases) {
           const aliases = JSON.parse(resource.aliases);
           aliases.forEach(alias => {

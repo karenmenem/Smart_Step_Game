@@ -19,25 +19,25 @@ const combinedAuth = async (req, res, next) => {
         return res.status(401).json({ error: 'Authentication required' });
     }
     
-    // Try admin auth first
+    // admin auth
     try {
         const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'smartstep-secret-key-2024');
         
         if (decoded.adminId) {
-            // This is an admin token
+            // admin token hay
             req.admin = decoded;
             req.userType = 'admin';
             return next();
         }
     } catch (err) {
-        // Not an admin token, try teacher auth
+        
     }
     
-    // Try teacher auth
+    // teacher
     try {
         await teacherAuth(req, res, () => {
-            // Teacher auth sets req.teacher, req.teacherId, and req.userType
+            
             next();
         });
     } catch (err) {
@@ -46,7 +46,7 @@ const combinedAuth = async (req, res, next) => {
     }
 };
 
-// All routes require authentication (admin or teacher)
+// all routes li bdon authentication
 router.use(combinedAuth);
 
 router.post('/send', sendMessage);

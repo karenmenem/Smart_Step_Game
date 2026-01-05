@@ -26,7 +26,7 @@ function Subjects() {
       const data = await response.json();
       
       if (data.success && data.data) {
-        setSubjects(data.data);
+        setSubjects(data.data); // array of all men db
       }
     } catch (error) {
       console.error('Error loading subjects:', error);
@@ -35,7 +35,7 @@ function Subjects() {
     }
   };
 
-  // Get icon for subject
+  
   const getSubjectIcon = (subjectName) => {
     const icons = {
       'Math': '🔢',

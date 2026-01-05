@@ -85,6 +85,7 @@ router.get('/reading-passages', teacherAuth, async (req, res) => {
         const passages = await query(`
             SELECT passage_id as id, title, content as passage_text, level, sublevel, topic
             FROM reading_passage
+            WHERE is_active = 1
             ORDER BY level, sublevel, title
         `);
         res.json({ passages });

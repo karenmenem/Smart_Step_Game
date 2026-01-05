@@ -144,6 +144,13 @@ const getChildAchievements = async (req, res) => {
   try {
     const { childId } = req.params;
     
+    // Get child's total points
+    const childData = await query(
+      'SELECT total_points FROM child WHERE child_id = ?',
+      [childId]
+    );
+    const totalPoints = childData[0]?.total_points || 0;
+    
     
     const earned = await query(`
       SELECT a.*, ca.earned_at
@@ -171,7 +178,8 @@ const getChildAchievements = async (req, res) => {
       data: {
         achievements,
         totalEarned: earned.length,
-        totalAvailable: all.length
+        totalAvailable: all.length,
+        totalPoints: totalPoints
       }
     });
     

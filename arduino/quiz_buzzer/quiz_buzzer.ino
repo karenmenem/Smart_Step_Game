@@ -1,64 +1,40 @@
-/*
- * SmartStep Arduino Quiz Buzzer System
- * 
- * Hardware Setup:
- * - Button A (Red)    → Pin 2 → Answer A  → LED Pin 9 (Red LED)
- * - Button B (Blue)   → Pin 3 → Answer B  → LED Pin 10 (Blue LED)
- * - Button C (Green)  → Pin 4 → Answer C  → LED Pin 11 (Green LED)
- * - Button D (Yellow) → Pin 5 → Answer D  → LED Pin 6 (Yellow LED)
- * - Buzzer            → Pin 8
- * - LED Green         → Pin 12 (Correct answer feedback)
- * - LED Red           → Pin 13 (Wrong answer feedback)
- * 
- * Each button should connect to:
- * - One side → Arduino digital pin
- * - Other side → GND (ground)
- * 
- * Each button LED indicator (shows which button is A/B/C/D):
- * - LED + (long leg) → Arduino pin through 220Ω resistor
- * - LED - (short leg) → GND
- * 
- * Use INPUT_PULLUP mode so buttons work without external resistors
- */
 
-// Button pins
 const int buttonA = 2;
 const int buttonB = 3;
 const int buttonC = 4;
 const int buttonD = 5;
 
-// Button indicator LEDs (to identify which button is which)
-const int ledA = 9;   // Red LED for Button A
-const int ledB = 10;  // Blue LED for Button B
-const int ledC = 11;  // Green LED for Button C
-const int ledD = 6;   // Yellow LED for Button D
 
-// Buzzer and feedback LED pins
+const int ledA = 9;   
+const int ledB = 10;  
+const int ledC = 11;  
+const int ledD = 6;   
+
+
 const int buzzerPin = 8;
-const int ledGreen = 12;  // Correct answer feedback
-const int ledRed = 13;     // Wrong answer feedback
+const int ledGreen = 12;  // correct
+const int ledRed = 13;     // wrong
 
 // Debounce timing
 unsigned long lastDebounceTime = 0;
-const unsigned long debounceDelay = 300; // 300ms between button presses
-
+const unsigned long debounceDelay = 300; 
 void setup() {
-  // Initialize serial communication at 9600 baud
-  Serial.begin(9600);
   
-  // Set button pins as INPUT_PULLUP (no external resistors needed)
+  Serial.begin(9600); // open serial communication
+  
+  
   pinMode(buttonA, INPUT_PULLUP);
   pinMode(buttonB, INPUT_PULLUP);
   pinMode(buttonC, INPUT_PULLUP);
   pinMode(buttonD, INPUT_PULLUP);
   
-  // Set button indicator LEDs as outputs
+  
   pinMode(ledA, OUTPUT);
   pinMode(ledB, OUTPUT);
   pinMode(ledC, OUTPUT);
   pinMode(ledD, OUTPUT);
   
-  // Set buzzer and feedback LED pins as outputs
+  
   pinMode(buzzerPin, OUTPUT);
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
@@ -67,11 +43,11 @@ void setup() {
   digitalWrite(ledGreen, LOW);
   digitalWrite(ledRed, LOW);
   
-  // Turn ON button indicator LEDs (so users know which button is which)
+  // Turn ON button indicator LEDs 
   digitalWrite(ledA, HIGH);  // Button A indicator always ON
-  digitalWrite(ledB, HIGH);  // Button B indicator always ON
-  digitalWrite(ledC, HIGH);  // Button C indicator always ON
-  digitalWrite(ledD, HIGH);  // Button D indicator always ON
+  digitalWrite(ledB, HIGH);  
+  digitalWrite(ledC, HIGH);  
+  digitalWrite(ledD, HIGH);  
   
   // Startup beep and LED sequence
   tone(buzzerPin, 1000, 200);
@@ -101,32 +77,32 @@ void loop() {
   // Check if enough time has passed since last button press (debounce)
   if ((currentTime - lastDebounceTime) > debounceDelay) {
     
-    // Check Button A (Pin 2) - LOW means pressed (INPUT_PULLUP)
+    
     if (digitalRead(buttonA) == LOW) {
       sendAnswer('A');
       lastDebounceTime = currentTime;
     }
     
-    // Check Button B (Pin 3)
+   
     else if (digitalRead(buttonB) == LOW) {
       sendAnswer('B');
       lastDebounceTime = currentTime;
     }
     
-    // Check Button C (Pin 4)
+    
     else if (digitalRead(buttonC) == LOW) {
       sendAnswer('C');
       lastDebounceTime = currentTime;
     }
     
-    // Check Button D (Pin 5)
+    
     else if (digitalRead(buttonD) == LOW) {
       sendAnswer('D');
       lastDebounceTime = currentTime;
     }
   }
   
-  // Listen for feedback from computer (correct/wrong)
+  
   if (Serial.available() > 0) {
     String feedback = Serial.readStringUntil('\n');
     feedback.trim();

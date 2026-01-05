@@ -29,6 +29,8 @@ function AdminDashboard() {
   const [selectedPassage, setSelectedPassage] = useState(null);
   const [showMessages, setShowMessages] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingTeachersCount, setPendingTeachersCount] = useState(0);
+  const [pendingContentCount, setPendingContentCount] = useState(0);
   
   // Question filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,9 +67,15 @@ function AdminDashboard() {
     setAdmin(JSON.parse(adminData));
     loadDashboardData();
     loadUnreadCount();
+    loadPendingTeachersCount();
+    loadPendingContentCount();
     
-    // Poll for new messages every 30 seconds
-    const interval = setInterval(loadUnreadCount, 30000);
+    // Poll for new messages, pending teachers, and pending content every 30 seconds
+    const interval = setInterval(() => {
+      loadUnreadCount();
+      loadPendingTeachersCount();
+      loadPendingContentCount();
+    }, 30000);
     return () => clearInterval(interval);
   }, [navigate]);
 
@@ -75,6 +83,34 @@ function AdminDashboard() {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
   });
+
+  const loadPendingTeachersCount = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/teachers/pending`, {
+        headers: getHeaders()
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPendingTeachersCount(data.data.length);
+      }
+    } catch (error) {
+      console.error('Error loading pending teachers count:', error);
+    }
+  };
+
+  const loadPendingContentCount = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/content/pending`, {
+        headers: getHeaders()
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPendingContentCount(data.data.length);
+      }
+    } catch (error) {
+      console.error('Error loading pending content count:', error);
+    }
+  };
 
   const loadUnreadCount = async () => {
     try {
@@ -502,8 +538,28 @@ function AdminDashboard() {
           <button
             className="admin-nav-btn"
             onClick={() => navigate('/admin/approvals')}
+            style={{ position: 'relative' }}
           >
             ✅ Teacher Approvals
+            {(pendingTeachersCount + pendingContentCount) > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '5px',
+                right: '5px',
+                background: '#ff4444',
+                color: 'white',
+                borderRadius: '50%',
+                width: '20px',
+                height: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '11px',
+                fontWeight: 'bold'
+              }}>
+                {(pendingTeachersCount + pendingContentCount) > 9 ? '9+' : (pendingTeachersCount + pendingContentCount)}
+              </span>
+            )}
           </button>
         </nav>
 

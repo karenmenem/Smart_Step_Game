@@ -18,6 +18,7 @@ function TeacherDashboard() {
     const [classes, setClasses] = useState([]);
     const [students, setStudents] = useState([]);
     const [copiedCode, setCopiedCode] = useState(null);
+    const [classesLoading, setClassesLoading] = useState(true);
 
     useEffect(() => {
         // Check if teacher is logged in
@@ -82,6 +83,7 @@ function TeacherDashboard() {
 
     const loadClasses = async () => {
         try {
+            setClassesLoading(true);
             const token = localStorage.getItem('teacherToken');
             const teacherInfo = JSON.parse(localStorage.getItem('teacherInfo'));
             const result = await api.getTeacherClasses(teacherInfo.id, token);
@@ -93,6 +95,8 @@ function TeacherDashboard() {
             }
         } catch (error) {
             console.error('Error loading classes:', error);
+        } finally {
+            setClassesLoading(false);
         }
     };
 
@@ -291,7 +295,9 @@ function TeacherDashboard() {
                             <div className="class-code-section">
                                 <h3>🔑 Share Your Class Code</h3>
                                 <p>Ask parents to enter this code in their Family Profile to link their child to you.</p>
-                                {classes.length > 0 ? (
+                                {classesLoading ? (
+                                    <p>Loading your class code...</p>
+                                ) : classes.length > 0 ? (
                                     classes.map(cls => (
                                         <div key={cls.id} className="class-code-card">
                                             <div className="class-info">
@@ -310,7 +316,10 @@ function TeacherDashboard() {
                                         </div>
                                     ))
                                 ) : (
-                                    <p>Loading your class code...</p>
+                                    <div className="no-class-yet">
+                                        <p>⏳ Your class is being set up...</p>
+                                        <p className="hint">Please refresh the page in a moment or contact support if this persists.</p>
+                                    </div>
                                 )}
                             </div>
 
@@ -396,13 +405,22 @@ function PassageForm({ onSuccess }) {
 
         try {
             const token = localStorage.getItem('teacherToken');
+            
+            // Convert level text to integer
+            const levelMap = { 'beginner': 1, 'intermediate': 2, 'advanced': 3 };
+            const submissionData = {
+                ...formData,
+                level: levelMap[formData.level] || 1,
+                sublevel: parseInt(formData.sublevel)
+            };
+            
             const response = await fetch('http://localhost:5001/api/teacher/passages', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(submissionData)
             });
 
             const data = await response.json();

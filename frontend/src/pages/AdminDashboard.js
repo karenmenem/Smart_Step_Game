@@ -32,7 +32,7 @@ function AdminDashboard() {
   const [pendingTeachersCount, setPendingTeachersCount] = useState(0);
   const [pendingContentCount, setPendingContentCount] = useState(0);
   
-  // Question filters
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSubject, setFilterSubject] = useState('all');
   const [filterActivity, setFilterActivity] = useState('all');

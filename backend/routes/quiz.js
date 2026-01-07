@@ -9,6 +9,7 @@ const {
   getChildAchievements,
   getActivitiesByLevel
 } = require('../controllers/quizController');
+const arduinoManager = require('../utils/arduino');
 
 // Get questions for a specific activity
 router.get('/questions/:activityId', getQuestions);
@@ -160,5 +161,18 @@ router.get('/progress/:childId', getChildProgress);
 
 // Get child's achievements
 router.get('/achievements/:childId', getChildAchievements);
+
+// Arduino feedback endpoint
+router.post('/arduino-feedback', (req, res) => {
+  try {
+    const { isCorrect } = req.body;
+    console.log(`📡 Received feedback request: isCorrect=${isCorrect}`);
+    arduinoManager.sendFeedback(isCorrect === true || isCorrect === 'true');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Arduino feedback error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send Arduino feedback' });
+  }
+});
 
 module.exports = router;

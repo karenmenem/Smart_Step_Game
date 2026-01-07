@@ -1,5 +1,5 @@
 
-// Cache for ASL resources loaded from API
+
 let cachedResources = null;
 let resourceMap = { words: {}, numbers: {}, operations: {} };
 
@@ -61,12 +61,12 @@ export const loadASLResources = async () => {
 };
 
 const getWordVideoPath = (word) => {
-  // Try cached resources first (case-insensitive)
+  
   const lowerWord = word.toLowerCase();
   if (resourceMap.words[lowerWord]) {
     return resourceMap.words[lowerWord];
   }
-  // Fallback to dynamic path
+  
   const cleanWord = word.toLowerCase().replace(/[^a-z0-9-]/g, '');
   return `/asl/words/${cleanWord}.mp4`;
 };
@@ -82,12 +82,12 @@ const getNumberVideoPath = (number) => {
 };
 
 const getOperationVideoPath = (operation) => {
-  // Try cached resources first (case-insensitive)
+  
   const lowerOp = operation.toLowerCase();
   if (resourceMap.operations[lowerOp]) {
     return resourceMap.operations[lowerOp];
   }
-  // Fallback to dynamic path based on common operations
+  
   const operationMap = {
     'plus': 'plus.mp4',
     'add': 'plus.mp4',
@@ -300,18 +300,35 @@ export const getASLFromQuestion = (question) => {
         ? JSON.parse(aslSigns)
         : aslSigns;
       
-      // If aslType is sentence and signs array is empty, fall through to auto-generation
+      
       if (aslType === 'sentence' && Array.isArray(signs) && signs.length === 0) {
-        // Empty array - skip to auto-generation below
+        
       } else if (aslType === 'sentence' && Array.isArray(signs) && signs.length > 0) {
         console.log('Processing sentence ASL signs:', signs);
         const wordSequence = signs.map(word => {
-          const cleanWord = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+          
+          const wordStr = String(word || '');
+          const cleanWord = wordStr.toLowerCase().replace(/[^a-z0-9]/g, '');
+          
+          // Check if it's a number first
+          if (/^\d+$/.test(cleanWord)) {
+            const resource = ASL_RESOURCES.numbers[cleanWord];
+            console.log(`Number detected "${wordStr}" -> resource:`, resource);
+            return {
+              type: 'number',
+              value: cleanWord,
+              resource: resource,
+              display: wordStr,
+              needsTranslation: !resource
+            };
+          }
+          
+          // Otherwise treat as word
           const resource = resourceMap.words[cleanWord] || ASL_RESOURCES.words[cleanWord] || null;
-          console.log(`Looking up word "${word}" -> cleanWord: "${cleanWord}" -> resource:`, resource);
+          console.log(`Looking up word "${wordStr}" -> cleanWord: "${cleanWord}" -> resource:`, resource);
           return {
             type: 'word',
-            value: word,
+            value: wordStr,
             resource: resource,
             display: word,
             needsTranslation: !resource

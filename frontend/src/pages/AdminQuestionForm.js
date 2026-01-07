@@ -122,21 +122,20 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
   };
 
   const autoSelectPassage = (activity) => {
-    // Extract level and sublevel from activity name
-    // Example: "Comprehension Beginner - Level 1"
+  
     const activityName = activity.name || '';
     const sectionName = activity.section_name || '';
     
-    // Determine level (1=Beginner, 2=Intermediate, 3=Advanced)
+    
     let level = 1;
     if (sectionName.includes('Intermediate')) level = 2;
     else if (sectionName.includes('Advanced')) level = 3;
     
-    // Extract sublevel from activity name (Level 1, Level 2)
+  
     const sublevelMatch = activityName.match(/Level (\d+)/i);
     const sublevel = sublevelMatch ? parseInt(sublevelMatch[1]) : 1;
     
-    // Find matching passage
+    
     const matchingPassage = passages.find(p => 
       p.level === level && p.sublevel === sublevel && p.topic?.toLowerCase() === 'comprehension'
     );
@@ -153,11 +152,11 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
   };
 
   const filterPassagesByActivity = (activity) => {
-    // Extract level and sublevel from activity
+    // Extract level from activity
     const activityName = activity.name || '';
     const sectionName = activity.section_name || '';
     
-    // Determine level (1=Beginner, 2=Intermediate, 3=Advanced)
+    // determine level
     let level = 1;
     if (sectionName.includes('Intermediate')) level = 2;
     else if (sectionName.includes('Advanced')) level = 3;
@@ -166,7 +165,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
     const sublevelMatch = activityName.match(/Level (\d+)/i);
     const sublevel = sublevelMatch ? parseInt(sublevelMatch[1]) : 1;
     
-    // Filter passages to only show matching level and sublevel
+    // filetr passage
     const filtered = passages.filter(p => 
       p.level === level && p.sublevel === sublevel && p.topic?.toLowerCase() === 'comprehension'
     );
@@ -691,10 +690,10 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                       'equals': 'equals'
                     };
                     
-                    // common math words
+                    
                     const mathWords = ['what', 'is', 'how', 'many', 'sum', 'difference', 'product', 'quotient'];
                     
-                    // Parse question word by word in order
+                    // parse
                     const words = questionText.split(/\s+/);
                     const structured = [];
                     let operationFound = false;
@@ -706,18 +705,18 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                       if (/^\d+$/.test(cleanWord)) {
                         structured.push({type: 'number', value: cleanWord});
                       }
-                      // if operation
+                      
                       else if (operations[cleanWord]) {
                         structured.push({type: 'operation', value: operations[cleanWord]});
                         operationFound = true;
                       }
-                      // if word math ques
+                      
                       else if (mathWords.includes(cleanWord)) {
                         structured.push({type: 'word', value: cleanWord});
                       }
-                      // Check for operation symbols in the word (e.g., "10+1")
+                      
                       else if (cleanWord.includes('+') || cleanWord.includes('-') || cleanWord.includes('×') || cleanWord.includes('*') || cleanWord.includes('÷') || cleanWord.includes('/')) {
-                        // Split by operation symbols
+                        
                         const parts = cleanWord.split(/([+\-×÷*/])/);
                         parts.forEach(part => {
                           if (part && /^\d+$/.test(part)) {
@@ -730,7 +729,7 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                       }
                     });
                     
-                    // If no operation was found in the text but we have a default operation based on activity,
+                    
                     // insert it between the first two numbers
                     if (!operationFound && defaultOperation) {
                       const numberIndices = [];
@@ -744,22 +743,22 @@ function AdminQuestionForm({ isTeacher = false, onSuccess }) {
                       if (numberIndices.length >= 2) {
                         structured.splice(numberIndices[1], 0, {type: 'operation', value: defaultOperation});
                       } else if (numberIndices.length === 1) {
-                        // Just add at the end if only one number
+                      
                         structured.push({type: 'operation', value: defaultOperation});
                       }
                     }
                     
                     extracted = structured;
                   } else if (aslType === 'words' || aslType === 'sentence') {
-                    // Extract all words - only filter out very basic articles
-                    // Keep pronouns, question words, and verbs as they're important for ASL
+                    // Extract BOTH words AND numbers together
+                    
                     const stopWords = ['the', 'a', 'an'];
                     
-                    // Remove emojis and special characters, split into words
-                    const cleaned = questionText.replace(/[^\w\s]/g, '').toLowerCase();
+                    
+                    const cleaned = questionText.replace(/[^\w\s]/g, '');
                     const words = cleaned.split(/\s+/)
-                      .filter(w => w.length > 1 && !stopWords.includes(w))
-                      .slice(0, 20); // Increased limit to 20 words
+                      .filter(w => w.length > 0 && !stopWords.includes(w.toLowerCase()))
+                      .slice(0, 20); // Limit to 20 words/numbers
                     
                     extracted = words;
                   }

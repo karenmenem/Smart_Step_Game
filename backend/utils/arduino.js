@@ -105,10 +105,12 @@ class ArduinoManager {
   sendFeedback(isCorrect) {
     try {
       if (!this.isConnected || !this.port || !this.port.isOpen) {
+        console.log('Arduino not connected, cannot send feedback');
         return;
       }
 
       const feedback = isCorrect ? 'CORRECT\n' : 'WRONG\n';
+      console.log(`Sending Arduino feedback: ${feedback.trim()} (isCorrect: ${isCorrect}, type: ${typeof isCorrect})`);
       this.port.write(feedback);
     } catch (error) {
       console.error('Failed to send feedback:', error.message);

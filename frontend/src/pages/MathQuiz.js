@@ -201,7 +201,7 @@ function MathQuiz() {
       }
       
       
-      const keyMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+      const keyMap = { 'A': 3, 'B': 1, 'C': 2, 'D': 0 };
       
       if (keyMap.hasOwnProperty(key) && currentOptions[keyMap[key]] && !showResult) {
         const selectedOption = currentOptions[keyMap[key]];
@@ -209,7 +209,7 @@ function MathQuiz() {
         handleAnswerSelect(selectedOption);
         // auto submit after pressing 
         setTimeout(() => {
-          handleNextQuestion();
+          handleNextQuestion(selectedOption);
         }, 100);
       }
     };
@@ -272,23 +272,45 @@ function MathQuiz() {
     setSelectedAnswer(answer);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = (answerOverride = null) => {
     if (!questions || questions.length === 0 || !questions[currentQuestion]) {
       console.error('No question available at current index');
       return;
     }
     
-    const isCorrect = selectedAnswer === questions[currentQuestion].correct;
+    // Prevent duplicate calls
+    if (showResult) {
+      console.log('⚠️ Already showing result, ignoring duplicate call');
+      return;
+    }
+    
+    const actualAnswer = answerOverride !== null ? answerOverride : selectedAnswer;
+    const isCorrect = actualAnswer === questions[currentQuestion].correct;
+    console.log('🔍 Answer Check:', { 
+      selectedAnswer: actualAnswer, 
+      correctAnswer: questions[currentQuestion].correct, 
+      isCorrect,
+      match: actualAnswer === questions[currentQuestion].correct
+    });
+    
     const newScore = isCorrect ? score + 1 : score;
     
     if (isCorrect) {
       setScore(newScore);
     }
 
+    // Send Arduino feedback ONCE
+    console.log('📤 Sending Arduino feedback:', isCorrect ? 'CORRECT' : 'WRONG');
+    fetch('http://localhost:5001/api/quiz/arduino-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isCorrect })
+    }).catch(err => console.log('Arduino feedback failed:', err));
+
     // track answers
     const answerRecord = {
       questionId: questions[currentQuestion].id,
-      selectedAnswer: selectedAnswer,
+      selectedAnswer: actualAnswer,
       isCorrect: isCorrect,
       pointsEarned: isCorrect ? (questions[currentQuestion].points || 10) : 0,
       timeTaken: getTimerDuration() - timeLeft
@@ -740,7 +762,7 @@ function MathQuiz() {
                 
                 <button 
                   className="submit-btn"
-                  onClick={handleNextQuestion}
+                  onClick={() => handleNextQuestion(selectedAnswer)}
                   disabled={!selectedAnswer}
                 >
                   {currentQuestion === questions.length - 1 ? "Finish Quiz" : "Next Question"}

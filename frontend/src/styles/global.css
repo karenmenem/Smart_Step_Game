@@ -3252,6 +3252,27 @@ select.form-input {
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
 }
 
+.remove-child-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 0.8rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.8rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.remove-child-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
 .select-child-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -3330,12 +3351,13 @@ select.form-input {
   background: white;
   border-radius: 20px;
   padding: 0;
-  width: 95%;
-  max-width: 950px;
+  width: 90%;
+  max-width: 650px;
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s ease;
+  margin: 0 auto;
 }
 
 .teacher-linking-modal .modal-header {
@@ -3363,6 +3385,8 @@ select.form-input {
   padding: 2rem;
   max-height: calc(90vh - 100px);
   overflow-y: auto;
+  display: flex;
+  justify-content: center;
 }
 
 .teacher-linking-modal .teacher-linking-container {
@@ -3372,6 +3396,84 @@ select.form-input {
 
 .teacher-linking-modal .teacher-linking-header {
   display: none;
+}
+
+.confirm-delete-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+.confirm-delete-modal h3 {
+  color: #ef4444;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.confirm-delete-modal p {
+  color: #4a5568;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  line-height: 1.5;
+}
+
+.confirm-delete-modal .warning-text {
+  color: #dc2626;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: #fee2e2;
+  padding: 1rem;
+  border-radius: 10px;
+  margin: 1.5rem 0;
+}
+
+.confirm-delete-modal .modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.confirm-delete-modal .btn-cancel {
+  flex: 1;
+  padding: 1rem;
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-delete-modal .btn-cancel:hover {
+  background: #d1d5db;
+  transform: translateY(-2px);
+}
+
+.confirm-delete-modal .btn-delete {
+  flex: 1;
+  padding: 1rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.confirm-delete-modal .btn-delete:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
 @keyframes slideUp {

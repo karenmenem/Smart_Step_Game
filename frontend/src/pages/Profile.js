@@ -19,19 +19,20 @@ function Profile() {
   const [childrenData, setChildrenData] = useState({});
   const [selectedChildForTeacher, setSelectedChildForTeacher] = useState(null);
   const [showTeacherLinking, setShowTeacherLinking] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     if (auth.isAuthenticated()) {
       const userData = auth.getCurrentUser();
       setUser(userData);
       
-      // Ensure children array exists
+      
       let childrenList = userData.children || [];
       
-      // If no children array but there's a child object, create the array
+      
       if (childrenList.length === 0 && userData.child) {
         childrenList = [userData.child];
-        // Update sessionStorage with the corrected data
+       
         const updatedUserData = {
           ...userData,
           children: childrenList
@@ -41,10 +42,10 @@ function Profile() {
       
       setChildren(childrenList);
       
-      // Fetch fresh data for each child from database
+      // fetch from db
       childrenList.forEach(async (child) => {
         try {
-          // Fetch progress
+          
           const progressRes = await api.getChildProgress(child.id);
           if (progressRes.success) {
             const completedCount = progressRes.data.filter(p => p.completed).length;
@@ -54,7 +55,7 @@ function Profile() {
             }));
           }
           
-          // Fetch fresh child data including total_points
+         
           const response = await fetch(`http://localhost:5001/api/children/${child.id}`);
           const childDataRes = await response.json();
           if (childDataRes.success) {
@@ -68,7 +69,7 @@ function Profile() {
         }
       });
       
-      // Set the first child as current if not already set
+      
       if (childrenList.length > 0 && !auth.getCurrentChild()) {
         auth.setCurrentChild(childrenList[0]);
       }
@@ -144,6 +145,48 @@ function Profile() {
     }));
     
     navigate("/");
+  };
+
+  const handleDeleteChild = async (childId) => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/auth/child/${childId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        
+        const updatedChildren = children.filter(c => c.id !== childId);
+        setChildren(updatedChildren);
+
+       
+        const updatedUserData = {
+          ...user,
+          children: updatedChildren
+        };
+        setUser(updatedUserData);
+        sessionStorage.setItem('userData', JSON.stringify(updatedUserData));
+
+        
+        const currentChild = auth.getCurrentChild();
+        if (currentChild && currentChild.id === childId) {
+          auth.clearCurrentChild();
+        }
+
+        setDeleteConfirm(null);
+        alert('✅ Child removed successfully');
+      } else {
+        alert('❌ ' + (data.message || 'Failed to remove child'));
+      }
+    } catch (err) {
+      console.error('Delete child error:', err);
+      alert('❌ Error removing child');
+    }
   };
 
   if (!user) {
@@ -236,6 +279,15 @@ function Profile() {
                       }}
                     >
                       👨‍🏫 Teacher Access
+                    </button>
+                    <button 
+                      className="remove-child-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirm(child);
+                      }}
+                    >
+                      🗑️ Remove Child
                     </button>
                     <div className="select-child-btn">
                       {isActive ? 'Currently Active' : `Click to Play as ${child.name}`}
@@ -350,6 +402,31 @@ function Profile() {
             </div>
             <div className="modal-content">
               <TeacherLinking child={{...selectedChildForTeacher, child_id: selectedChildForTeacher.id}} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="confirm-delete-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>⚠️ Remove Child?</h3>
+            <p>Are you sure you want to remove <strong>{deleteConfirm.name}</strong>?</p>
+            <p className="warning-text">This will delete all their progress, achievements, and data permanently.</p>
+            <div className="modal-actions">
+              <button 
+                className="btn-cancel"
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-delete"
+                onClick={() => handleDeleteChild(deleteConfirm.id)}
+              >
+                🗑️ Yes, Remove Child
+              </button>
             </div>
           </div>
         </div>

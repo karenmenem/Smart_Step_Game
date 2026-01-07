@@ -290,7 +290,10 @@ function AdminApprovals() {
                                                             <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
                                                                 {content.missing_asl.map((item, idx) => (
                                                                     <li key={idx}>
-                                                                        <strong>{item.value}</strong> ({item.type})
+                                                                        <strong>{item.value}</strong>
+                                                                        <span style={{ fontSize: '11px', color: '#666', marginLeft: '5px' }}>
+                                                                            ({item.type === 'word' ? 'word video' : item.type === 'number' ? 'number video' : item.type})
+                                                                        </span>
                                                                     </li>
                                                                 ))}
                                                             </ul>

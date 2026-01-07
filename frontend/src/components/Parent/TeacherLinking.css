@@ -1,7 +1,7 @@
 .teacher-linking-container {
-  max-width: 900px;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0;
 }
 
 .teacher-linking-header {
@@ -22,10 +22,11 @@
 
 .link-teacher-section {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 20px;
   margin-bottom: 3rem;
   box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  overflow: hidden;
 }
 
 .link-teacher-section h3 {
@@ -37,13 +38,15 @@
 .input-group {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  align-items: stretch;
+  flex-wrap: nowrap;
 }
 
 .class-code-input {
   flex: 1;
-  padding: 1rem 1.5rem;
-  font-size: 1.3rem;
+  padding: 1rem 1.2rem;
+  font-size: 1.2rem;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.95);
@@ -52,6 +55,7 @@
   font-weight: 700;
   text-transform: uppercase;
   transition: all 0.3s ease;
+  min-width: 0;
 }
 
 .class-code-input:focus {
@@ -67,16 +71,22 @@
 }
 
 .link-btn {
-  padding: 1rem 2rem;
+  padding: 1rem 1.5rem;
   background: white;
   color: #667eea;
   border: none;
   border-radius: 12px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
 }
 
 .link-btn:hover:not(:disabled) {

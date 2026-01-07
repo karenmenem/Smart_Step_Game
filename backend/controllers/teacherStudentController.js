@@ -10,7 +10,7 @@ function generateClassCode() {
   return code;
 }
 
-// Get teacher's classes
+
 const getTeacherClasses = async (req, res) => {
   try {
     const { teacherId } = req.params;
@@ -22,7 +22,7 @@ const getTeacherClasses = async (req, res) => {
       [teacherId]
     );
     
-    // Get student count for each class
+   
     for (let cls of classes) {
       const count = await query(
         `SELECT COUNT(*) as count FROM child_teacher_access 
@@ -39,7 +39,7 @@ const getTeacherClasses = async (req, res) => {
   }
 };
 
-// Create new class
+
 const createTeacherClass = async (req, res) => {
   try {
     const { teacherId, className, description } = req.body;
@@ -75,7 +75,7 @@ const createTeacherClass = async (req, res) => {
   }
 };
 
-// Get teacher's students with progress
+
 const getTeacherStudents = async (req, res) => {
   try {
     const { teacherId } = req.params;
@@ -126,7 +126,7 @@ const getTeacherStudents = async (req, res) => {
       );
       student.activities_completed = completed[0]?.count || 0;
       
-      // Average score
+      
       const avgScore = await query(
         `SELECT AVG((score / max_score) * 100) as avg_score 
          FROM child_progress WHERE child_id = ?`,
@@ -151,12 +151,11 @@ const getTeacherStudents = async (req, res) => {
   }
 };
 
-// Get detailed student progress
+
 const getStudentProgress = async (req, res) => {
   try {
     const { teacherId, childId } = req.params;
     
-    // Verify teacher has access
     const access = await query(
       `SELECT * FROM child_teacher_access 
        WHERE teacher_id = ? AND child_id = ? 

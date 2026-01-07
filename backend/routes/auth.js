@@ -390,4 +390,47 @@ router.get('/children/:parentId', async (req, res) => {
   }
 });
 
+// delete child
+router.delete('/child/:childId', async (req, res) => {
+  try {
+    const { childId } = req.params;
+
+    
+    const childRows = await query(
+      'SELECT profile_picture FROM child WHERE child_id = ?',
+      [childId]
+    );
+
+    if (!childRows || childRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Child not found'
+      });
+    }
+
+    
+    if (childRows[0].profile_picture) {
+      const picturePath = path.join(__dirname, '../', childRows[0].profile_picture);
+      if (fs.existsSync(picturePath)) {
+        fs.unlinkSync(picturePath);
+      }
+    }
+
+    
+    await query('DELETE FROM child WHERE child_id = ?', [childId]);
+
+    res.json({
+      success: true,
+      message: 'Child removed successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete child error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to remove child. Please try again.'
+    });
+  }
+});
+
 module.exports = router;

@@ -1,15 +1,15 @@
-const int buttonA = 2;
+const int buttonA = 5;
 const int buttonB = 3;
 const int buttonC = 4;
-const int buttonD = 5;
+const int buttonD = 2;
 
-const int ledA = 9;   
+const int ledA = 6;   
 const int ledB = 10;  
 const int ledC = 11;  
-const int ledD = 6;   
+const int ledD = 9;   
 
 const int buzzerPin = 8;
-const int ledGreen = 5;
+const int ledGreen = 7;
 const int ledRed = 12;
 
 unsigned long lastDebounceTime = 0;
@@ -24,7 +24,7 @@ void setup() {
   
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
-  digitalWrite(ledGreen, HIGH);
+  digitalWrite(ledGreen, LOW);
   digitalWrite(ledRed, LOW);
   
   pinMode(buttonA, INPUT_PULLUP);
@@ -64,12 +64,12 @@ void setup() {
     Serial.read();
   }
   
-  digitalWrite(ledGreen, HIGH);
+  digitalWrite(ledGreen, LOW);
   digitalWrite(ledRed, LOW);
 }
 
 void loop() {
-  digitalWrite(ledGreen, HIGH);
+  digitalWrite(ledGreen, LOW);
   digitalWrite(ledRed, LOW);
   
   unsigned long currentTime = millis();
@@ -149,7 +149,7 @@ void flashGreen() {
     delay(150);
   }
   
-  digitalWrite(ledGreen, HIGH);
+  digitalWrite(ledGreen, LOW);
   Serial.println("GREEN done");
 }
 
